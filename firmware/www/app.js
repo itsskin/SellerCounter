@@ -95,6 +95,8 @@ function renderSettings(state) {
 
   document.getElementById("set-display-driver").value =
     (state.display && state.display.driver) || "epd1in54";
+
+  document.getElementById("ota-current-version").textContent = state.ota_version ?? "?";
 }
 
 function shopCardHtml(available, shop) {
@@ -654,6 +656,64 @@ document.getElementById("mp-sounds-save").addEventListener("click", async (ev) =
     button.disabled = false;
   }
   setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("ota-check").addEventListener("click", async (ev) => {
+  const button = ev.target;
+  const msg = document.getElementById("ota-msg");
+  const applyButton = document.getElementById("ota-apply");
+  button.disabled = true;
+  applyButton.hidden = true;
+  msg.classList.remove("error");
+  msg.textContent = "Проверяю обновления...";
+  try {
+    const res = await fetch("/api/ota/check", { method: "POST" });
+    const data = await res.json();
+    if (!data.ok) {
+      msg.textContent = "Ошибка: " + (data.error || res.status);
+      msg.classList.add("error");
+    } else if (data.update_available) {
+      msg.textContent = "Доступно обновление: версия " + data.available_version +
+        " (сейчас " + data.current_version + "), источник: " + data.source;
+      applyButton.hidden = false;
+    } else {
+      msg.textContent = "Обновлений нет — установлена последняя версия (" + data.current_version + ")";
+    }
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.getElementById("ota-apply").addEventListener("click", async (ev) => {
+  const button = ev.target;
+  const checkButton = document.getElementById("ota-check");
+  const msg = document.getElementById("ota-msg");
+  button.disabled = true;
+  checkButton.disabled = true;
+  msg.classList.remove("error");
+  msg.textContent = "Скачиваю и проверяю файлы обновления — это может занять минуту, не выключай плату...";
+  try {
+    const res = await fetch("/api/ota/apply", { method: "POST" });
+    const data = await res.json();
+    if (data.ok) {
+      msg.textContent = "Обновлено до версии " + data.new_version + " — плата перезагружается...";
+      button.hidden = true;
+      setTimeout(() => location.reload(), 8000);
+    } else {
+      msg.textContent = "Ошибка: " + (data.error || res.status);
+      msg.classList.add("error");
+      button.disabled = false;
+      checkButton.disabled = false;
+    }
+  } catch (err) {
+    // Само соединение может оборваться при перезагрузке платы уже ПОСЛЕ
+    // того как файлы применились — это не обязательно ошибка обновления.
+    msg.textContent = "Соединение прервано (возможно, плата уже перезагружается) — обнови страницу через полминуты.";
+    checkButton.disabled = false;
+  }
 });
 
 loadState(true);

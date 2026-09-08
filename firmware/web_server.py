@@ -14,6 +14,7 @@ import machine
 
 import breadcrumb
 import config as config_module
+import ota
 import wifi_manager
 from display import layout as layout_module
 from display.framebuf_sim import to_bmp_bytes
@@ -99,6 +100,7 @@ async def api_state(request):
         "buzzer": cfg["buzzer"],
         "marketplaces_available": available_marketplaces(),
         "marketplaces": [_public_marketplace(e) for e in cfg["marketplaces"]],
+        "ota_version": ota.current_version(),
     }
     if engine is not None:
         data["stats"] = engine.latest
@@ -138,6 +140,46 @@ async def api_reboot(request):
     может быть переключена на живом объекте без пересоздания SPI/пинов."""
     asyncio.create_task(_reset_soon())
     return {"ok": True, "message": "rebooting"}
+
+
+@app.route("/api/ota/check", methods=["POST"])
+async def api_ota_check(request):
+    try:
+        result = await ota.check()
+    except ota.OtaError as exc:
+        return {"ok": False, "error": str(exc)}, 502
+    return {
+        "ok": True,
+        "current_version": result["current_version"],
+        "available_version": result["available_version"],
+        "update_available": result["update_available"],
+        "source": result["source"],
+    }
+
+
+@app.route("/api/ota/apply", methods=["POST"])
+async def api_ota_apply(request):
+    """Проверяет ещё раз (на случай если с последней проверки в вебе
+    прошло время и версия успела поменяться) и, если обновление реально
+    доступно, качает+проверяет все файлы и перезагружает плату — см.
+    ota.apply() про то, почему это безопасно на середине сорвавшейся сети."""
+    try:
+        result = await ota.check()
+    except ota.OtaError as exc:
+        return {"ok": False, "error": str(exc)}, 502
+    if not result["update_available"]:
+        return {"ok": False, "error": "обновлений нет"}, 400
+
+    breadcrumb.mark("applying OTA update to version %d" % result["available_version"])
+    try:
+        await ota.apply(result["manifest"], result["source"])
+    except Exception as exc:
+        breadcrumb.mark("OTA update failed: %s" % exc)
+        return {"ok": False, "error": str(exc)}, 500
+
+    breadcrumb.mark("OTA update applied — rebooting")
+    asyncio.create_task(_reset_soon())
+    return {"ok": True, "new_version": result["available_version"]}
 
 
 @app.route("/api/marketplaces/<marketplace_id>/add", methods=["POST"])

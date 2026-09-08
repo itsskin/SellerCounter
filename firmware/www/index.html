@@ -212,6 +212,19 @@
     </form>
     <p id="wifi-msg" class="msg"></p>
   </section>
+
+  <section id="ota-section" class="card">
+    <h2>Обновление прошивки</h2>
+    <p class="hint">
+      Текущая версия: <span id="ota-current-version">?</span>.
+      Обновление качается с GitHub (два независимых источника — если один
+      недоступен, пробуется второй) и проверяется по контрольной сумме
+      каждого файла перед применением.
+    </p>
+    <button type="button" id="ota-check">Проверить обновления</button>
+    <button type="button" id="ota-apply" hidden>Обновить</button>
+    <p id="ota-msg" class="msg"></p>
+  </section>
 </main>
 
 <script src="/app.js"></script>
