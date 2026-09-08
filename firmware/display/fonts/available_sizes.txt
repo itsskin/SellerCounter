@@ -4,42 +4,19 @@ display/assets/layout.txt (поле font).
 
 orbitron:
   имя файла          реальная высота цифр на экране
-  orbitron_8        6px
-  orbitron_16       11px
   orbitron_20       15px
   orbitron_24       17px
-  orbitron_30       22px
   orbitron_36       26px
   orbitron_42       30px
-  orbitron_48       35px
   orbitron_52       37px
-  orbitron_58       42px
-  orbitron_64       46px
   orbitron_70       51px
-  orbitron_80       58px
   orbitron_96       70px
-  orbitron_112      81px
   orbitron_128      92px
-  orbitron_144      104px
 
 verdana:
   имя файла          реальная высота цифр на экране
-  verdana_8        6px
-  verdana_14       10px
-  verdana_15       11px
-  verdana_18       13px
-  verdana_20       15px
-  verdana_24       18px
-  verdana_28       21px
-  verdana_32       24px
-  verdana_36       27px
-  verdana_40       30px
-  verdana_46       35px
-  verdana_52       40px
-  verdana_58       44px
-  verdana_64       49px
-  verdana_72       54px
-  verdana_80       60px
+  verdana_15       17px
+  verdana_28       34px
 
 Если в layout.txt указать размер, которого нет у данного семейства —
 плата возьмёт ближайший меньший ИЗ ЭТОГО СЕМЕЙСТВА и увеличит его до

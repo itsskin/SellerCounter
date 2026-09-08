@@ -66,7 +66,11 @@ DEFAULTS = {
     "orders.suffix_font": "verdana_15",
     "clock.x": "100",
     "clock.y": "10",
-    "clock.font": "verdana_20",
+    # Дата — только цифры и дефис, кириллица не нужна — можно Orbitron
+    # (гораздо компактнее файла шрифта, чем Verdana, см.
+    # generate_orbitron_font.py). Verdana в комплекте остаётся только под
+    # то, что реально кириллическое (suffix "шт", fbs_label).
+    "clock.font": "orbitron_20",
     # Тестовая надпись (см. cfg["display"]["show_fbs_test_label"] в
     # web_server.py/www) — рисуется, только когда чекбокс в веб-интерфейсе
     # включён. Текст настраивается через fbs_label.text (можно вписать

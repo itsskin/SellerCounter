@@ -120,6 +120,26 @@ async def check():
     raise OtaError("ни один источник не ответил: " + "; ".join(errors))
 
 
+def _local_hash(path):
+    """sha256 уже лежащего на плате файла, или None если файла нет.
+    Нужно, чтобы не перекачивать по сети файлы, которые и так уже
+    актуальны (HW-подтверждено: полный набор из ~70 файлов, включая
+    крупные шрифты, качается по TLS с GitHub несколько минут в основном
+    из-за накладных расходов TLS-хендшейка на КАЖДЫЙ файл — большинство
+    обновлений на практике меняют единицы файлов, а не все разом)."""
+    try:
+        with open(path, "rb") as f:
+            h = hashlib.sha256()
+            while True:
+                chunk = f.read(512)
+                if not chunk:
+                    break
+                h.update(chunk)
+            return binascii.hexlify(h.digest()).decode()
+    except OSError:
+        return None
+
+
 def _ensure_dirs(path):
     parts = path.strip("/").split("/")[:-1]
     cur = ""
@@ -138,11 +158,19 @@ async def apply(manifest, base_url, progress=None):
     (сеть моргнула, источник отдал не то), плата остаётся на старой,
     рабочей версии целиком, а не в смеси старого и нового.
 
+    Файлы, чей локальный sha256 уже совпадает с манифестом, вообще не
+    скачиваются — см. _local_hash.
+
     await asyncio.sleep_ms(0) после каждого файла — отдаём управление event
     loop, чтобы кормление аппаратного watchdog (main.py._feed_watchdog) и
     веб-сервер не простаивали 70+ синхронных HTTP-запросов подряд (HW-
     подтверждено на другом сценарии в этом проекте: длинная синхронная
-    работа без await реально роняет плату по watchdog)."""
+    работа без await реально роняет плату по watchdog).
+
+    Голый except (не except Exception) — HW-подтверждено: KeyboardInterrupt
+    (например Ctrl-C от raw-REPL сессии диагностики) НЕ ловится
+    except Exception в этой прошивке, и без голого except недокачанные
+    .ota_new оставались бы мусором на флеше навсегда."""
     files = manifest["files"]
     total = len(files)
     downloaded = []
@@ -151,6 +179,10 @@ async def apply(manifest, base_url, progress=None):
             expected_hash = files[rel_path]
             if progress:
                 progress(i, total, rel_path)
+            dest = "/" + rel_path
+            if _local_hash(dest) == expected_hash:
+                await asyncio.sleep_ms(0)
+                continue
             data = _get(base_url + rel_path, FILE_TIMEOUT_SEC)
             actual_hash = binascii.hexlify(hashlib.sha256(data).digest()).decode()
             if actual_hash != expected_hash:
@@ -158,16 +190,16 @@ async def apply(manifest, base_url, progress=None):
                     "%s: хэш не совпал (ожидали %s, получили %s)"
                     % (rel_path, expected_hash, actual_hash)
                 )
-            dest = "/" + rel_path
             _ensure_dirs(dest)
             tmp = dest + ".ota_new"
             with open(tmp, "wb") as f:
                 f.write(data)
             downloaded.append((tmp, dest))
             await asyncio.sleep_ms(0)
-    except Exception:
+    except:
         # Подчищаем недокачанные .ota_new — настоящие файлы ещё не тронуты,
-        # плата остаётся в рабочем состоянии на старой версии.
+        # плата остаётся в рабочем состоянии на старой версии. Голый except
+        # (см. докстринг) — ловит и KeyboardInterrupt тоже.
         for tmp, _dest in downloaded:
             try:
                 os.remove(tmp)
