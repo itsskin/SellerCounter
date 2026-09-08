@@ -1,6 +1,6 @@
 {
  "files": {
-  ".DS_Store": "4878499da4f4cd8d58ec399977e28bea27dac88d5cb9a27710a06d21f86f4d0a",
+  ".DS_Store": "29f92000a185ae3027dbf654bd3b389e95cc208cc176f562348f5e249c521803",
   "boot.py": "c125b2cd03296b74ae2f5eabffe2f33274c3b0aa1fc4f313bdf4839d5eac53d6",
   "breadcrumb.py": "77db47c240590b54bfc7255744510ec93ceb3aa3a8677a9ebd0572a93ec76837",
   "buzzer.py": "be0979aef2661dfa62d0b0683007ae71428819bff6d7c03cd2d1d8ecf42adb54",
@@ -73,5 +73,5 @@
   "www/index.html": "65ea0f3c126e772a5aac5d35bdfef0d2b136e8ab3263055fd288853a12194734",
   "www/style.css": "3036dccd464be51e3f8fd4d08a68b483a54ec27a2ca83a62ef9e942dcde896f7"
  },
- "version": 1
+ "version": 2
 }
