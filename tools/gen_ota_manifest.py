@@ -28,7 +28,7 @@ VERSION_PATH = os.path.join(FIRMWARE_DIR, "VERSION")
 MANIFEST_PATH = os.path.join(FIRMWARE_DIR, "ota_manifest.json")
 
 EXCLUDE_PREFIXES = ("display/assets/", "notifications/")
-EXCLUDE_NAMES = ("ota_manifest.json", "VERSION")
+EXCLUDE_NAMES = ("ota_manifest.json", "VERSION", ".DS_Store")
 
 
 def _should_include(rel_path):

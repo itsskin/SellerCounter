@@ -1,11 +1,9 @@
 {
  "files": {
-  ".DS_Store": "9dab3712f9797c83bdc537d708eef4d963daa7997302361ec6773b5b4dea5e51",
   "boot.py": "c125b2cd03296b74ae2f5eabffe2f33274c3b0aa1fc4f313bdf4839d5eac53d6",
   "breadcrumb.py": "77db47c240590b54bfc7255744510ec93ceb3aa3a8677a9ebd0572a93ec76837",
   "buzzer.py": "be0979aef2661dfa62d0b0683007ae71428819bff6d7c03cd2d1d8ecf42adb54",
   "config.py": "4ddb9557fcc21ca45fdbe8424c7bf9cf82cf068b8dd8823b7a62cd7457b943fb",
-  "display/.DS_Store": "096da19676a2d33e19d05054fbfd4b799b77cca6c12bf32b1fcd616df00ee1a3",
   "display/base.py": "d8d9f68ccb2b1f6dc42e5621852ba0927593329a87700aed9bd908ff540c5848",
   "display/custom_font.py": "f8a1fe225255d4a0c57dcfb44f05fc680f852177a5f4e42967ff41d6c130a3a7",
   "display/epd1in54.py": "7e16bb3020cfe9d7497ef4acb94e28916888fceef9faac6a9be0fa05654acda0",
@@ -50,7 +48,6 @@
   "display/layout_400x300.py": "3a64269095dc0ed52108e3283dc6f44f27902785c5c5f4e01b94415dbd48c2eb",
   "display/layout_common.py": "643b7508cee42a453908fd3bebecdbfceb78c9b1f66c4e27b396bbcfd306d9d8",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
-  "lib/.DS_Store": "235cd853401dc4191f05dec7a9e5dc8bf678e1f18a761590a4029a36273aa36a",
   "lib/VENDORED.md": "c97126a1ddc568b09d1502c9c22d81658003af393d5972233d6ef69e3f6ef3a5",
   "lib/microdot/__init__.py": "600f59c25bc576bb6659e3ad4697a82c3c7a225f0063cc6024f8fc439c4a0a7c",
   "lib/microdot/microdot.py": "5815bfec71d44f1ceee91d79c2ddd1b0cffb13409785166846c0a6f05d5ccb00",
