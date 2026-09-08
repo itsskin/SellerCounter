@@ -31,7 +31,7 @@
   "lib/sc_http/__init__.py": "e9b5605e73a267925ea88340f1238377a7c3be5d724ddc7b073d78fc4257943c",
   "lib/umidiparser/__init__.py": "9cd841108db4f550d552afb0424661a0246817ad88fda82ed35903ac9f5e71a9",
   "lib/umidiparser/umidiparser.py": "82ac1b5ac975eb4ed82500d29b1b03c644855575bd3bfb1373a17139ec4d4dea",
-  "main.py": "fc9eed17c652c20e6535b0a9a686ed11ae544daec70a4e493f36cdad290a22e2",
+  "main.py": "82ba37e5c392daaaf38515904dc50a43642b9c60c9df0a652bd2242c4b7f09c2",
   "marketplaces/base.py": "653fc5b1a7996b6593ac5a9354dbc42b2e330499bae3749ccd5b67ec5448c71d",
   "marketplaces/ozon.py": "df69c512256f93610177bd8b91ff5340f6ae873252f937e26c26ee04037800df",
   "marketplaces/registry.py": "4100084c0f5434752710d7e4701d60848e1efe4dac664440d3fd12408ef9f4f7",
