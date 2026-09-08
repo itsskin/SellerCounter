@@ -2,6 +2,6 @@
 __pycache__/
 *.pyc
 .claude/
-Fonts/
+/Fonts/
 Whistle.mp3
 firmware/notifications/mp3test.wav
