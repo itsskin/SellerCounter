@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SellerCounter</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>SellerCounter</h1>
+  <div id="conn-status" class="badge">...</div>
+</header>
+
+<main>
+  <section id="stats-section" class="card">
+    <h2>Статистика сегодня</h2>
+    <p class="hint" id="page-updated">—</p>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value" id="stat-orders">—</div>
+        <div class="stat-label">заказов</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-revenue">—</div>
+        <div class="stat-label">выручка, ₽</div>
+      </div>
+    </div>
+    <p id="stats-errors" class="msg error"></p>
+    <button id="stats-refresh" type="button">Обновить сейчас</button>
+    <p id="stats-msg" class="msg"></p>
+
+    <table class="mp-stats-table">
+      <thead>
+        <tr><th>Маркетплейс</th><th>Заказы</th><th>Выручка, ₽</th><th>Опрошен</th></tr>
+      </thead>
+      <tbody id="mp-stats-body"></tbody>
+    </table>
+    <p class="hint">Если сумма выше не сходится с личными кабинетами маркетплейсов — тут видно,
+      какой конкретно API насчитал не то.</p>
+  </section>
+
+  <section id="preview-section" class="card">
+    <h2>Превью экрана</h2>
+    <p class="hint">Физического экрана ещё нет — вот что было бы на нём нарисовано.</p>
+    <img id="preview-img" src="/api/display/preview.bmp" alt="Превью экрана">
+    <button id="preview-refresh" type="button">Обновить превью</button>
+
+    <div class="override-row">
+      <label>Заказы (тест)
+        <input type="number" id="override-orders" min="0" placeholder="0 = реальные">
+      </label>
+      <label>Выручка (тест)
+        <input type="number" id="override-revenue" min="0" placeholder="0 = реальные">
+      </label>
+    </div>
+    <p class="hint">Пусто или 0 в обоих полях — на экране реальные данные. Настоящий опрос
+      маркетплейсов эти поля не трогают, следующее изменение продаж всё равно перерисует
+      настоящими цифрами.</p>
+    <button id="override-apply" type="button">Показать на экране</button>
+    <p id="override-msg" class="msg"></p>
+  </section>
+
+  <section id="background-section" class="card">
+    <h2>Фон экрана</h2>
+    <p class="hint">
+      PNG ровно под размер активного экрана (сейчас <span id="bg-size">?</span>). Картинка не
+      редактируется — просто пакуется в чёрно-белый растр по порогу яркости, так что готовь её
+      заранее чёрно-белой. Применяется сразу, без перезагрузки платы.
+    </p>
+    <input type="file" id="bg-file" accept="image/png">
+    <button id="bg-upload" type="button">Загрузить как новый фон</button>
+    <p id="bg-msg" class="msg"></p>
+  </section>
+
+  <section id="marketplaces-section" class="card">
+    <h2>Маркетплейсы</h2>
+    <div id="marketplaces-list"></div>
+  </section>
+
+  <section id="notifications-section" class="card">
+    <h2>Уведомления</h2>
+    <label class="checkbox">
+      <input type="checkbox" id="set-buzzer-disabled">
+      Полностью выключить звук
+    </label>
+    <p class="hint">
+      Общий выключатель — глушит вообще всё: уведомления о продажах, кнопку "Тест" ниже и звук
+      при загрузке/перезагрузке платы. Остальные настройки на этой странице (громкость, мелодии,
+      ночной режим) при выключенном звуке просто ничего не делают, но остаются как есть.
+    </p>
+    <label class="checkbox">
+      <input type="checkbox" id="set-boot-sound">
+      Звук при загрузке/перезагрузке платы
+    </label>
+    <p class="hint">
+      Отдельно от общего выключателя выше — можно приглушить именно писк при включении/
+      перезагрузке, оставив звук для продаж и кнопки "Тест". Применяется со следующей
+      загрузки платы (сейчас играющий сигнал уже не остановить).
+    </p>
+    <p class="hint">
+      Файлы лежат в <code>/notifications/</code> на плате. <code>.mid</code> играется как мелодия,
+      <code>.wav</code> — как грубый PWM-звук (сырые 8-битные моно-сэмплы). <code>.mp3</code> плата
+      декодировать не умеет — сконвертируй один раз на компьютере:
+      <code>ffmpeg -i file.mp3 -ar 8000 -ac 1 -acodec pcm_u8 file.wav</code>
+    </p>
+    <div id="notifications-list"></div>
+    <label>
+      <span>Громкость: <span id="volume-value">100</span>%</span>
+      <input type="range" id="set-volume" min="0" max="100" step="10">
+    </label>
+    <p class="hint">
+      100% — уже физический максимум для мелодий/MIDI (потолок по напряжению GPIO), выше можно
+      только тише. Для .wav значения выше 100% цифрово усиливают тихую запись — чем выше, тем
+      сильнее искажения (обрезание сигнала), это ожидаемо.
+    </p>
+
+    <label>Кривая громкости для мелодий/MIDI
+      <select id="set-volume-curve">
+        <option value="linear">Линейная (как есть)</option>
+        <option value="capped">Без провала на 100% (плавнее к максимуму)</option>
+        <option value="quadratic">Аудио-кривая (на слух более равномерная)</option>
+      </select>
+    </label>
+    <p class="hint">
+      На пьезо высокие ноты иногда звучат ГРОМЧЕ на 80-90%, чем на 100% — это резонанс пьезо с
+      гармониками, которые "линейная" кривая на самом верху гасит (физика PWM, не баг). "Без
+      провала" держит громкость монотоннее ценой чуть более тихого максимума. "Аудио-кривая" просто
+      более естественно звучит на слух (как в аудио-потенциометрах), проблему резонанса не решает.
+    </p>
+
+    <h3>Мелодия по маркетплейсам</h3>
+    <p class="hint">
+      Своя мелодия для конкретного маркетплейса — необязательно, "по умолчанию" значит играть
+      общий выбор выше.
+    </p>
+    <div id="mp-sounds-list"></div>
+    <button type="button" id="mp-sounds-save">Сохранить</button>
+
+    <h3>Ночной режим</h3>
+    <p class="hint">
+      В это время уведомления о продажах не звучат — опрос маркетплейсов и экран это не касается,
+      молчит только звук. Диапазон через полночь (например 22:00 → 08:00) работает как есть.
+    </p>
+    <label class="checkbox">
+      <input type="checkbox" id="set-night-enabled">
+      Включить ночной режим
+    </label>
+    <div class="override-row">
+      <label>С
+        <input type="time" id="set-night-start" value="22:00">
+      </label>
+      <label>До
+        <input type="time" id="set-night-end" value="08:00">
+      </label>
+    </div>
+    <p id="notifications-msg" class="msg"></p>
+  </section>
+
+  <section id="settings-section" class="card">
+    <h2>Настройки</h2>
+    <form id="settings-form">
+      <label>Интервал опроса (сек)
+        <input type="number" name="poll_interval_sec" id="set-poll" min="15">
+      </label>
+      <label>Часовой пояс (UTC+)
+        <input type="number" name="timezone_offset_hours" id="set-tz" step="0.5">
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" name="beep_on_sale" id="set-beep">
+        Пищать при новой продаже
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" name="show_yesterday" id="set-yesterday">
+        Показывать данные за вчера (временно, для теста)
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" name="show_fbs_test_label" id="set-fbs-label">
+        Показать на экране "Собрать FBS" (для теста расположения)
+      </label>
+      <button type="submit">Сохранить</button>
+    </form>
+    <p id="settings-msg" class="msg"></p>
+
+    <h3>Экран</h3>
+    <p class="hint">
+      Смена экрана требует перезагрузки платы — драйвер и распиновка выбираются один раз при
+      старте. Пины у обоих экранов совпадают (см. docs/HARDWARE.md), физически переключать можно
+      без перепайки.
+    </p>
+    <label>Какой экран подключён
+      <select id="set-display-driver">
+        <option value="epd1in54">1.54" маленький (200x200)</option>
+        <option value="epd4in2">4.2" большой (400x300)</option>
+      </select>
+    </label>
+    <button type="button" id="display-driver-save">Сохранить и перезагрузить</button>
+    <p id="display-driver-msg" class="msg"></p>
+  </section>
+
+  <section id="wifi-section" class="card">
+    <h2>Wi-Fi</h2>
+    <p class="hint">Плата подключится к этой сети и будет опрашивать маркетплейсы через неё.</p>
+    <form id="wifi-form">
+      <label>SSID
+        <input type="text" name="ssid" id="wifi-ssid" required>
+      </label>
+      <label>Пароль
+        <input type="password" name="password" id="wifi-password">
+      </label>
+      <button type="submit">Сохранить и перезагрузить</button>
+    </form>
+    <p id="wifi-msg" class="msg"></p>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
