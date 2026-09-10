@@ -22,13 +22,28 @@ from utils.time_sync import today_utc_bounds_z
 FBS_URL = "https://api-seller.ozon.ru/v3/posting/fbs/list"
 FBO_URL = "https://api-seller.ozon.ru/v2/posting/fbo/list"
 CANCELLED_STATUS = "cancelled"
+# Статусы FBS-отправления, при которых продавец ЕЩЁ должен его физически
+# собрать — используется только для счётчика напоминания "Собрать FBS"
+# (см. "fbs_orders" в fetch_daily_stats), не для orders/revenue (там считаем
+# ВСЕ несортированные заказы, включая уже собранные и отправленные).
+# "awaiting_packaging" — официальное имя статуса по документации Ozon
+# (https://docs.ozon.ru/api/seller/, раздел posting.status): "ожидает
+# сборки". После сборки статус переходит в "awaiting_deliver" (упаковано,
+# ждёт передачи в доставку) — с этого момента продавцу по этому
+# отправлению уже физически нечего делать, поэтому дальше в список не
+# входит. ВАЖНО: сверить с актуальной документацией, если Ozon когда-нибудь
+# переименует статусы.
+PENDING_FBS_STATUSES = ("awaiting_packaging",)
 # TODO: если в день будет больше 1000 отправлений по одному из каналов —
 # понадобится пагинация (result.has_next / offset). Для одного продавца
 # с небольшим ассортиментом это маловероятно, оставлено как есть.
 
-# Последние успешно полученные (count, revenue) ПО КАЖДОМУ КАНАЛУ отдельно
-# (FBS/FBO), на магазин (ключ — settings["key"], например "ozon-1" — на
-# случай нескольких магазинов Ozon). Модульный уровень, не атрибут
+# Последние успешно полученные данные ПО КАЖДОМУ КАНАЛУ отдельно (FBS/FBO),
+# на магазин (ключ — settings["key"], например "ozon-1" — на случай
+# нескольких магазинов Ozon). У FBS кортеж (count, revenue, pending) — у
+# FBO просто (count, revenue), см. _fetch_fbo: понятия "ещё не собран" для
+# FBO не существует, заказ и так уже на складе Ozon. Модульный уровень, не
+# атрибут
 # OzonClient — build_enabled_clients() создаёт новый инстанс клиента на
 # КАЖДЫЙ цикл опроса (см. marketplaces/registry.py), инстанс не переживает
 # между опросами, а этот кэш должен.
@@ -59,11 +74,11 @@ class OzonClient(MarketplaceClient):
         }
 
         try:
-            fbs_count, fbs_revenue = self._fetch_fbs(headers)
-            _last_good_fbs[self.key] = (fbs_count, fbs_revenue)
+            fbs_count, fbs_revenue, fbs_pending = self._fetch_fbs(headers)
+            _last_good_fbs[self.key] = (fbs_count, fbs_revenue, fbs_pending)
             fbs_error = None
         except MarketplaceError as exc:
-            fbs_count, fbs_revenue = _last_good_fbs.get(self.key, (0, 0.0))
+            fbs_count, fbs_revenue, fbs_pending = _last_good_fbs.get(self.key, (0, 0.0, 0))
             fbs_error = exc
 
         try:
@@ -85,15 +100,23 @@ class OzonClient(MarketplaceClient):
         result = {
             "orders": fbs_count + fbo_count,
             "revenue": fbs_revenue + fbo_revenue,
-            # Отдельно от общего orders — нужно stats_engine, чтобы играть
-            # звук именно на новый FBS-заказ (см. StatsEngine.poll_once):
-            # FBS продавец обязан собрать и отправить сам, а FBO уже лежит
-            # на складе Ozon — то есть FBS реально требует его действия
-            # прямо сейчас, в отличие от FBO. WB/Yandex такого разделения
-            # не имеют (их API не различает FBS/FBO в наших запросах) — у
-            # них этого поля в возвращаемом словаре просто нет, stats_engine
-            # трактует отсутствие как 0.
-            "fbs_orders": fbs_count,
+            # ВАЖНО: это НЕ "все FBS-заказы за сегодня" (тот count уже учтён
+            # в orders/revenue выше) — а только те, что ещё в статусе
+            # PENDING_FBS_STATUSES, то есть продавцу ещё физически нужно их
+            # собрать. Раньше тут был общий fbs_count, и напоминание
+            # "Собрать FBS" на экране (см. StatsEngine._redraw,
+            # www/index.html) не гасло весь день даже после того, как заказ
+            # реально собрали и отправили — HW-подтверждено пользователем
+            # (собрал и отправил, в личном кабинете 0 висящих, а на экране
+            # надпись осталась). Тем же полем играется звук на новый
+            # FBS-заказ (см. StatsEngine.poll_once) — рост НЕсобранных при
+            # опросе работает для этого ничуть не хуже роста общего count.
+            # FBO тут нет вообще — эти заказы уже на складе Ozon, продавцу
+            # физически нечего "собирать". WB/Yandex такого разделения не
+            # имеют (их API не различает FBS/FBO) — у них этого поля в
+            # возвращаемом словаре просто нет, stats_engine трактует
+            # отсутствие как 0.
+            "fbs_orders": fbs_pending,
         }
         if fbs_error is not None or fbo_error is not None:
             # Ровно ОДИН канал упал (оба сразу — см. raise выше) — это уже
@@ -134,7 +157,9 @@ class OzonClient(MarketplaceClient):
         }
         data = request_json("POST", FBS_URL, headers=headers, json_body=body)
         postings = data.get("result", {}).get("postings", [])
-        return _sum_postings(postings)
+        count, revenue = _sum_postings(postings)
+        pending = sum(1 for p in postings if p.get("status") in PENDING_FBS_STATUSES)
+        return count, revenue, pending
 
     def _fetch_fbo(self, headers):
         # /v2/posting/fbo/list на самом деле хочет то же самое, что и FBS —
