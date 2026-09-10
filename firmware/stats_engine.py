@@ -16,6 +16,32 @@ from utils.time_sync import today_local_bounds
 # одного IP; без паузы это реально ловило rate limit (HTTP 429 от WB).
 SHOP_REQUEST_GAP_MS = 1500
 
+# Время последнего опроса — на флеше, а не только в памяти (см. __init__ и
+# poll_once): переживает перезагрузку платы. Без этого троттлинг "не чаще
+# раза в poll_interval_sec" сбрасывался на КАЖДОМ ребуте, и первый опрос
+# после загрузки всегда происходил немедленно, игнорируя интервал — при
+# частых перезагрузках (например во время заливки прошивки по USB) это
+# означало лишние внеплановые запросы к маркетплейсам почти сразу друг за
+# другом. HW-подтверждено: похоже, именно так и словили HTTP 429 от Ozon
+# ("rate limit per second") во время серии перезагрузок при отладке.
+LAST_POLL_PATH = "/last_poll_at.txt"
+
+
+def _read_last_poll_epoch():
+    try:
+        with open(LAST_POLL_PATH) as f:
+            return int(f.read().strip())
+    except (OSError, ValueError):
+        return None
+
+
+def _write_last_poll_epoch(epoch):
+    try:
+        with open(LAST_POLL_PATH, "w") as f:
+            f.write(str(int(epoch)))
+    except OSError:
+        pass
+
 
 class StatsEngine:
     """Опрашивает включённые маркетплейсы, суммирует заказы/выручку за
@@ -64,8 +90,12 @@ class StatsEngine:
         # себе бан, а не чинить его.
         self._retry_not_before_by_shop = {}
         self._current_date = None
-        self._last_poll_ticks = None
-        self.latest = {"orders": 0, "revenue": 0.0}
+        # Восстанавливаем с флеша (см. LAST_POLL_PATH выше) — переживает
+        # перезагрузку платы, поэтому действует сразу на ВСЕ маркетплейсы
+        # (Ozon, WB, Yandex опрашиваются одним общим циклом poll_once, тут
+        # нет разделения по конкретному магазину).
+        self._last_poll_epoch = _read_last_poll_epoch()
+        self.latest = {"orders": 0, "revenue": 0.0, "fbs_orders": 0}
         self.last_errors = {}
         # Разбивка последнего опроса по каждому маркетплейсу отдельно —
         # {id: {"name", "orders", "revenue", "error", "updated_at"}}.
@@ -88,30 +118,32 @@ class StatsEngine:
                 print("stats_engine: unexpected error:", exc)
             await asyncio.sleep(self.cfg.get("poll_interval_sec", 60))
 
-    def _min_poll_gap_ms(self):
+    def _min_poll_gap_sec(self):
         # Фоновый цикл (run()) не должен опрашивать API маркетплейсов чаще,
         # чем раз в poll_interval_sec. На ручное обновление (force=True)
         # это ограничение не действует — см. poll_once().
-        return int(self.cfg.get("poll_interval_sec", 60)) * 1000
+        return int(self.cfg.get("poll_interval_sec", 60))
 
     async def poll_once(self, force=False):
         """Возвращает True, если реально сходили в API, False — если пропустили
-        из-за минимального интервала (см. _min_poll_gap_ms).
+        из-за минимального интервала (см. _min_poll_gap_sec).
 
         force=True (используется ручной кнопкой "Обновить сейчас" в
         веб-интерфейсе) отключает эту защиту — опрос происходит всегда,
         по явному запросу человека."""
         ts = _now_hms(self.cfg.get("timezone_offset_hours", 3))
-        if not force and self._last_poll_ticks is not None:
-            elapsed_ms = time.ticks_diff(time.ticks_ms(), self._last_poll_ticks)
-            min_gap_ms = self._min_poll_gap_ms()
-            if elapsed_ms < min_gap_ms:
+        now_epoch = time.time()
+        if not force and self._last_poll_epoch is not None:
+            elapsed_sec = now_epoch - self._last_poll_epoch
+            min_gap_sec = self._min_poll_gap_sec()
+            if elapsed_sec < min_gap_sec:
                 print(
-                    "[stats %s] пропускаю: последний опрос был %.1f с назад (мин. пауза %.0f с)"
-                    % (ts, elapsed_ms / 1000, min_gap_ms / 1000)
+                    "[stats %s] пропускаю: последний опрос был %.0f с назад (мин. пауза %d с)"
+                    % (ts, elapsed_sec, min_gap_sec)
                 )
                 return False
-        self._last_poll_ticks = time.ticks_ms()
+        self._last_poll_epoch = now_epoch
+        _write_last_poll_epoch(now_epoch)
 
         _, _, date_str = today_local_bounds(
             self.cfg.get("timezone_offset_hours", 3),
@@ -300,7 +332,12 @@ class StatsEngine:
                     await self.buzzer.play_notification("/notifications/" + sound)
                 breadcrumb.mark("idle (after notification)")
 
-        self.latest = {"orders": total_orders, "revenue": total_revenue}
+        # Суммарно по всем площадкам — нужно для напоминания "Собрать FBS"
+        # на экране (см. cfg["display"]["show_fbs_reminder"] и _redraw):
+        # оно должно появляться само, когда за сегодня реально есть хотя бы
+        # один несобранный FBS-заказ, и пропадать, когда их нет.
+        total_fbs_orders = sum(entry.get("fbs_orders", 0) for entry in per_marketplace.values())
+        self.latest = {"orders": total_orders, "revenue": total_revenue, "fbs_orders": total_fbs_orders}
 
         current = (total_orders, total_revenue)
         if current != self._displayed:
@@ -359,7 +396,14 @@ class StatsEngine:
             "ip": self.get_ip() or "",
             "updated_at": _current_time_hhmm(tz),
             "updated_date": _current_date_ddmmyyyy(tz),
-            "show_fbs_label": self.cfg["display"].get("show_fbs_test_label", False),
+            # Показываем, только если функция включена в настройках И
+            # реально есть хотя бы один FBS-заказ за сегодня — не форсируем
+            # надпись вслепую (раньше, пока это был тестовый чекбокс,
+            # форсировали).
+            "show_fbs_label": (
+                self.cfg["display"].get("show_fbs_reminder", False)
+                and self.latest.get("fbs_orders", 0) > 0
+            ),
         }
         breadcrumb.mark("redrawing display")
         try:

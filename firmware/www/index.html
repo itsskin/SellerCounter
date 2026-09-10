@@ -76,6 +76,17 @@
   <section id="marketplaces-section" class="card">
     <h2>Маркетплейсы</h2>
     <div id="marketplaces-list"></div>
+    <label class="checkbox">
+      <input type="checkbox" id="set-fbs-reminder">
+      Показывать на экране "Собрать FBS"
+    </label>
+    <p class="hint">
+      Появляется на экране само, когда за сегодня есть хотя бы один
+      несобранный FBS-заказ (продавец обязан сам собрать и отправить его —
+      в отличие от FBO, который уже лежит на складе маркетплейса), и
+      пропадает, когда таких заказов нет.
+    </p>
+    <p id="fbs-reminder-msg" class="msg"></p>
   </section>
 
   <section id="notifications-section" class="card">
@@ -173,10 +184,6 @@
       <label class="checkbox">
         <input type="checkbox" name="show_yesterday" id="set-yesterday">
         Показывать данные за вчера (временно, для теста)
-      </label>
-      <label class="checkbox">
-        <input type="checkbox" name="show_fbs_test_label" id="set-fbs-label">
-        Показать на экране "Собрать FBS" (для теста расположения)
       </label>
       <button type="submit">Сохранить</button>
     </form>

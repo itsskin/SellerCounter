@@ -15,7 +15,7 @@
 # считает Wildberries-клиент). "Выручка" — валовая сумма (что заплатил
 # покупатель), без вычета комиссии Ozon и логистики.
 
-from marketplaces.base import MarketplaceClient
+from marketplaces.base import MarketplaceClient, MarketplaceError
 from utils.http import request_json
 from utils.time_sync import today_utc_bounds_z
 
@@ -25,6 +25,25 @@ CANCELLED_STATUS = "cancelled"
 # TODO: если в день будет больше 1000 отправлений по одному из каналов —
 # понадобится пагинация (result.has_next / offset). Для одного продавца
 # с небольшим ассортиментом это маловероятно, оставлено как есть.
+
+# Последние успешно полученные (count, revenue) ПО КАЖДОМУ КАНАЛУ отдельно
+# (FBS/FBO), на магазин (ключ — settings["key"], например "ozon-1" — на
+# случай нескольких магазинов Ozon). Модульный уровень, не атрибут
+# OzonClient — build_enabled_clients() создаёт новый инстанс клиента на
+# КАЖДЫЙ цикл опроса (см. marketplaces/registry.py), инстанс не переживает
+# между опросами, а этот кэш должен.
+#
+# Нужен, потому что FBS и FBO — это два НЕЗАВИСИМЫХ HTTP-запроса, и один
+# может сломаться, пока другой прекрасно работает (HW-подтверждено: Ozon
+# реально отдавал 429 стабильно на /v2/posting/fbo/list несколько минут,
+# пока /v3/posting/fbs/list на то же время отвечал нормально). Раньше
+# fetch_daily_stats() был "всё или ничего" — сбой ЛЮБОГО из двух вызовов
+# ронял исключение ДО return, и уже полученные данные рабочего канала
+# просто выбрасывались, а не только сломанного. Теперь при сбое ОДНОГО
+# канала берём последнее успешное значение ИМЕННО ЭТОГО канала (не 0) —
+# рабочий канал при этом остаётся полностью свежим.
+_last_good_fbs = {}
+_last_good_fbo = {}
 
 
 class OzonClient(MarketplaceClient):
@@ -38,8 +57,31 @@ class OzonClient(MarketplaceClient):
             "Api-Key": self.settings["api_key"],
             "Content-Type": "application/json",
         }
-        fbs_count, fbs_revenue = self._fetch_fbs(headers)
-        fbo_count, fbo_revenue = self._fetch_fbo(headers)
+
+        try:
+            fbs_count, fbs_revenue = self._fetch_fbs(headers)
+            _last_good_fbs[self.key] = (fbs_count, fbs_revenue)
+            fbs_error = None
+        except MarketplaceError as exc:
+            fbs_count, fbs_revenue = _last_good_fbs.get(self.key, (0, 0.0))
+            fbs_error = exc
+
+        try:
+            fbo_count, fbo_revenue = self._fetch_fbo(headers)
+            _last_good_fbo[self.key] = (fbo_count, fbo_revenue)
+            fbo_error = None
+        except MarketplaceError as exc:
+            fbo_count, fbo_revenue = _last_good_fbo.get(self.key, (0, 0.0))
+            fbo_error = exc
+
+        if fbs_error is not None and fbo_error is not None:
+            # Оба канала упали В ЭТОМ цикле — сообщить об ошибке целиком и
+            # отдать разбираться дальше (см. stats_engine.poll_once —
+            # у него есть свой, отдельный откат на last_good ВСЕГО
+            # магазина, этого достаточно, не дублируем ту же подстраховку
+            # тут ещё раз на уровне канала).
+            raise MarketplaceError("FBS: %s; FBO: %s" % (fbs_error, fbo_error))
+
         return {
             "orders": fbs_count + fbo_count,
             "revenue": fbs_revenue + fbo_revenue,

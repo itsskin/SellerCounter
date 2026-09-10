@@ -71,7 +71,7 @@ DEFAULTS = {
     # generate_orbitron_font.py). Verdana в комплекте остаётся только под
     # то, что реально кириллическое (suffix "шт", fbs_label).
     "clock.font": "orbitron_20",
-    # Тестовая надпись (см. cfg["display"]["show_fbs_test_label"] в
+    # Напоминание "Собрать FBS" (см. cfg["display"]["show_fbs_reminder"] в
     # web_server.py/www) — рисуется, только когда чекбокс в веб-интерфейсе
     # включён. Текст настраивается через fbs_label.text (можно вписать
     # что угодно — Verdana теперь умеет полный алфавит кириллицы и
@@ -127,8 +127,8 @@ clock.x = {clock.x}
 clock.y = {clock.y}
 clock.font = {clock.font}
 
-# Тестовая надпись — рисуется, только когда включён чекбокс в веб-
-# интерфейсе (Настройки), см. cfg["display"]["show_fbs_test_label"].
+# Напоминание "Собрать FBS" — рисуется, только когда включён чекбокс в веб-
+# интерфейсе (раздел "Маркетплейсы"), см. cfg["display"]["show_fbs_reminder"].
 # fbs_label.text — сам текст (любой, кириллица и латиница поддерживаются).
 # fbs_label.font обязательно verdana_* (Orbitron кириллицу не умеет).
 fbs_label.x = {fbs_label.x}
@@ -323,7 +323,7 @@ def update_numbers(fb, data):
             fb, clock_font, clock_text, _cfg_int(cfg, "clock.x"), _cfg_int(cfg, "clock.y"), scale=clock_scale
         )
 
-    # Тестовая надпись — см. cfg["display"]["show_fbs_test_label"].
+    # Напоминание "Собрать FBS" — см. cfg["display"]["show_fbs_reminder"].
     if data.get("show_fbs_label"):
         fbs_text = _cfg_text(cfg, "fbs_label.text")
         if fbs_text:

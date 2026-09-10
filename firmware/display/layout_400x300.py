@@ -67,7 +67,7 @@ DEFAULTS = {
     "ip.x": "200",
     "ip.y": "282",
     "ip.scale": "1",
-    # Тестовая надпись (см. cfg["display"]["show_fbs_test_label"] в
+    # Напоминание "Собрать FBS" (см. cfg["display"]["show_fbs_reminder"] в
     # web_server.py/www) — рисуется, только когда чекбокс в веб-интерфейсе
     # включён. Текст настраивается через fbs_label.text (можно вписать
     # что угодно — Verdana теперь умеет полный алфавит кириллицы и
@@ -122,8 +122,8 @@ ip.x = {ip.x}
 ip.y = {ip.y}
 ip.scale = {ip.scale}
 
-# Тестовая надпись — рисуется, только когда включён чекбокс в веб-
-# интерфейсе (Настройки), см. cfg["display"]["show_fbs_test_label"].
+# Напоминание "Собрать FBS" — рисуется, только когда включён чекбокс в веб-
+# интерфейсе (раздел "Маркетплейсы"), см. cfg["display"]["show_fbs_reminder"].
 # fbs_label.text — сам текст (любой, кириллица и латиница поддерживаются).
 # fbs_label.font обязательно verdana_* (Orbitron кириллицу не умеет).
 fbs_label.x = {fbs_label.x}
@@ -272,7 +272,7 @@ def update_numbers(fb, data):
         ip_y = _LAYOUT.cfg_int(cfg, "ip.y")
         draw_scaled_text_centered(fb, ip, ip_x, ip_y, scale=ip_scale)
 
-    # Тестовая надпись — см. cfg["display"]["show_fbs_test_label"].
+    # Напоминание "Собрать FBS" — см. cfg["display"]["show_fbs_reminder"].
     if data.get("show_fbs_label"):
         fbs_text = _LAYOUT.cfg_text(cfg, "fbs_label.text")
         if fbs_text:

@@ -74,7 +74,7 @@ function renderSettings(state) {
   document.getElementById("set-tz").value = state.timezone_offset_hours;
   document.getElementById("set-beep").checked = !!(state.display && state.display.beep_on_sale);
   document.getElementById("set-yesterday").checked = (state.debug_day_offset || 0) !== 0;
-  document.getElementById("set-fbs-label").checked = !!(state.display && state.display.show_fbs_test_label);
+  document.getElementById("set-fbs-reminder").checked = !!(state.display && state.display.show_fbs_reminder);
 
   // Чекбокс "выключить звук" — инверсия buzzer.enabled (checked = звук
   // ВЫКЛЮЧЕН). Дефолт enabled=true (см. config.py), так что если поля нет
@@ -410,7 +410,6 @@ document.getElementById("settings-form").addEventListener("submit", async (ev) =
       debug_day_offset: fd.get("show_yesterday") === "on" ? -1 : 0,
       display: {
         beep_on_sale: fd.get("beep_on_sale") === "on",
-        show_fbs_test_label: fd.get("show_fbs_test_label") === "on",
       },
     }),
   });
@@ -614,6 +613,23 @@ document.getElementById("set-boot-sound").addEventListener("change", async (ev) 
       body: JSON.stringify({ buzzer: { boot_sound: ev.target.checked } }),
     });
     msg.textContent = "Сохранено — применится со следующей загрузки";
+    msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("set-fbs-reminder").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("fbs-reminder-msg");
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { show_fbs_reminder: ev.target.checked } }),
+    });
+    msg.textContent = "Сохранено";
     msg.classList.remove("error");
   } catch (err) {
     msg.textContent = "Ошибка: " + err.message;
