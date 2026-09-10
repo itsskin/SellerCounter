@@ -7,7 +7,15 @@
 
 - **microdot** — https://github.com/miguelgrinberg/microdot (MIT, v2.6.2,
   ядро без опциональных расширений: только `__init__.py` + `microdot.py`
-  из `src/microdot/`). Используется веб-сервером настройки.
+  из `src/microdot/`). Используется веб-сервером настройки. Доработан:
+  в `Microdot.handle_request()` запись ответа (`res.write(writer)`) и
+  закрытие соединения (`writer.aclose()`) раньше были в одном
+  `try/except OSError` — если запись падала с НЕ-OSError исключением
+  (например, при стриминге большого файла вроде `preview.bmp`), сокет
+  никогда не закрывался и утекал навсегда. Тот же класс бага, что и в
+  `sc_http` ниже, только на стороне входящих HTTP-соединений, а не
+  исходящих запросов. Теперь `aclose()` — в своём отдельном
+  try/except, гарантированно выполняется независимо от исхода записи.
 - **sc_http** (папка `lib/sc_http/`, изначально micropython-lib `requests`,
   бывший `urequests`) —
   https://github.com/micropython/micropython-lib/tree/master/python-ecosys/requests

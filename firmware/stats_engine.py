@@ -124,6 +124,19 @@ class StatsEngine:
         # это ограничение не действует — см. poll_once().
         return int(self.cfg.get("poll_interval_sec", 60))
 
+    def next_poll_in_sec(self):
+        """Сколько секунд осталось до следующего разрешённого опроса (0, если
+        уже можно/пора). Нужно веб-интерфейсу: сразу после перезагрузки
+        per_marketplace пуст (реального опроса ещё не было в этом процессе),
+        и без этого www/app.js показывал "настрой маркетплейсы", хотя на
+        самом деле они настроены и опрос просто ждёт своей очереди из-за
+        персистентного троттлинга (см. _read_last_poll_epoch выше) — вводило
+        в заблуждение."""
+        if self._last_poll_epoch is None:
+            return 0
+        remaining = self._min_poll_gap_sec() - (time.time() - self._last_poll_epoch)
+        return max(0, int(remaining))
+
     async def poll_once(self, force=False):
         """Возвращает True, если реально сходили в API, False — если пропустили
         из-за минимального интервала (см. _min_poll_gap_sec).
@@ -228,6 +241,16 @@ class StatsEngine:
                     }
                     # Успешный запрос — прошлый бан (если был) точно снят.
                     self._retry_not_before_by_shop.pop(client.key, None)
+                    # Не бросил исключение — не значит "всё точно ок": у
+                    # Ozon (см. marketplaces/ozon.py) один из двух каналов
+                    # (FBS/FBO) может молча упасть и подставить кэш, пока
+                    # другой отвечает свежими данными — это НЕ считается
+                    # фатальной ошибкой (см. try/except MarketplaceError
+                    # ниже), но должно быть видно для диагностики, а не
+                    # выглядеть как "всё в порядке, просто мало заказов".
+                    partial_error = stats.get("partial_error")
+                    if partial_error:
+                        shop_errors.append("%s: %s" % (client.key, partial_error))
                 except MarketplaceError as exc:
                     done_ts = _now_hms(self.cfg.get("timezone_offset_hours", 3))
                     print(

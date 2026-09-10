@@ -82,7 +82,7 @@ class OzonClient(MarketplaceClient):
             # тут ещё раз на уровне канала).
             raise MarketplaceError("FBS: %s; FBO: %s" % (fbs_error, fbo_error))
 
-        return {
+        result = {
             "orders": fbs_count + fbo_count,
             "revenue": fbs_revenue + fbo_revenue,
             # Отдельно от общего orders — нужно stats_engine, чтобы играть
@@ -95,6 +95,28 @@ class OzonClient(MarketplaceClient):
             # трактует отсутствие как 0.
             "fbs_orders": fbs_count,
         }
+        if fbs_error is not None or fbo_error is not None:
+            # Ровно ОДИН канал упал (оба сразу — см. raise выше) — это уже
+            # не "всё в порядке", хоть и не повод отбрасывать данные
+            # рабочего канала (см. комментарий у _last_good_fbs/_last_good_fbo
+            # выше). Раньше такой частичный сбой был вообще не виден в
+            # веб-интерфейсе: fetch_daily_stats() просто возвращал числа как
+            # ни в чём не бывало, а stats_engine.poll_once() пишет в
+            # per_marketplace[...]["error"] только когда сюда прилетает
+            # исключение (см. except MarketplaceError). Пользователь видел
+            # "1 заказ" без единого намёка, что часть данных на самом деле
+            # устаревшая (кэш _last_good_fbo, а не свежий ответ Ozon) —
+            # обнаружили это только ручной диагностикой через serial, когда
+            # в личном кабинете Ozon заказов было больше, чем на экране.
+            # Отдаём эту причину отдельным полем — stats_engine добавляет
+            # его в error без отбрасывания уже посчитанных orders/revenue.
+            parts = []
+            if fbs_error is not None:
+                parts.append("FBS: %s" % fbs_error)
+            if fbo_error is not None:
+                parts.append("FBO: %s" % fbo_error)
+            result["partial_error"] = "; ".join(parts)
+        return result
 
     def _fetch_fbs(self, headers):
         # /v3/posting/fbs/list хочет since/to как настоящие UTC-моменты в

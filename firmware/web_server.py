@@ -106,6 +106,7 @@ async def api_state(request):
         data["stats"] = engine.latest
         data["errors"] = engine.last_errors
         data["per_marketplace"] = engine.per_marketplace
+        data["next_poll_in_sec"] = engine.next_poll_in_sec()
     display = _state["display"]
     if display is not None:
         # Реальное разрешение подключённого экрана (не cfg["display"]["screen"]

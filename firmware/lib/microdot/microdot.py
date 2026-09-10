@@ -1408,15 +1408,34 @@ class Microdot:
             print_exception(exc)
 
         res = await self.dispatch_request(req)
+        # ВАЖНО (локальная правка, не апстрим): res.write() и writer.aclose()
+        # раньше были в одном try/except OSError — если write() падал с
+        # НЕ-OSError исключением (например, при стриминге большого файла
+        # вроде preview.bmp — см. web_server.py /api/display/preview.bmp),
+        # aclose() не вызывался вообще, и соединение оставалось открытым
+        # навсегда. HW-подтверждено: именно так утекали сокеты со стороны
+        # входящих HTTP-соединений — у ESP32/lwIP пул сокетов крошечный
+        # (около 6-9 одновременных), и веб-сервер переставал отвечать новым
+        # клиентам уже через несколько минут обычной работы. Тот же класс
+        # бага уже чинили в lib/sc_http (см. VENDORED.md) — там для
+        # исходящих запросов, здесь для входящих. Фикс: aclose() теперь в
+        # своём собственном try/except, гарантированно выполняется
+        # независимо от того, что случилось при записи ответа.
         try:
             if res != Response.already_handled:  # pragma: no branch
                 await res.write(writer)
+        except OSError as exc:  # pragma: no cover
+            if exc.errno not in MUTED_SOCKET_ERRORS:
+                print_exception(exc)
+        except Exception as exc:  # pragma: no cover
+            print_exception(exc)
+        try:
             await writer.aclose()
         except OSError as exc:  # pragma: no cover
-            if exc.errno in MUTED_SOCKET_ERRORS:
-                pass
-            else:
-                raise
+            if exc.errno not in MUTED_SOCKET_ERRORS:
+                print_exception(exc)
+        except Exception as exc:  # pragma: no cover
+            print_exception(exc)
         if self.debug and req:  # pragma: no cover
             print('{method} {path} {status_code}'.format(
                 method=req.method, path=req.path,

@@ -21,6 +21,19 @@ from PIL import Image, ImageDraw, ImageFont
 # какие символы вообще можно вывести любым из шрифтов.
 DEFAULT_CHARSET = "0123456789.-KM"
 
+# Порог "чернила или нет" для антиалиased-пикселя PIL (0=чёрный, 255=белый).
+# 128 (честная середина) резал слишком жёстко на тонких кириллических
+# штрихах ("ш"/"щ" на verdana_28 — 3-4 узких вертикальных линии, почти нет
+# запаса по ширине) — частично закрашенные (антиалиасинговые) пиксели по
+# краям штриха терялись, буквы выходили рублеными/со сросшимися ножками.
+# Сравнивали визуально с Floyd-Steinberg дизерингом на этом же случае —
+# дизеринг оказался ХУЖЕ (на такой высоте глифа штриху не хватает пикселей,
+# чтобы дизеринг мог что-то реально размазать — получался шум/гребёнка по
+# краю, не сглаживание). Просто более мягкий порог (кому-то из
+# частично-закрашенных пикселей тоже засчитывать чернила) визуально лучше
+# без такого побочного эффекта.
+INK_THRESHOLD = 190
+
 
 def render_variant(font_path, size, out_dir, name_prefix, charset, spacing=0):
     name = "%s_%d" % (name_prefix, size)
@@ -44,7 +57,7 @@ def render_variant(font_path, size, out_dir, name_prefix, charset, spacing=0):
         d = ImageDraw.Draw(canvas)
         d.text((0, ascent), ch, font=font, fill=0, anchor="ls")
         px = canvas.load()
-        rows_with_ink = [y for y in range(canvas_h) if any(px[x, y] < 128 for x in range(width))]
+        rows_with_ink = [y for y in range(canvas_h) if any(px[x, y] < INK_THRESHOLD for x in range(width))]
         if rows_with_ink:
             top_min = min(top_min, rows_with_ink[0]) if top_min is not None else rows_with_ink[0]
             bottom_max = max(bottom_max, rows_with_ink[-1]) if bottom_max is not None else rows_with_ink[-1]
@@ -59,7 +72,7 @@ def render_variant(font_path, size, out_dir, name_prefix, charset, spacing=0):
         for y in range(height):
             src_y = top_min + y
             for x in range(width):
-                if px[x, src_y] < 128:
+                if px[x, src_y] < INK_THRESHOLD:
                     idx = y * row_bytes + x // 8
                     bit = 7 - (x % 8)
                     buf[idx] |= 1 << bit

@@ -52,7 +52,22 @@ function renderMarketplaceStats(state) {
   const per = state.per_marketplace || {};
   const ids = Object.keys(per);
   if (!ids.length) {
-    body.innerHTML = '<tr><td colspan="4" class="hint">Пока нет данных — настрой маркетплейсы ниже или нажми "Обновить сейчас".</td></tr>';
+    // Маркетплейсы настроены, просто опрос ещё не случился в этом процессе
+    // (например сразу после перезагрузки — см. next_poll_in_sec в
+    // web_server.py/stats_engine.py, персистентный троттлинг) — раньше тут
+    // всегда писалось "настрой маркетплейсы", даже когда они уже настроены
+    // и опрос просто ждёт своей очереди, что вводило в заблуждение.
+    const configured = (state.marketplaces || []).length > 0;
+    const wait = state.next_poll_in_sec || 0;
+    let msg;
+    if (!configured) {
+      msg = 'Пока нет данных — настрой маркетплейсы ниже или нажми "Обновить сейчас".';
+    } else if (wait > 0) {
+      msg = `Маркетплейсы настроены, опрос по расписанию через ${wait} с — или нажми "Обновить сейчас".`;
+    } else {
+      msg = 'Опрашиваю маркетплейсы... — или нажми "Обновить сейчас".';
+    }
+    body.innerHTML = `<tr><td colspan="4" class="hint">${msg}</td></tr>`;
     return;
   }
   body.innerHTML = ids
