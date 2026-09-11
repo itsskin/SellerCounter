@@ -20,7 +20,22 @@ from utils.http import request_json
 from utils.time_sync import today_utc_bounds_z
 
 FBS_URL = "https://api-seller.ozon.ru/v3/posting/fbs/list"
-FBO_URL = "https://api-seller.ozon.ru/v2/posting/fbo/list"
+# /v2/posting/fbo/list стабильно отдавал HTTP 429 "rate limit per second" на
+# этом аккаунте много часов подряд, включая одиночные запросы с интервалом
+# в несколько минут (не похоже на настоящий троттлинг по частоте) — завели
+# тикет в поддержку Ozon, порекомендовали перейти на /v3/posting/fbo/list.
+# Проверено вручную curl'ом в обход платы (реальный Client-Id/Api-Key,
+# 2026-09-11): v3 отвечает 200 с реальными данными, пока v2 в это же время
+# по-прежнему 429. У v3 другой контракт, оба момента учтены ниже:
+#  - лимit максимум 100 за раз (валидатор v3 прямо ругается на 1000:
+#    "invalid PostingFboListRequest.Limit: value must be inside range
+#    (0, 100]"), у v2 было до 1000.
+#  - тело ответа БЕЗ обёртки "result" — сразу {"has_next", "cursor",
+#    "postings"} в корне, не {"result": [...]} как у v2.
+#  - "products[].price" — не плоское число (как у FBS), а вложенный объект
+#    {"amount": "1050", "currency": "RUB"} — учтено в _sum_postings.
+FBO_URL = "https://api-seller.ozon.ru/v3/posting/fbo/list"
+FBO_LIST_LIMIT = 100
 CANCELLED_STATUS = "cancelled"
 # Статусы FBS-отправления, при которых продавец ЕЩЁ должен его физически
 # собрать — используется только для счётчика напоминания "Собрать FBS"
@@ -34,9 +49,13 @@ CANCELLED_STATUS = "cancelled"
 # входит. ВАЖНО: сверить с актуальной документацией, если Ozon когда-нибудь
 # переименует статусы.
 PENDING_FBS_STATUSES = ("awaiting_packaging",)
-# TODO: если в день будет больше 1000 отправлений по одному из каналов —
-# понадобится пагинация (result.has_next / offset). Для одного продавца
-# с небольшим ассортиментом это маловероятно, оставлено как есть.
+# TODO: если в день будет больше 1000 отправлений по FBS или больше
+# FBO_LIST_LIMIT (100) по FBO — понадобится пагинация. У FBS она через
+# offset (см. _fetch_fbs), у FBO v3 — ЧЕРЕЗ CURSOR (data["has_next"]/
+# data["cursor"]), не offset (offset в теле запроса v3, похоже, просто
+# игнорируется дальше первой страницы — не проверяли на практике, страниц
+# больше одной пока не бывало). Для одного продавца с небольшим
+# ассортиментом такое маловероятно, оставлено как есть.
 
 # Последние успешно полученные данные ПО КАЖДОМУ КАНАЛУ отдельно (FBS/FBO),
 # на магазин (ключ — settings["key"], например "ozon-1" — на случай
@@ -162,23 +181,21 @@ class OzonClient(MarketplaceClient):
         return count, revenue, pending
 
     def _fetch_fbo(self, headers):
-        # /v2/posting/fbo/list на самом деле хочет то же самое, что и FBS —
-        # полноценный google.protobuf.Timestamp (RFC3339 с "Z"), а не просто
-        # дату. Сам Ozon подсказал это в тексте ошибки на дату без времени:
-        # "invalid google.protobuf.Timestamp value" — расходится с тем, что
-        # написано в комментариях сторонней Go-библиотеки, которой я
-        # ориентировался при первой реализации.
+        # since/to — полноценный google.protobuf.Timestamp (RFC3339 с "Z"),
+        # а не просто дата: так хотел ещё v2, и v3 требует то же самое.
         since_iso, to_iso = today_utc_bounds_z(
             self.settings.get("timezone_offset_hours", 3),
             self.settings.get("day_offset", 0),
         )
         body = {
             "filter": {"since": since_iso, "to": to_iso, "status": ""},
-            "limit": 1000,
+            "limit": FBO_LIST_LIMIT,
             "offset": 0,
         }
         data = request_json("POST", FBO_URL, headers=headers, json_body=body)
-        postings = data.get("result", [])
+        # v3 отдаёт "postings" сразу в корне, БЕЗ обёртки "result" (та была
+        # у v2) — см. комментарий у FBO_URL выше.
+        postings = data.get("postings", [])
         return _sum_postings(postings)
 
 
@@ -190,8 +207,15 @@ def _sum_postings(postings):
             continue
         count += 1
         for product in posting.get("products", []):
+            price_field = product.get("price", 0)
+            # FBS (v3) отдаёт price ПЛОСКИМ числом/строкой ("293.0000").
+            # FBO (v3) отдаёт вложенный объект {"amount": "1050",
+            # "currency": "RUB"} — разные контракты у формально одной и той
+            # же версии API, HW-подтверждено сравнением реальных ответов.
+            if isinstance(price_field, dict):
+                price_field = price_field.get("amount", 0)
             try:
-                price = float(product.get("price", 0))
+                price = float(price_field)
             except (TypeError, ValueError):
                 price = 0.0
             revenue += price * int(product.get("quantity", 1))
