@@ -38,7 +38,7 @@
   "marketplaces/wb.py": "c388c62ae1e6f5baed49235f1afc3edb437e31906e18e7009523affe6a15fbda",
   "marketplaces/yandex.py": "49d787c24bfae678cb3bac79b20f37d275d54e1e4d16b99a7dff90976dbb0081",
   "ota.py": "3f413a5c2137cbe9cdc348dfbec884a4d5ee52226ad0a38c6ef04804a6f2f2ae",
-  "stats_engine.py": "aba51a611a503ef2eb5e2b53761dfa85463f8cdc57ad10c64b648df90299922e",
+  "stats_engine.py": "b3d25fcbb6e0317e7a215ad1d61a36c238c5e00bd07be6eec3d7840332c3c400",
   "utils/http.py": "56cb5fc84ccb21b73b638065d37ac90b710daf224fb5466ea7ebb250cf1720c2",
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
   "web_server.py": "17d17aa8d4cac4b81ec419ff46198661dd14cd4456c1ac6a7468663f69c7c9ca",
@@ -47,5 +47,5 @@
   "www/index.html": "5d4adcccfe6927e8e59825290691f6d1a32209e658ec834b1a965d37c077af5c",
   "www/style.css": "3036dccd464be51e3f8fd4d08a68b483a54ec27a2ca83a62ef9e942dcde896f7"
  },
- "version": 11
+ "version": 12
 }

@@ -362,7 +362,16 @@ class StatsEngine:
         total_fbs_orders = sum(entry.get("fbs_orders", 0) for entry in per_marketplace.values())
         self.latest = {"orders": total_orders, "revenue": total_revenue, "fbs_orders": total_fbs_orders}
 
-        current = (total_orders, total_revenue)
+        # total_fbs_orders — ОБЯЗАТЕЛЬНО в этом сравнении, не только orders/
+        # revenue: заказ уже учтён в сумме/количестве в момент оформления,
+        # и когда его потом собирают/отгружают, orders и revenue не
+        # меняются вообще — меняется только то, нужно ли ещё его собирать.
+        # Без fbs_orders тут экран не перерисовывался бы в момент отгрузки
+        # заказа, хотя self.latest уже содержит верные данные — HW-
+        # подтверждено пользователем (отгрузил на Yandex, а "Собрать FBS"
+        # так и осталось на экране, пока не случился следующий редрав по
+        # другой причине).
+        current = (total_orders, total_revenue, total_fbs_orders)
         if current != self._displayed:
             await self._redraw()
             self._displayed = current
