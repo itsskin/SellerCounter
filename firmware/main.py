@@ -4,9 +4,11 @@ except ImportError:
     import asyncio
 
 import machine
+import time
 
 import breadcrumb
 import config as config_module
+import ota
 import wifi_manager
 from buzzer import Buzzer
 from display import layout
@@ -15,12 +17,25 @@ from web_server import run_server
 
 # Печатаем СРАЗУ при импорте, до всего остального — если прошлая загрузка
 # закончилась зависанием + сбросом по watchdog (см. WDT ниже), это первое,
-# что должно попасть в лог, до того как что-либо новое перезапишет
-# last_activity.txt. None — самая первая загрузка вообще (файла ещё нет)
-# или чистое штатное выключение/сброс не через зависание.
-_last_activity_before_boot = breadcrumb.read_last()
-if _last_activity_before_boot:
-    print("main: последняя активность до этой загрузки: %s" % _last_activity_before_boot)
+# что должно попасть в лог, до того как что-либо новое допишет своих
+# отметок в last_activity.txt (см. breadcrumb.py — история, не одна
+# строка, поэтому дописывание новых меток её не портит, но лучше всё равно
+# смотреть именно тут, в самом первом выводе после загрузки). Пустой
+# список — самая первая загрузка вообще (файла ещё нет) или чистое штатное
+# выключение/сброс не через зависание.
+_history_before_boot = breadcrumb.read_history()
+if _history_before_boot:
+    print("main: активность до этой загрузки (от старой к новой):")
+    for _line in _history_before_boot:
+        print("  " + _line)
+
+# Отдельный постоянный счётчик именно watchdog-сбросов (см. breadcrumb.py —
+# read_history() хранит только ~15 минут вглубь, этого счётчика хватает на
+# сколь угодно долгий промежуток без подключения к компьютеру, например
+# тест на отдельном источнике питания).
+if machine.reset_cause() == machine.WDT_RESET:
+    _wdt_count = breadcrumb.mark_wdt_reset()
+    print("main: это перезагрузка по watchdog, счётчик сбросов = %d" % _wdt_count)
 
 
 def _get_display(cfg):
@@ -59,6 +74,9 @@ def _get_display(cfg):
 #    заметно короче прежних 10 минут.
 WDT_TIMEOUT_MS = 3 * 60_000
 WDT_FEED_INTERVAL_MS = 5_000
+# Как часто писать отдельную (более частую, чем обычные breadcrumb) метку
+# именно кормёжки watchdog — см. комментарий в _feed_watchdog ниже.
+WDT_MARK_INTERVAL_MS = 30_000
 
 
 async def _feed_watchdog(wdt):
@@ -70,10 +88,62 @@ async def _feed_watchdog(wdt):
     плата перезагрузится сама — без необходимости физически переткнуть
     кабель (см. запрос пользователя "почему надо постоянно передёргивать").
     watchdog не отключаем даже если что-то из остального не запустилось —
-    так безопаснее, чем тихо повиснуть навсегда."""
+    так безопаснее, чем тихо повиснуть навсегда.
+
+    Отдельно пишем метку именно кормёжки (не обычные breadcrumb.mark() у
+    опроса/экрана — те редкие и ничего не говорят о том, продолжался ли
+    именно ЭТОТ цикл кормёжки вплоть до сброса). Раз в WDT_MARK_INTERVAL_MS
+    (30с — компромисс между точностью и износом флеша), а не на каждое
+    кормление (5с) — этого достаточно, чтобы после сброса увидеть, за
+    сколько секунд ДО него реально прекратилось кормление: если вплотную к
+    моменту сброса — значит завис именно наш событийный цикл; если разрыв
+    заметно больше WDT_MARK_INTERVAL_MS — значит наш цикл кормил исправно,
+    а сбросило что-то ДРУГОЕ (например собственный Task Watchdog ESP-IDF
+    из-за зависания системной задачи вроде драйвера Wi-Fi — у него тот же
+    reset_cause(), что и у machine.WDT, различить иначе нельзя)."""
+    last_mark = time.ticks_ms()
     while True:
         wdt.feed()
+        now = time.ticks_ms()
+        if time.ticks_diff(now, last_mark) >= WDT_MARK_INTERVAL_MS:
+            breadcrumb.mark("wdt fed")
+            last_mark = now
         await asyncio.sleep_ms(WDT_FEED_INTERVAL_MS)
+
+
+AUTO_UPDATE_INTERVAL_SEC = 24 * 60 * 60
+
+
+async def _auto_update(cfg):
+    """Раз в сутки САМА проверяет и, если есть новая версия, применяет
+    OTA-обновление — без участия человека (ручные кнопки в веб-интерфейсе,
+    см. web_server.py /api/ota/check и /apply, остаются как есть, это
+    отдельный, автоматический путь). Интервал считаем от МОМЕНТА ЗАГРУЗКИ
+    этой конкретной корутины (обычный sleep, не привязка к часам) — так
+    что если плата перезагружается часто (например из-за нестабильности,
+    см. историю проекта), 24-часовой отсчёт просто начинается заново
+    каждый раз, а не бьёт по серверам обновлений на каждой перезагрузке.
+    Сбой проверки/применения (нет сети, GitHub/jsDelivr недоступны и т.п.)
+    не считается фатальным — просто ждём следующего раза через сутки."""
+    while True:
+        await asyncio.sleep(AUTO_UPDATE_INTERVAL_SEC)
+        try:
+            breadcrumb.mark("auto-update: checking")
+            result = await ota.check()
+        except ota.OtaError as exc:
+            breadcrumb.mark("auto-update: check failed - %s" % exc)
+            continue
+        if not result["update_available"]:
+            breadcrumb.mark("auto-update: up to date (v%d)" % result["current_version"])
+            continue
+        breadcrumb.mark("auto-update: applying v%d" % result["available_version"])
+        try:
+            await ota.apply(result["manifest"], result["source"])
+        except Exception as exc:
+            breadcrumb.mark("auto-update: apply failed - %s" % exc)
+            continue
+        breadcrumb.mark("auto-update: applied v%d, rebooting" % result["available_version"])
+        machine.reset()
 
 
 async def _safe_render(display, data):
@@ -107,10 +177,19 @@ def _run_provisioning(cfg, display, buzzer, wdt):
 
 
 async def _run_normal(cfg, engine, display, buzzer, wdt):
+    # Диагностика (см. историю проекта): временно выключали веб-сервер из
+    # этого gather(), чтобы проверить, зависает ли основной цикл (опрос+
+    # экран+watchdog) сам по себе, без веба. Пассивное наблюдение поймало
+    # watchdog-сброс ДАЖЕ с выключенным веб-сервером — последняя метка
+    # breadcrumb перед крахом была "idle (after redraw)" (полный простой,
+    # ни сети, ни экрана) — то есть веб-сервер тут ни при чём, дело в чём-то
+    # более базовом (планировщик asyncio / Wi-Fi-радио в простое / что-то
+    # на уровне ESP-IDF). Веб возвращён обратно.
     await asyncio.gather(
         run_server(cfg, mode="normal", engine=engine, display=display, buzzer=buzzer),
         engine.run(),
         _feed_watchdog(wdt),
+        _auto_update(cfg),
     )
 
 

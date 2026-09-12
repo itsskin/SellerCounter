@@ -750,5 +750,5 @@ document.getElementById("ota-apply").addEventListener("click", async (ev) => {
 loadState(true);
 loadNotifications();
 refreshPreview();
-setInterval(() => loadState(false), 5000);
+setInterval(() => loadState(false), 30000);
 setInterval(refreshPreview, 30000);

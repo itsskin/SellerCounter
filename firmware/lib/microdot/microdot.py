@@ -287,6 +287,27 @@ class AsyncBytesIO:
 
 class Request:
     """An HTTP request."""
+    # ВАЖНО (локальная правка, не апстрим): у чтения строки запроса/
+    # заголовков (_safe_readline) и тела (readexactly ниже) не было вообще
+    # никакого таймаута — реальный код MicroPython (extmod/asyncio/
+    # stream.py, Stream.readline/readexactly) просто ждёт данные от
+    # клиента бесконечно. Если клиент подключится и не пришлёт полную
+    # строку (оборванное соединение, мобильный браузер, спекулятивный
+    # preconnect, клиент, у которого истёк СВОЙ таймаут и он тихо ушёл, не
+    # закрыв TCP чисто) — задача-обработчик этого соединения виснет
+    # НАВСЕГДА и держит сокет до перезагрузки платы. Хуже того: сам
+    # accept-луп MicroPython (Server._serve в том же stream.py) ловит
+    # ошибку accept() голым except и просто молча continue — то есть когда
+    # из-за таких висящих задач исчерпывается крошечный пул сокетов ESP32
+    # (~6-9), веб-сервер перестаёт принимать вообще всех новых клиентов
+    # БЕЗ единой строчки в логе. HW-подтверждено: именно так плата
+    # переставала отвечать намертво (иногда с watchdog-перезапуском через
+    # 3 минуты, иногда без — смотря успевал ли ещё что-то повиснуть), и
+    # ни разу не нашлось трейсбека — потому что exception тут просто не
+    # бросается, всё тихо зависает на await.
+    READ_TIMEOUT_SEC = 10
+    BODY_READ_TIMEOUT_SEC = 30
+
     #: Specify the maximum payload size that is accepted. Requests with larger
     #: payloads will be rejected with a 413 status code. Applications can
     #: change this maximum as necessary.
@@ -423,7 +444,10 @@ class Request:
         # body
         body = b''
         if content_length and content_length <= Request.max_body_length:
-            body = await client_reader.readexactly(content_length)
+            body = await asyncio.wait_for(
+                client_reader.readexactly(content_length),
+                Request.BODY_READ_TIMEOUT_SEC,
+            )
             stream = None
         else:
             body = b''
@@ -531,7 +555,9 @@ class Request:
 
     @staticmethod
     async def _safe_readline(stream):
-        line = (await stream.readline())
+        # asyncio.wait_for — см. Request.READ_TIMEOUT_SEC выше: голый
+        # await stream.readline() ждёт данные от клиента бесконечно.
+        line = await asyncio.wait_for(stream.readline(), Request.READ_TIMEOUT_SEC)
         if len(line) > Request.max_readline:
             raise ValueError('line too long')
         return line
@@ -1395,48 +1421,50 @@ class Microdot:
         return {'Allow': ', '.join(allow)}
 
     async def handle_request(self, reader, writer):
+        # ВАЖНО (локальная правка, не апстрим): весь метод теперь в
+        # try/finally с writer.aclose() гарантированно в finally — раньше
+        # каждый шаг (Request.create, res.write) закрывал соединение
+        # только на СВОЁМ собственном пути успеха/ожидаемой ошибки; любое
+        # исключение за пределами этих веток (например, немой OSError из
+        # Request.create с errno не из MUTED_SOCKET_ERRORS — раньше он
+        # явно re-raise'ился и вылетал из handle_request ДО closе) просто
+        # пропускало закрытие сокета, и соединение утекало навсегда. У
+        # ESP32/lwIP пул сокетов крошечный (около 6-9 одновременных), и
+        # именно так веб-сервер переставал отвечать новым клиентам без
+        # единой ошибки в логе. Тот же класс бага уже чинили в lib/sc_http
+        # (см. VENDORED.md) — там для исходящих запросов, здесь для
+        # входящих. try/finally — самый надёжный способ гарантировать
+        # закрытие вне зависимости от ТИПА и МЕСТА исключения.
         req = None
+        res = None
         try:
-            req = await Request.create(self, reader, writer,
-                                       writer.get_extra_info('peername'))
-        except OSError as exc:  # pragma: no cover
-            if exc.errno in MUTED_SOCKET_ERRORS:
-                pass
-            else:
-                raise
-        except Exception as exc:  # pragma: no cover
-            print_exception(exc)
+            try:
+                req = await Request.create(self, reader, writer,
+                                           writer.get_extra_info('peername'))
+            except OSError as exc:  # pragma: no cover
+                if exc.errno not in MUTED_SOCKET_ERRORS:
+                    print_exception(exc)
+            except Exception as exc:  # pragma: no cover
+                print_exception(exc)
 
-        res = await self.dispatch_request(req)
-        # ВАЖНО (локальная правка, не апстрим): res.write() и writer.aclose()
-        # раньше были в одном try/except OSError — если write() падал с
-        # НЕ-OSError исключением (например, при стриминге большого файла
-        # вроде preview.bmp — см. web_server.py /api/display/preview.bmp),
-        # aclose() не вызывался вообще, и соединение оставалось открытым
-        # навсегда. HW-подтверждено: именно так утекали сокеты со стороны
-        # входящих HTTP-соединений — у ESP32/lwIP пул сокетов крошечный
-        # (около 6-9 одновременных), и веб-сервер переставал отвечать новым
-        # клиентам уже через несколько минут обычной работы. Тот же класс
-        # бага уже чинили в lib/sc_http (см. VENDORED.md) — там для
-        # исходящих запросов, здесь для входящих. Фикс: aclose() теперь в
-        # своём собственном try/except, гарантированно выполняется
-        # независимо от того, что случилось при записи ответа.
-        try:
-            if res != Response.already_handled:  # pragma: no branch
-                await res.write(writer)
-        except OSError as exc:  # pragma: no cover
-            if exc.errno not in MUTED_SOCKET_ERRORS:
+            res = await self.dispatch_request(req)
+            try:
+                if res != Response.already_handled:  # pragma: no branch
+                    await res.write(writer)
+            except OSError as exc:  # pragma: no cover
+                if exc.errno not in MUTED_SOCKET_ERRORS:
+                    print_exception(exc)
+            except Exception as exc:  # pragma: no cover
                 print_exception(exc)
-        except Exception as exc:  # pragma: no cover
-            print_exception(exc)
-        try:
-            await writer.aclose()
-        except OSError as exc:  # pragma: no cover
-            if exc.errno not in MUTED_SOCKET_ERRORS:
+        finally:
+            try:
+                await writer.aclose()
+            except OSError as exc:  # pragma: no cover
+                if exc.errno not in MUTED_SOCKET_ERRORS:
+                    print_exception(exc)
+            except Exception as exc:  # pragma: no cover
                 print_exception(exc)
-        except Exception as exc:  # pragma: no cover
-            print_exception(exc)
-        if self.debug and req:  # pragma: no cover
+        if self.debug and req and res:  # pragma: no cover
             print('{method} {path} {status_code}'.format(
                 method=req.method, path=req.path,
                 status_code=res.status_code))

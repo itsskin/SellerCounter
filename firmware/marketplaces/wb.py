@@ -20,11 +20,32 @@
 # агрегируем на плате: берём dateFrom = начало сегодняшнего дня и фильтруем
 # локально по полю date (дата оформления заказа) + isCancel.
 
-from marketplaces.base import MarketplaceClient
+from marketplaces.base import MarketplaceClient, MarketplaceError
 from utils.http import request_json
 from utils.time_sync import today_local_bounds
 
 API_URL = "https://statistics-api.wildberries.ru/api/v1/supplier/orders"
+
+# ДРУГОЙ домен и, судя по документации, отдельная категория API-ключа
+# ("Marketplace", не "Statistics", которым пользуется API_URL выше) —
+# https://dev.wildberries.ru/en/docs/openapi/orders-fbs. Проверено вручную
+# на реальном аккаунте (2026-09-12): существующий ключ доступ имеет, но это
+# не гарантировано для всех продавцов — если у сохранённого ключа нет прав
+# именно на Marketplace-категорию, этот запрос будет падать отдельно от
+# основного /supplier/orders. Обрабатываем как частичный сбой (см. ozon.py
+# partial_error) — не роняем весь опрос ради одного счётчика напоминания.
+#
+# Отдаёт УЖЕ отфильтрованный сервером список — заказы со supplierStatus
+# "new" (см. документацию: "new" = ожидает сборки, "confirm" = взят в
+# сборку/поставку, "complete" = в доставке, "cancel" = отменён продавцом).
+# Специально не завязан на календарный день — заказ, оформленный вчера
+# поздно вечером и до сих пор не собранный, должен продолжать считаться
+# "несобранным" и сегодня, а не пропадать из счётчика в полночь. HW-
+# подтверждено пользователем на Yandex (см. yandex.py) — тот же принцип
+# относится и к WB.
+NEW_ORDERS_URL = "https://marketplace-api.wildberries.ru/api/v3/orders/new"
+
+_last_good_pending = {}
 
 
 class WBClient(MarketplaceClient):
@@ -51,4 +72,17 @@ class WBClient(MarketplaceClient):
                 continue
             count += 1
             revenue += float(order.get("priceWithDisc", 0))
-        return {"orders": count, "revenue": revenue}
+
+        result = {"orders": count, "revenue": revenue}
+        try:
+            pending = self._fetch_pending_count(headers)
+            _last_good_pending[self.key] = pending
+        except MarketplaceError as exc:
+            pending = _last_good_pending.get(self.key, 0)
+            result["partial_error"] = "несобранные заказы: %s" % exc
+        result["fbs_orders"] = pending
+        return result
+
+    def _fetch_pending_count(self, headers):
+        data = request_json("GET", NEW_ORDERS_URL, headers=headers)
+        return len(data.get("orders", []))

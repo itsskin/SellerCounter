@@ -48,7 +48,7 @@ CANCELLED_STATUS = "cancelled"
 # отправлению уже физически нечего делать, поэтому дальше в список не
 # входит. ВАЖНО: сверить с актуальной документацией, если Ozon когда-нибудь
 # переименует статусы.
-PENDING_FBS_STATUSES = ("awaiting_packaging",)
+PENDING_FBS_STATUS = "awaiting_packaging"
 # TODO: если в день будет больше 1000 отправлений по FBS или больше
 # FBO_LIST_LIMIT (100) по FBO — понадобится пагинация. У FBS она через
 # offset (см. _fetch_fbs), у FBO v3 — ЧЕРЕЗ CURSOR (data["has_next"]/
@@ -177,8 +177,42 @@ class OzonClient(MarketplaceClient):
         data = request_json("POST", FBS_URL, headers=headers, json_body=body)
         postings = data.get("result", {}).get("postings", [])
         count, revenue = _sum_postings(postings)
-        pending = sum(1 for p in postings if p.get("status") in PENDING_FBS_STATUSES)
+        pending = self._fetch_pending_fbs_count(headers)
         return count, revenue, pending
+
+    def _fetch_pending_fbs_count(self, headers, lookback_days=7):
+        # ОТДЕЛЬНЫЙ запрос за более широкое окно (по умолчанию 7 дней) —
+        # именно для счётчика "ещё не собран", НЕ для orders/revenue (те
+        # остаются строго за сегодня, см. _fetch_fbs выше). Если ограничить
+        # проверку "несобранности" только сегодняшними отправлениями, заказ,
+        # оформленный вчера поздно вечером и до сих пор не собранный,
+        # перестаёт учитываться ровно в полночь — просто выпадает из
+        # диапазона запроса, хотя физически его всё ещё нужно собрать.
+        # HW-подтверждено пользователем: заказ на Yandex в 23:56 корректно
+        # засветил напоминание, а в 00:00 (новые сутки) оно погасло само,
+        # хотя заказ так и остался несобранным — тот же принцип относится и
+        # к Ozon. Фильтр по статусу передаём самому Ozon ("status":
+        # "awaiting_packaging" вместо "") — сервер сам отдаёт уже
+        # отфильтрованное, не нужно тащить все отправления за неделю ради
+        # подсчёта.
+        since_iso, _ = today_utc_bounds_z(
+            self.settings.get("timezone_offset_hours", 3),
+            self.settings.get("day_offset", 0) - lookback_days,
+        )
+        _, to_iso = today_utc_bounds_z(
+            self.settings.get("timezone_offset_hours", 3),
+            self.settings.get("day_offset", 0),
+        )
+        body = {
+            "dir": "ASC",
+            "filter": {"since": since_iso, "to": to_iso, "status": PENDING_FBS_STATUS},
+            "limit": 1000,
+            "offset": 0,
+            "with": {"financial_data": False},
+        }
+        data = request_json("POST", FBS_URL, headers=headers, json_body=body)
+        postings = data.get("result", {}).get("postings", [])
+        return len(postings)
 
     def _fetch_fbo(self, headers):
         # since/to — полноценный google.protobuf.Timestamp (RFC3339 с "Z"),

@@ -1,4 +1,77 @@
 import socket
+import time
+
+try:
+    import _thread
+except ImportError:  # pragma: no cover — на симуляторе/хосте может не быть
+    _thread = None
+
+# Кэш DNS-резолвинга — {(host, port): addrinfo}. Без него каждый ОДИНОЧНЫЙ
+# HTTP-запрос (то есть каждый опрос каждого маркетплейса, раз в
+# poll_interval_sec) заново дёргал socket.getaddrinfo(), а это ЕДИНСТВЕННЫЙ
+# сетевой вызов во всём модуле, для которого нет вообще никакой защиты от
+# таймаута (в отличие от connect/TLS-handshake/чтения ответа — там везде
+# settimeout честно выставлен, см. request() ниже). Если DNS у хоста
+# зависнет (плохие условия сети, кривой ответ, что угодно на уровне
+# lwIP-резолвера) — блокируется ВЕСЬ однопоточный event loop НАВСЕГДА, а с
+# ним веб-сервер и даже подкормка watchdog, потому что вообще всё в проекте
+# крутится в одном потоке/loop. Кэш резолвит каждый хост максимум один раз
+# за время работы платы вместо одного раза на КАЖДЫЙ опрос — резко снижает,
+# как часто вообще можно попасть в этот риск.
+_dns_cache = {}
+
+
+def _resolve(host, port, timeout_sec):
+    """getaddrinfo с жёстким верхним пределом по времени — в отличие от
+    голого socket.getaddrinfo(), который ничем не ограничен и может
+    заблокировать поток навсегда (см. комментарий у _dns_cache выше).
+
+    ESP32-S3 двухъядерный — реальный резолвинг гоняем в отдельном потоке
+    (_thread, второе ядро), а тут просто ждём результат с явным дедлайном.
+    Если резолвинг не уложился — поток может продолжать висеть в фоне сам
+    по себе (не страшно, второе ядро не блокирует основной луп), а мы
+    честно бросаем исключение и идём дальше, вместо того чтобы зависнуть
+    вместе с ним.
+    """
+    cache_key = (host, port)
+    cached = _dns_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    if _thread is None:
+        # Нет потоков (например симулятор на хосте) — работаем как раньше,
+        # без защиты от таймаута, лучше так, чем совсем не резолвить.
+        ai = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)[0]
+        _dns_cache[cache_key] = ai
+        return ai
+
+    result = [None]
+    error = [None]
+    done = [False]
+
+    def _worker():
+        try:
+            result[0] = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)[0]
+        except Exception as exc:
+            error[0] = exc
+        finally:
+            done[0] = True
+
+    _thread.start_new_thread(_worker, ())
+
+    deadline = time.ticks_add(time.ticks_ms(), int(timeout_sec * 1000))
+    while not done[0]:
+        if time.ticks_diff(deadline, time.ticks_ms()) <= 0:
+            raise OSError(
+                "DNS resolution of %s timed out after %.1fs" % (host, timeout_sec)
+            )
+        time.sleep_ms(20)
+
+    if error[0] is not None:
+        raise error[0]
+
+    _dns_cache[cache_key] = result[0]
+    return result[0]
 
 
 class _LineBufferedSocket:
@@ -211,8 +284,7 @@ def request(
         host, port = host.split(":", 1)
         port = int(port)
 
-    ai = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
-    ai = ai[0]
+    ai = _resolve(host, port, timeout if timeout is not None else 15)
 
     resp_d = None
     if parse_headers is not False:
@@ -226,7 +298,15 @@ def request(
         s.settimeout(timeout)
 
     try:
-        s.connect(ai[-1])
+        try:
+            s.connect(ai[-1])
+        except OSError:
+            # Закэшированный IP мог протухнуть (сервер сменил адрес, старый
+            # backend за DNS-балансировщиком выключили и т.п.) — выкидываем
+            # его из кэша, чтобы СЛЕДУЮЩАЯ попытка резолвила заново, а не
+            # долбилась в тот же самый мёртвый адрес до конца работы платы.
+            _dns_cache.pop((host, port), None)
+            raise
         if proto == "https:":
             context = tls.SSLContext(tls.PROTOCOL_TLS_CLIENT)
             context.verify_mode = tls.CERT_NONE

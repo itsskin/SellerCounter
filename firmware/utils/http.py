@@ -4,6 +4,11 @@
 # именем никогда бы не перекрыл его, поэтому назвали иначе. См. lib/VENDORED.md.
 import time
 
+try:
+    import _thread
+except ImportError:  # pragma: no cover — на симуляторе/хосте может не быть
+    _thread = None
+
 import sc_http as requests
 
 from marketplaces.base import MarketplaceError
@@ -89,33 +94,13 @@ def _retry_after_from_headers(headers):
     return None
 
 
-def request_json(method, url, headers=None, json_body=None, timeout=15):
-    """Тонкая обёртка над requests с разбором JSON и понятными ошибками.
-
-    timeout реально прокидывается в сокет (requests.request -> s.settimeout).
-    Без этого зависший на другом конце сервер мог заблокировать чтение
-    сокета навсегда — а поскольку всё крутится в одном потоке/event loop,
-    это заморозило бы всю плату целиком (веб-сервер, точку доступа — всё).
-
-    Единый таймаут для всех маркетплейсов — "зависания" именно на Yandex
-    Market были багом в readline() (см. lib/sc_http, _LineBufferedSocket),
-    а не реальной медлительностью их сервера, так что отдельный запас для
-    него больше не нужен.
-    """
+def _do_request(method, url, headers, json_body, timeout):
     response = None
     try:
-        req_headers = dict(headers or {})
-        if "User-Agent" not in req_headers:
-            # Некоторые WAF/прокси относятся к запросам без User-Agent как к
-            # подозрительным и гоняют их через более медленный пайплайн —
-            # curl его шлёт автоматически, наш минимальный клиент не слал
-            # вообще ничего. Дешёвая проверка на случай, если именно в этом
-            # разница в скорости ответа у Yandex.
-            req_headers["User-Agent"] = "SellerCounter-ESP32/1.0"
         response = requests.request(
             method,
             url,
-            headers=req_headers,
+            headers=headers,
             json=json_body,
             timeout=timeout,
         )
@@ -126,10 +111,92 @@ def request_json(method, url, headers=None, json_body=None, timeout=15):
                 retry_after_sec=retry_after,
             )
         return response.json()
-    except MarketplaceError:
-        raise
-    except Exception as exc:
-        raise MarketplaceError("request to %s failed: %s" % (url, exc))
     finally:
         if response is not None:
             response.close()
+
+
+def request_json(method, url, headers=None, json_body=None, timeout=15):
+    """Тонкая обёртка над requests с разбором JSON, понятными ошибками и
+    ЖЁСТКИМ верхним пределом по времени на весь запрос целиком.
+
+    timeout передаётся в requests.request -> s.settimeout, но одной этой
+    защиты оказалось недостаточно: сам sc_http честно предупреждает (см.
+    комментарий у wrap_socket в lib/sc_http/__init__.py), что settimeout,
+    поставленный на raw-сокет ДО обёртки в TLS, "не всегда переживает
+    обёртку... на некоторых портах MicroPython" — то есть даже повторная
+    установка после wrap_socket не 100% гарантия на каждом этапе (DNS,
+    connect, TLS handshake, чтение заголовков, чтение тела). Если
+    settimeout молча не сработает хоть на одном из них — чтение
+    зависнет НАВСЕГДА, а поскольку весь проект (веб-сервер, watchdog-
+    подкормка, опрос — всё) крутится в одном потоке/event loop, это
+    замораживает плату целиком без единого исключения в консоли (HW-
+    подтверждено: watchdog срабатывал сам по себе после нескольких минут
+    полной тишины, хотя память и сокеты были в порядке — то есть не крах,
+    а именно тихое зависание).
+
+    Поэтому реальный HTTP-запрос выполняется в отдельном потоке (_thread,
+    второе ядро ESP32-S3), а тут — просто ожидание результата с жёстким
+    дедлайном (hard_limit_sec, заметно больше timeout — с запасом на
+    случай, если settimeout всё-таки отработал на КАЖДОМ этапе по
+    отдельности, а не как единый бюджет на весь обмен). Если дедлайн
+    настал, а поток так и не завершился — честно бросаем ошибку и
+    отдаём управление обратно (остальные задачи /marketplace'ы/веб-сервер
+    продолжают жить), а не виснем вместе с ним. Сам поток при этом может
+    остаться висеть в фоне навсегда — это не идеально (второе ядро он не
+    блокирует), но несравнимо лучше, чем заморозка всей платы.
+
+    Единый таймаут для всех маркетплейсов — "зависания" именно на Yandex
+    Market были багом в readline() (см. lib/sc_http, _LineBufferedSocket),
+    а не реальной медлительностью их сервера, так что отдельный запас для
+    него больше не нужен.
+    """
+    req_headers = dict(headers or {})
+    if "User-Agent" not in req_headers:
+        # Некоторые WAF/прокси относятся к запросам без User-Agent как к
+        # подозрительным и гоняют их через более медленный пайплайн — curl
+        # его шлёт автоматически, наш минимальный клиент не слал вообще
+        # ничего. Дешёвая проверка на случай, если именно в этом разница
+        # в скорости ответа у Yandex.
+        req_headers["User-Agent"] = "SellerCounter-ESP32/1.0"
+
+    if _thread is None:
+        # Нет потоков (симулятор на хосте) — работаем как раньше, без
+        # защиты от зависания settimeout.
+        try:
+            return _do_request(method, url, req_headers, json_body, timeout)
+        except MarketplaceError:
+            raise
+        except Exception as exc:
+            raise MarketplaceError("request to %s failed: %s" % (url, exc))
+
+    result = [None]
+    error = [None]
+    done = [False]
+
+    def _worker():
+        try:
+            result[0] = _do_request(method, url, req_headers, json_body, timeout)
+        except Exception as exc:
+            error[0] = exc
+        finally:
+            done[0] = True
+
+    _thread.start_new_thread(_worker, ())
+
+    hard_limit_sec = max(timeout * 4, 30)
+    deadline = time.ticks_add(time.ticks_ms(), int(hard_limit_sec * 1000))
+    while not done[0]:
+        if time.ticks_diff(deadline, time.ticks_ms()) <= 0:
+            raise MarketplaceError(
+                "request to %s exceeded hard limit of %ds (settimeout may not "
+                "have fired on one of the network steps)" % (url, hard_limit_sec)
+            )
+        time.sleep_ms(20)
+
+    if error[0] is not None:
+        exc = error[0]
+        if isinstance(exc, MarketplaceError):
+            raise exc
+        raise MarketplaceError("request to %s failed: %s" % (url, exc))
+    return result[0]
