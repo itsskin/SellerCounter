@@ -97,6 +97,7 @@ function renderSettings(state) {
   document.getElementById("set-buzzer-disabled").checked = !!(state.buzzer && state.buzzer.enabled === false);
   // Не инверсия — checked значит "звук при загрузке ВКЛЮЧЁН" (дефолт true).
   document.getElementById("set-boot-sound").checked = !(state.buzzer && state.buzzer.boot_sound === false);
+  document.getElementById("set-watchdog-sound").checked = !(state.buzzer && state.buzzer.watchdog_sound === false);
 
   const volume = (state.buzzer && state.buzzer.volume) || 100;
   document.getElementById("set-volume").value = volume;
@@ -628,6 +629,24 @@ document.getElementById("set-boot-sound").addEventListener("change", async (ev) 
       body: JSON.stringify({ buzzer: { boot_sound: ev.target.checked } }),
     });
     msg.textContent = "Сохранено — применится со следующей загрузки";
+    msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("set-watchdog-sound").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("notifications-msg");
+  try {
+    // Не инверсия — checked=true значит watchdog_sound=true.
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ buzzer: { watchdog_sound: ev.target.checked } }),
+    });
+    msg.textContent = "Сохранено — применится со следующего watchdog-сброса";
     msg.classList.remove("error");
   } catch (err) {
     msg.textContent = "Ошибка: " + err.message;

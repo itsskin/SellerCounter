@@ -3,7 +3,7 @@
   "boot.py": "c125b2cd03296b74ae2f5eabffe2f33274c3b0aa1fc4f313bdf4839d5eac53d6",
   "breadcrumb.py": "9f0f73d1fd0dfebf62a4dc14ae5fbb11c33d831aebb278b8dc9a9a271d084f41",
   "buzzer.py": "be0979aef2661dfa62d0b0683007ae71428819bff6d7c03cd2d1d8ecf42adb54",
-  "config.py": "4457456a013b0fd2a3bf55fef1ad786f71591b696e8c9e462a4400f881540a78",
+  "config.py": "1c481c11f6ea83f078a9cbf68c1247263ec1bacbd2fb35bf2c9edf1f9d804aca",
   "display/base.py": "d8d9f68ccb2b1f6dc42e5621852ba0927593329a87700aed9bd908ff540c5848",
   "display/custom_font.py": "f8a1fe225255d4a0c57dcfb44f05fc680f852177a5f4e42967ff41d6c130a3a7",
   "display/epd1in54.py": "7e16bb3020cfe9d7497ef4acb94e28916888fceef9faac6a9be0fa05654acda0",
@@ -31,7 +31,7 @@
   "lib/sc_http/__init__.py": "526dd7dadb16afbab43fad92aec71d4e18be0b66afb2e03b2edac6106627a742",
   "lib/umidiparser/__init__.py": "9cd841108db4f550d552afb0424661a0246817ad88fda82ed35903ac9f5e71a9",
   "lib/umidiparser/umidiparser.py": "82ac1b5ac975eb4ed82500d29b1b03c644855575bd3bfb1373a17139ec4d4dea",
-  "main.py": "91802f7f01882dee29e23257142090bec222b6d457141c6f074dec44b5c99a2a",
+  "main.py": "8bc7398374656330f87ef5b594fc5823020829cbfdd66b7ee32db1bd39374488",
   "marketplaces/base.py": "653fc5b1a7996b6593ac5a9354dbc42b2e330499bae3749ccd5b67ec5448c71d",
   "marketplaces/ozon.py": "63416857afc9dc585b269764f463badc94d6207ab210eb2405ca8a83cd79f49c",
   "marketplaces/registry.py": "4100084c0f5434752710d7e4701d60848e1efe4dac664440d3fd12408ef9f4f7",
@@ -43,9 +43,9 @@
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
   "web_server.py": "17d17aa8d4cac4b81ec419ff46198661dd14cd4456c1ac6a7468663f69c7c9ca",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
-  "www/app.js": "f9fa3a3ab31f1c9086baf348a6e435c4f10b51d195909f313ce58883d025537e",
-  "www/index.html": "5d4adcccfe6927e8e59825290691f6d1a32209e658ec834b1a965d37c077af5c",
+  "www/app.js": "7d9abb6405af11296318d260d2b818c9b3ec581f5b2bbddee818a22c596fb602",
+  "www/index.html": "3b712de1162f61b698313c761907d67929e1bb54b69c91db0df89c35987ba8c1",
   "www/style.css": "3036dccd464be51e3f8fd4d08a68b483a54ec27a2ca83a62ef9e942dcde896f7"
  },
- "version": 12
+ "version": 13
 }
