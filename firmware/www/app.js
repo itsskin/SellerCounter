@@ -112,6 +112,9 @@ function renderSettings(state) {
   document.getElementById("set-display-driver").value =
     (state.display && state.display.driver) || "epd1in54";
 
+  document.getElementById("set-layout-override").value =
+    (state.display && state.display.layout_override) || "";
+
   document.getElementById("ota-current-version").textContent = state.ota_version ?? "?";
 }
 
@@ -672,6 +675,73 @@ document.getElementById("set-fbs-reminder").addEventListener("change", async (ev
   setTimeout(() => (msg.textContent = ""), 3000);
 });
 
+document.getElementById("set-layout-override").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("layout-override-msg");
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { layout_override: ev.target.value } }),
+    });
+    // Сразу перерисовываем экран текущими данными — без этого пришлось бы
+    // ждать следующего изменения заказов/выручки, чтобы увидеть эффект.
+    await api("/api/display/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    msg.textContent = "Сохранено и перерисовано";
+    msg.classList.remove("error");
+    refreshPreview();
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+async function loadLayoutText() {
+  const textarea = document.getElementById("layout-text");
+  const msg = document.getElementById("layout-text-msg");
+  try {
+    const res = await api("/api/layout/text");
+    textarea.value = res.text;
+    msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка загрузки: " + err.message;
+    msg.classList.add("error");
+  }
+}
+
+document.getElementById("layout-text-reload").addEventListener("click", loadLayoutText);
+
+document.getElementById("layout-text-apply").addEventListener("click", async (ev) => {
+  const button = ev.target;
+  const msg = document.getElementById("layout-text-msg");
+  const text = document.getElementById("layout-text").value;
+  button.disabled = true;
+  msg.classList.remove("error");
+  try {
+    const res = await api("/api/layout/text", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (res.redraw_error) {
+      msg.textContent = "Сохранено, но перерисовать не вышло: " + res.redraw_error;
+      msg.classList.add("error");
+    } else {
+      msg.textContent = "Сохранено и перерисовано";
+      refreshPreview();
+      setTimeout(() => (msg.textContent = ""), 3000);
+    }
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  button.disabled = false;
+});
+
 document.getElementById("mp-sounds-save").addEventListener("click", async (ev) => {
   const button = ev.target;
   const msg = document.getElementById("notifications-msg");
@@ -768,6 +838,7 @@ document.getElementById("ota-apply").addEventListener("click", async (ev) => {
 
 loadState(true);
 loadNotifications();
+loadLayoutText();
 refreshPreview();
 setInterval(() => loadState(false), 30000);
 setInterval(refreshPreview, 30000);

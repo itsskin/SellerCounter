@@ -17,6 +17,7 @@ import config as config_module
 import ota
 import wifi_manager
 from display import layout as layout_module
+from display import layout_common
 from display.framebuf_sim import to_bmp_bytes
 from marketplaces.registry import available_marketplaces, get_client_class
 from microdot import Microdot, Request, Response
@@ -303,6 +304,39 @@ async def api_display_test(request):
     return {"ok": True}
 
 
+@app.route("/api/layout/text")
+async def api_layout_text_get(request):
+    """Отдаёт содержимое ОБЩЕГО layout.txt (координаты/шрифты для ОБОИХ
+    экранов сразу — 200x200 и 400x300, см. display/layout_common.LAYOUT) —
+    для редактирования прямо в браузере, без Thonny/физического доступа к
+    плате."""
+    return {"ok": True, "path": layout_common.LAYOUT.path, "text": layout_common.LAYOUT.read_text()}
+
+
+@app.route("/api/layout/text", methods=["POST"])
+async def api_layout_text_post(request):
+    """Сохраняет отредактированный layout.txt и сразу перерисовывает экран
+    текущими данными (без нового опроса маркетплейсов) — правка видна на
+    экране (или в /api/display/preview.bmp) сразу после нажатия "Применить"."""
+    display = _state["display"]
+    engine = _state["engine"]
+    if display is None or engine is None:
+        return {"ok": False, "error": "not running (provisioning mode)"}, 400
+
+    body = request.json or {}
+    text = body.get("text")
+    if text is None:
+        return {"ok": False, "error": "text обязателен"}, 400
+
+    layout_common.LAYOUT.write_text(text)
+
+    try:
+        await engine.redraw()
+    except Exception as exc:
+        return {"ok": True, "saved": True, "redraw_error": str(exc)}
+    return {"ok": True, "saved": True}
+
+
 @app.route("/api/background", methods=["POST"])
 async def api_background(request):
     """Заливает новый PNG-фон прямо через веб — без Thonny/mpremote.
@@ -319,7 +353,8 @@ async def api_background(request):
     if not body or body[:8] != PNG_SIGNATURE:
         return {"ok": False, "error": "это не PNG (нет сигнатуры файла)"}, 400
 
-    layout_mod = layout_module.get_layout(display.width, display.height)
+    cfg = _state["cfg"]
+    layout_mod = layout_module.get_layout(display.width, display.height, cfg["display"].get("layout_override"))
     check_bg = getattr(layout_mod, "check_new_background", None)
     if check_bg is None:
         return {"ok": False, "error": "у этого макета экрана нет смены фона картинкой"}, 400

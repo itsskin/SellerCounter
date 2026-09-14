@@ -439,7 +439,10 @@ class StatsEngine:
         }
         breadcrumb.mark("redrawing display")
         try:
-            layout_mod = layout.get_layout(self.display.width, self.display.height)
+            layout_mod = layout.get_layout(
+                self.display.width, self.display.height,
+                self.cfg["display"].get("layout_override"),
+            )
             layout_mod.update_numbers(self.display.fb, data)
             # display.show() у e-paper — async и внутри отдаёт управление
             # event loop на время busy-wait (~20с), так что веб-сервер не

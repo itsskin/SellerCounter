@@ -92,13 +92,23 @@ input[type="text"],
 input[type="password"],
 input[type="number"],
 input[type="time"],
-select {
+select,
+textarea {
   background: #0f1115;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px;
   color: var(--text);
   font-size: 14px;
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  resize: vertical;
 }
 
 input[type="file"] {
@@ -145,7 +155,8 @@ button:active { opacity: 0.8; }
   margin-top: 12px;
 }
 
-.override-row label {
+.override-row label,
+.override-row button {
   flex: 1;
 }
 

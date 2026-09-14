@@ -213,7 +213,7 @@ def main():
     # его в фон экрана и удаляем (см. check_new_background() у обоих
     # макетов, layout_200x200.py и layout_400x300.py) — getattr на случай,
     # если когда-нибудь появится макет вообще без фона-картинки.
-    layout_mod = layout.get_layout(display.width, display.height)
+    layout_mod = layout.get_layout(display.width, display.height, cfg["display"].get("layout_override"))
     check_bg = getattr(layout_mod, "check_new_background", None)
     if check_bg is not None:
         try:

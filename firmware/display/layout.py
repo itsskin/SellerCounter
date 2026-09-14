@@ -7,7 +7,18 @@
 from display import layout_200x200, layout_400x300
 
 
-def get_layout(width, height):
+def get_layout(width, height, override=None):
+    """override — cfg["display"].get("layout_override") ("", "200x200" или
+    "400x300"), см. config.py. Принудительно выбирает макет НЕЗАВИСИМО от
+    реального разрешения физического экрана — для разработки/проверки
+    вёрстки без физического переключения панелей (макет 200x200 при этом
+    просто рисуется в верхнем левом углу буфера физического экрана, если
+    тот больше; сам физический драйвер/SPI не меняются). Пустая строка или
+    None — обычное поведение, по width/height."""
+    if override == "200x200":
+        return layout_200x200
+    if override == "400x300":
+        return layout_400x300
     if width == 200 and height == 200:
         return layout_200x200
     return layout_400x300
