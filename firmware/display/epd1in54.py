@@ -112,6 +112,10 @@ class Epd1in54Display(DisplayDriver):
     # что partial не даёт выигрыша, который стоил бы такой цены — оставлен
     # только full (0x22=0xF7).
 
+    # Каждое N-ное обновление — честный full refresh (см. show()), не
+    # "fast full" — чистит накопившиеся от температурного трюка призраки.
+    FULL_REFRESH_EVERY = 10
+
     def __init__(self):
         super().__init__()
         self._spi = SPI(
@@ -127,6 +131,9 @@ class Epd1in54Display(DisplayDriver):
         self._rst = Pin(PINS["rst"], Pin.OUT, value=1)
         self._busy = Pin(PINS["busy"], Pin.IN)
         self._hw_ready = False
+        # См. FULL_REFRESH_EVERY выше и show() — стартует с 0, так что
+        # первый show() после включения платы тоже честный (не "fast full").
+        self._update_count = 0
         self._log("init: pins ok")
 
     def _log(self, msg):
@@ -245,8 +252,18 @@ class Epd1in54Display(DisplayDriver):
         # референс-драйвером именно этой панели: GxEPD2, ZinggJM/GxEPD2,
         # src/gdey/GxEPD2_154_GDEY0154D67.cpp, ветка useFastFullUpdate в
         # _Update_Full().
-        self._cmd(CMD_TEMP_WRITE, bytes([0x64]))
-        self._cmd(CMD_DISP_CTRL2, bytes([0xD7]))
+        #
+        # По HW-наблюдению этот трюк при частом повторении подряд оставляет
+        # лёгкие призраки предыдущих кадров, несмотря на "полное"
+        # перещёлкивание пикселей на бумаге. Раз в FULL_REFRESH_EVERY
+        # обновлений (и первым делом после включения — self._update_count
+        # стартует с 0 в __init__) пропускаем температурный трюк и
+        # используем настоящий медленный LUT (0x22=0xF7), который их убирает.
+        self._update_count += 1
+        full = self._update_count == 1 or self._update_count % self.FULL_REFRESH_EVERY == 0
+        if not full:
+            self._cmd(CMD_TEMP_WRITE, bytes([0x64]))
+        self._cmd(CMD_DISP_CTRL2, bytes([0xF7 if full else 0xD7]))
         self._cmd(CMD_MASTER_ACTIVATE)
         await self._wait_busy()
-        self._log("=== show() done ===")
+        self._log("=== show() done ===" + (" (full refresh)" if full else ""))

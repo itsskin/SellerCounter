@@ -73,6 +73,10 @@ class Epd4in2Display(DisplayDriver):
     # так быстрый (~3.3с, HW-замерено) и не мигает, так что partial не даёт
     # выигрыша, который стоил бы такой цены — оставлен только full.
 
+    # Каждое N-ное обновление — честный full refresh (см. show()), не
+    # "fast full" — чистит накопившиеся от температурного трюка призраки.
+    FULL_REFRESH_EVERY = 10
+
     def __init__(self):
         super().__init__()
         self._spi = SPI(
@@ -88,6 +92,14 @@ class Epd4in2Display(DisplayDriver):
         self._rst = Pin(PINS["rst"], Pin.OUT, value=1)
         self._busy = Pin(PINS["busy"], Pin.IN)
         self._hw_ready = False
+        # Счётчик обновлений — см. show(): "fast full" (температурный трюк,
+        # см. коммент там же) полностью перещёлкивает пиксели, но по
+        # HW-наблюдению накапливает лёгкие "призраки" от предыдущих кадров
+        # при частом повторении. Раз в FULL_REFRESH_EVERY обновлений (и
+        # сразу при первом show() после включения — счётчик стартует с 0,
+        # см. show()) — честный full refresh без трюка (0x22=0xF7),
+        # который чистит эти остатки.
+        self._update_count = 0
 
     def _reset(self):
         self._rst(0)
@@ -155,6 +167,7 @@ class Epd4in2Display(DisplayDriver):
         inverted = bytes(b ^ 0xFF for b in self.buffer)
         self._cmd(CMD_WRITE_RAM_BW, inverted)
         self._cmd(CMD_DISPLAY_UPDATE_CTRL1, bytes([0x40, 0x00]))
+
         # "Fast full update" — НЕ partial (тот не годится, см. коммент у
         # класса выше), а полноценный full refresh, просто с укороченной
         # waveform-LUT: панели подсовывается завышенная температура через
@@ -165,8 +178,19 @@ class Epd4in2Display(DisplayDriver):
         # панели: GxEPD2, ZinggJM/GxEPD2,
         # src/gdey/GxEPD2_420_GDEY042T81.cpp, ветка _use_fast_update в
         # _Update_Full().
-        self._cmd(CMD_TEMP_WRITE, bytes([0x6E]))
-        self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xD7]))
+        #
+        # По HW-наблюдению этот трюк, несмотря на "полное" перещёлкивание
+        # пикселей на бумаге, при частом повторении подряд оставляет лёгкие
+        # призраки предыдущих кадров. Раз в FULL_REFRESH_EVERY обновлений
+        # (и первым делом после включения — self._update_count стартует с
+        # 0 в __init__, так что первый show() тоже честный) пропускаем
+        # температурный трюк и используем настоящий медленный LUT
+        # (0x22=0xF7) — он их убирает.
+        self._update_count += 1
+        full = self._update_count == 1 or self._update_count % self.FULL_REFRESH_EVERY == 0
+        if not full:
+            self._cmd(CMD_TEMP_WRITE, bytes([0x6E]))
+        self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xF7 if full else 0xD7]))
         self._cmd(CMD_MASTER_ACTIVATE)
         await self._wait_busy()
 

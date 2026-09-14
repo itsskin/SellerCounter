@@ -6,8 +6,8 @@
   "config.py": "b4c24407fe3e2264ef030b0e404226ba9bc3385e9cc5061525e5ac06c7a7626b",
   "display/base.py": "d8d9f68ccb2b1f6dc42e5621852ba0927593329a87700aed9bd908ff540c5848",
   "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
-  "display/epd1in54.py": "7e16bb3020cfe9d7497ef4acb94e28916888fceef9faac6a9be0fa05654acda0",
-  "display/epd4in2.py": "8071e11bfb3564694d15109e910f41deea5fd819d5fc9f42012fa037b0c7e3a6",
+  "display/epd1in54.py": "dc44442fa22e8fcfd368236cbdc5d0fd7fcd0bc38f6951b3f2e3a01e15821983",
+  "display/epd4in2.py": "1ad42abc680c82a55390b5b4111899e9df2e5ac258b803578cc1ed7b3db90153",
   "display/fonts/available_sizes.txt": "a802cf304d80ceb6f31cf83f315a147f2fabe839d3e1e9d1045456fe32276a8d",
   "display/fonts/default_10.py": "26f32b9563db20a2b7719ad67b0da3e4dbe07e47e37e910ae008a8afddda2407",
   "display/fonts/orbitron_12.py": "58d5840e2e288849dd85c279b1c553520238a863e8c9f8ad3987bf495536f717",
@@ -52,5 +52,5 @@
   "www/index.html": "e2a2932b409d133a7efdd822a2af06cac58a28f0886585e3592c749d3cf303a5",
   "www/style.css": "d96299ab9fd8a77c5fbd0124ed860555d718ed16de1af1f7f4278fd4746690e7"
  },
- "version": 28
+ "version": 29
 }
