@@ -36,6 +36,7 @@ from display.layout_common import (
     resolve_font,
     shrink_font_to_fit,
     split_compact,
+    uniform_font_for_items,
 )
 
 WIDTH = 400
@@ -145,7 +146,6 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     orders_font, orders_scale = resolve_font(orders_font_name)
     orders_decimal_font, orders_decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.orders_decimal_font"))
     column_margin = LAYOUT.cfg_int(cfg, "mp_row.column_margin")
-    column_width = LAYOUT.cfg_int(cfg, "mp_row.column_width")
     area_x = LAYOUT.cfg_int(cfg, "mp_row.area_x")
     area_width = LAYOUT.cfg_int(cfg, "mp_row.area_width")
     label_y = LAYOUT.cfg_int(cfg, "mp_row.label_y")
@@ -153,14 +153,17 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     orders_y = LAYOUT.cfg_int(cfg, "mp_row.orders_y")
 
     n = len(columns)
-    # column_width — ФИКСИРОВАННАЯ ширина под столбик, не area_width/n:
-    # при area_width/n столбики растягивались на всю ширину области даже
-    # когда их 1-2 (реже 3), разъезжаясь к противоположным краям экрана с
-    # пустым разрывом посередине — визуально хуже, чем группа столбиков
-    # постоянной ширины, отцентрированная в area_x..area_x+area_width с
-    # запасом СНАРУЖИ группы, а не разрывом ВНУТРИ нее.
-    group_width = column_width * n
-    group_x = area_x + (area_width - group_width) // 2
+    # ПОЗИЦИЯ и БЮДЖЕТ ШИРИНЫ столбика — ОДНА и та же формула (area_width
+    # // n), не раздельные: пробовали раздельно (фиксированный шаг между
+    # столбиками + растущий бюджет ширины) — при 1-2 столбиках текст
+    # вырастал шире расстояния между столбиками и сливался с соседним.
+    # Раз оба растут синхронно, столбик просто занимает БОЛЬШЕ И места, И
+    # текста при малом числе столбиков, без риска наложения — а
+    # "прижатость к краям" на самом деле была больше о МЕЛКОМ тексте в
+    # широком слоте (нечем заполнить середину), чем о самой позиции слота
+    # — рост текста (см. uniform_font_for_items ниже) её и решает.
+    column_width = area_width // n
+    group_x = area_x
     max_width = max(1, column_width - column_margin)
 
     def _draw_number(value, x, y, font, font_name, decimal_font, decimal_scale, scale, max_decimals, min_abbrev=0):
@@ -178,41 +181,66 @@ def _draw_marketplace_breakdown(fb, cfg, data):
             fb, font, big, x, y, trailing, big_scale=scale, center_whole=True,
         )
 
-    for i, (mp_id, entry) in enumerate(columns):
+    show_total = data.get("marketplace_breakdown_show_total_revenue")
+
+    # Выручка — двумя проходами, не как заказы ниже. Первый проход считает
+    # компактный текст ("2K"/"18K"/...) для КАЖДОЙ колонки на базовом
+    # revenue_font (только чтобы понять, нужно ли K/M-сокращение вообще);
+    # второй — подбирает ОДИН общий размер шрифта, куда влезают ВСЕ
+    # колонки сразу (см. uniform_font_for_items) и рисует им все разом.
+    # Раздельный подбор размера под каждую колонку (как раньше) давал
+    # разный РОСТ у визуально сопоставимых чисел — у "1" глиф уже, чем у
+    # "5"/"7", так что "13K" помещался в кегль крупнее, чем "57K" при той
+    # же длине строки, хотя оба должны выглядеть одного размера.
+    revenue_items = []
+    for mp_id, entry in columns:
+        text = custom_font.format_compact(
+            revenue_font, entry.get("revenue", 0), max_width, revenue_scale,
+            decimal_font=revenue_decimal_font, decimal_scale=revenue_decimal_scale,
+            max_decimals=0, min_abbrev=1000,
+        )
+        big, tail = split_compact(text)
+        tail_width = custom_font.text_width(revenue_decimal_font, tail, revenue_decimal_scale) if tail else 0
+        revenue_items.append((mp_id, entry, big, tail, tail_width))
+
+    common_revenue_font, common_revenue_scale = uniform_font_for_items(
+        revenue_font_name, [(big, tail_width) for _, _, big, _, tail_width in revenue_items], max_width,
+    )
+
+    for i, (mp_id, entry, big, tail, _) in enumerate(revenue_items):
         col_x = group_x + column_width * i + column_width // 2
 
         label = entry.get("short_label") or (mp_id[:1].upper() + mp_id[1:2])
         custom_font.draw_text_centered(fb, label_font, label, col_x, label_y, scale=label_scale)
 
-        # Выручка — крупно, округление до целых K/M (max_decimals=0, "2K"
-        # не "1.8K") — при таком большом шрифте в узком столбике decimal
-        # часть почти никогда не влезла бы всё равно.
-        # min_abbrev=1000 — иначе, например, 220 (меньше 0.5K) округлилась
-        # бы до "0K" (max_decimals=0) при попытке K-сокращения — вместо
-        # этого до 1000 показываем число как есть, шрифт сам ужмётся
-        # (см. shrink_font_to_fit выше), если не влезает целиком.
-        _draw_number(
-            entry.get("revenue", 0), col_x, revenue_y,
-            revenue_font, revenue_font_name, revenue_decimal_font, revenue_decimal_scale, revenue_scale,
-            max_decimals=0, min_abbrev=1000,
+        trailing = [(tail, revenue_decimal_font, revenue_decimal_scale)] if tail else []
+        custom_font.draw_text_with_trailing(
+            fb, common_revenue_font, big, col_x, revenue_y, trailing,
+            big_scale=common_revenue_scale, center_whole=True,
         )
-        # Нижнее число — обычно заказы ЭТОГО маркетплейса, но галочка в
-        # веб-интерфейсе (раздел "Маркетплейсы") может заменить его на
-        # ОБЩУЮ выручку по всем маркетплейсам сразу (одно и то же число
-        # повторяется под каждым столбиком) — чтобы сразу видеть долю
-        # каждого от общего рядом с его собственной выручкой сверху.
-        if data.get("marketplace_breakdown_show_total_revenue"):
-            _draw_number(
-                data.get("revenue", 0), col_x, orders_y,
-                orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
-                max_decimals=0, min_abbrev=1000,
-            )
-        else:
+
+        # Нижнее число — заказы ЭТОГО маркетплейса. Когда включена галочка
+        # "показывать общую выручку" (см. ниже, после цикла) — тут вообще
+        # ничего не рисуем, общая сумма выводится ОДНИМ числом по центру,
+        # не под каждым столбиком отдельно.
+        if not show_total:
             _draw_number(
                 entry.get("orders", 0), col_x, orders_y,
                 orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
                 max_decimals=1, min_abbrev=10000,
             )
+
+    if show_total:
+        # Сумма именно по ОТОБРАЖАЕМЫМ столбикам (columns, уже отфильтрован
+        # по visible и, при тесте, содержит тестовые значения) — не общий
+        # data["revenue"] с платы, который не в курсе ни скрытых
+        # маркетплейсов, ни ручного теста.
+        total_revenue = sum(entry.get("revenue", 0) for _, entry in columns)
+        _draw_number(
+            total_revenue, WIDTH // 2, orders_y,
+            orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
+            max_decimals=0, min_abbrev=1000,
+        )
 
 
 def update_numbers(fb, data):

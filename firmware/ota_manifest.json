@@ -3,7 +3,7 @@
   "boot.py": "c125b2cd03296b74ae2f5eabffe2f33274c3b0aa1fc4f313bdf4839d5eac53d6",
   "breadcrumb.py": "9f0f73d1fd0dfebf62a4dc14ae5fbb11c33d831aebb278b8dc9a9a271d084f41",
   "buzzer.py": "be0979aef2661dfa62d0b0683007ae71428819bff6d7c03cd2d1d8ecf42adb54",
-  "config.py": "0eeb2850bf673cff59c9e4fba75a64f4c3e4eaa0bccd959b81f42cab51cf51d3",
+  "config.py": "b4c24407fe3e2264ef030b0e404226ba9bc3385e9cc5061525e5ac06c7a7626b",
   "display/base.py": "d8d9f68ccb2b1f6dc42e5621852ba0927593329a87700aed9bd908ff540c5848",
   "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
   "display/epd1in54.py": "7e16bb3020cfe9d7497ef4acb94e28916888fceef9faac6a9be0fa05654acda0",
@@ -27,8 +27,8 @@
   "display/framebuf_sim.py": "f3c6e694d95a2d596f5d28964b60d984e8bff78f0dc1e354c46174cb483810c5",
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
   "display/layout_200x200.py": "999938c3621ce92ceada9514248ee3b12964baf76c37bdaa43333e5dc96f3d93",
-  "display/layout_400x300.py": "45fdab08593a14af54b105034acaad934fc9d46f586142c83b279db4de647723",
-  "display/layout_common.py": "061e7f3a8b7a804f53e9cc8b2444a2d87fb24ffefa35c89b081f274fed42ea57",
+  "display/layout_400x300.py": "e2c21abae99d4f754149ad4aab081726a596612de2a9590dfc1fcb7fcfc8db88",
+  "display/layout_common.py": "5eb938c7b023e79918a4c8afae3718472508745d4ea6dd1c086f86d471d8d2ce",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
   "lib/microdot/__init__.py": "600f59c25bc576bb6659e3ad4697a82c3c7a225f0063cc6024f8fc439c4a0a7c",
@@ -49,8 +49,8 @@
   "web_server.py": "bde4c7f00b0383d6ea56fc46d8a2dd30c5c4fd7139375a548d4068ef9a888313",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
   "www/app.js": "5c0e9a7fd367104dcd00c3e9cb1dce22a4dd7098510a19fc7c9feeab034cad54",
-  "www/index.html": "94e37fbe2bd1b5fead7d0037bc6a5ff8a1af5887d2dfe37de5e62d872f716dc9",
+  "www/index.html": "e2a2932b409d133a7efdd822a2af06cac58a28f0886585e3592c749d3cf303a5",
   "www/style.css": "d96299ab9fd8a77c5fbd0124ed860555d718ed16de1af1f7f4278fd4746690e7"
  },
- "version": 25
+ "version": 26
 }
