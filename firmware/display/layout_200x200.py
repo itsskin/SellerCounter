@@ -28,7 +28,6 @@ import framebuf
 from display import custom_font
 from display.layout_common import (
     LAYOUT,
-    draw_scaled_text_centered,
     res_key,
     resolve_font,
     shrink_font_to_fit,
@@ -230,15 +229,14 @@ def update_numbers(fb, data):
             scale=clock_scale,
         )
 
-    # IP — встроенным ASCII-шрифтом framebuf (не Orbitron/Verdana), как на
-    # 400x300. На маленьком экране по умолчанию выключен (ip.show.200x200 =
-    # 0 в DEFAULTS) — включается через layout.txt/веб при желании.
+    # IP — как на 400x300. На маленьком экране по умолчанию выключен
+    # (ip.show.200x200 = 0 в DEFAULTS) — включается через layout.txt/веб.
     ip = data.get("ip") or ""
     if ip and LAYOUT.cfg_bool(cfg, res_key("ip", "show", RES)):
-        ip_scale = LAYOUT.cfg_int(cfg, res_key("ip", "scale", RES))
+        ip_font, ip_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("ip", "font", RES)))
         ip_x = LAYOUT.cfg_int(cfg, res_key("ip", "x", RES))
         ip_y = LAYOUT.cfg_int(cfg, res_key("ip", "y", RES))
-        draw_scaled_text_centered(fb, ip, ip_x, ip_y, scale=ip_scale)
+        custom_font.draw_text_centered(fb, ip_font, ip, ip_x, ip_y, scale=ip_scale)
 
     # Напоминание "Собрать FBS" — см. cfg["display"]["show_fbs_reminder"].
     # data["show_fbs_label"] уже учитывает и чекбокс в веб-интерфейсе, и

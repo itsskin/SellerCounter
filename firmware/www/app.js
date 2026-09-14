@@ -90,6 +90,7 @@ function renderSettings(state) {
   document.getElementById("set-beep").checked = !!(state.display && state.display.beep_on_sale);
   document.getElementById("set-yesterday").checked = (state.debug_day_offset || 0) !== 0;
   document.getElementById("set-fbs-reminder").checked = !!(state.display && state.display.show_fbs_reminder);
+  document.getElementById("set-fbs-test-label").checked = !!(state.display && state.display.show_fbs_test_label);
 
   // Чекбокс "выключить звук" — инверсия buzzer.enabled (checked = звук
   // ВЫКЛЮЧЕН). Дефолт enabled=true (см. config.py), так что если поля нет
@@ -668,6 +669,31 @@ document.getElementById("set-fbs-reminder").addEventListener("change", async (ev
     });
     msg.textContent = "Сохранено";
     msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("set-fbs-test-label").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("fbs-test-label-msg");
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { show_fbs_test_label: ev.target.checked } }),
+    });
+    // Сразу перерисовываем — иначе эффект отладочного чекбокса виден
+    // только после следующего опроса/изменения продаж.
+    await api("/api/display/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    msg.textContent = "Сохранено и перерисовано";
+    msg.classList.remove("error");
+    refreshPreview();
   } catch (err) {
     msg.textContent = "Ошибка: " + err.message;
     msg.classList.add("error");

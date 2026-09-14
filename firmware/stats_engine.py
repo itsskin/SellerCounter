@@ -428,13 +428,18 @@ class StatsEngine:
             "ip": self.get_ip() or "",
             "updated_at": _current_time_hhmm(tz),
             "updated_date": _current_date_ddmmyyyy(tz),
-            # Показываем, только если функция включена в настройках И
-            # реально есть хотя бы один FBS-заказ за сегодня — не форсируем
-            # надпись вслепую (раньше, пока это был тестовый чекбокс,
-            # форсировали).
+            # Показываем, если функция включена в настройках И реально есть
+            # хотя бы один FBS-заказ за сегодня — ИЛИ если включён отдельный
+            # отладочный чекбокс show_fbs_test_label (веб-интерфейс, раздел
+            # "Маркетплейсы") — форсирует надпись всегда, чтобы проверить
+            # положение/шрифт (см. layout.txt), не дожидаясь настоящего
+            # несобранного заказа.
             "show_fbs_label": (
-                self.cfg["display"].get("show_fbs_reminder", False)
-                and self.latest.get("fbs_orders", 0) > 0
+                self.cfg["display"].get("show_fbs_test_label", False)
+                or (
+                    self.cfg["display"].get("show_fbs_reminder", False)
+                    and self.latest.get("fbs_orders", 0) > 0
+                )
             ),
         }
         breadcrumb.mark("redrawing display")

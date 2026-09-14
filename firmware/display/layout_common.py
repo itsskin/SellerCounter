@@ -1,14 +1,8 @@
-# Общее между макетами разных экранов — только рисование текста с целочисленным
-# масштабом (framebuf не умеет масштабировать текст сам). Сама раскладка
-# (координаты, что где расположено) — отдельно и жёстко под каждый размер
-# экрана в layout_400x300.py / layout_200x200.py, без общего "резинового"
-# макета на все размеры.
-#
-# ВАЖНО: встроенный в framebuf шрифт поддерживает только ASCII — кириллицу
-# он не рисует, поэтому подписи временно на английском (см. lib/, шрифт с
-# кириллицей — отложенная задача).
-
-import framebuf
+# Общее между макетами разных экранов — подбор кастомного пиксельного шрифта
+# (Orbitron/Verdana) и единый layout.txt (LAYOUT, res_key, см. ниже). Сама
+# раскладка (какие элементы где, что чем рисуется) — отдельно и жёстко под
+# каждый размер экрана в layout_400x300.py / layout_200x200.py, без общего
+# "резинового" макета на все размеры.
 
 from display import custom_font
 
@@ -373,11 +367,8 @@ DEFAULTS = {
     "ip.x.400x300": "200",
     "ip.y.200x200": "190",
     "ip.y.400x300": "282",
-    # IP рисуется встроенным ASCII-шрифтом framebuf (не кастомным
-    # Orbitron/Verdana) — поэтому тут не "font", а целочисленный масштаб
-    # (1 — самый мелкий вариант, как framebuf.text() рисует нативно).
-    "ip.scale.200x200": "1",
-    "ip.scale.400x300": "1",
+    "ip.font.200x200": "orbitron_20",
+    "ip.font.400x300": "orbitron_20",
 
     "fbs_label.name": 'Напоминание "Собрать FBS"',
     # Кроме этого флага, напоминание всё равно рисуется, только когда
@@ -420,8 +411,8 @@ LAYOUT_TXT_TEMPLATE = """\
 # orders.suffix — подпись после числа заказов (например "шт"). Пусто —
 #   не рисуется. suffix_font обязательно verdana_* (Orbitron кириллицу не
 #   умеет вообще).
-# ip.scale — IP рисуется встроенным шрифтом framebuf, не Orbitron/Verdana
-#   — тут целочисленный масштаб (1 — самый мелкий), а не имя шрифта.
+# ip.font — IP-адрес состоит только из цифр и точек, так что тут годится и
+#   orbitron_*, и verdana_*.
 # fbs_label — см. комментарий у fbs_label.show выше по смыслу поля.
 
 revenue.name = {revenue.name}
@@ -470,11 +461,11 @@ ip.name = {ip.name}
 ip.show.200x200 = {ip.show.200x200}
 ip.x.200x200 = {ip.x.200x200}
 ip.y.200x200 = {ip.y.200x200}
-ip.scale.200x200 = {ip.scale.200x200}
+ip.font.200x200 = {ip.font.200x200}
 ip.show.400x300 = {ip.show.400x300}
 ip.x.400x300 = {ip.x.400x300}
 ip.y.400x300 = {ip.y.400x300}
-ip.scale.400x300 = {ip.scale.400x300}
+ip.font.400x300 = {ip.font.400x300}
 
 fbs_label.name = {fbs_label.name}
 fbs_label.show.200x200 = {fbs_label.show.200x200}
@@ -496,32 +487,3 @@ def res_key(element, field, resolution):
     """"revenue", "x", "200x200" -> "revenue.x.200x200" — составной ключ
     per-разрешение поля в общем layout.txt (см. LAYOUT выше)."""
     return "%s.%s.%s" % (element, field, resolution)
-
-
-def draw_scaled_text(fb, text, x, y, scale=1, color=1):
-    """Рисует текст встроенным 8x8 шрифтом с целочисленным масштабом —
-    в framebuf нет нативного увеличения текста."""
-    if scale <= 1:
-        fb.text(text, x, y, color)
-        return
-    glyph_w = len(text) * 8
-    tmp_buf = bytearray((glyph_w + 7) // 8 * 8)
-    tmp = framebuf.FrameBuffer(tmp_buf, glyph_w, 8, framebuf.MONO_HLSB)
-    tmp.fill(0)
-    tmp.text(text, 0, 0, 1)
-    for ty in range(8):
-        for tx in range(glyph_w):
-            if tmp.pixel(tx, ty):
-                fb.fill_rect(x + tx * scale, y + ty * scale, scale, scale, color)
-
-
-def scaled_text_width(text, scale=1):
-    return len(text) * 8 * scale
-
-
-def draw_scaled_text_centered(fb, text, center_x, y, scale=1, color=1):
-    """Как draw_scaled_text, но x подбирается так, чтобы текст был
-    отцентрирован по горизонтали вокруг center_x (сама координата y — верх
-    текста, как и в draw_scaled_text, без вертикального центрирования)."""
-    x = center_x - scaled_text_width(text, scale) // 2
-    draw_scaled_text(fb, text, x, y, scale, color)

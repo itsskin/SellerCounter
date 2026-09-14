@@ -26,6 +26,39 @@ def text_width(font, text, scale=1):
     return w * scale
 
 
+def _ink_bottom_row(font, text):
+    """Последняя (считая от 0 сверху) строка среди глифов text, где есть
+    хоть один закрашенный пиксель — -1, если text пустой/без известных
+    символов.
+
+    font.HEIGHT — общий на ВЕСЬ алфавит шрифта диапазон (см.
+    font_render_lib.render_variant): он подгоняется под самый нижний глиф
+    ВСЕГО charset, а не конкретно text. У Verdana в charset есть кириллица
+    со спускающимися ниже строки буквами ("р", "у", "д", "ц", "щ") — под их
+    хвостики HEIGHT включает запас снизу. Если в text таких букв нет
+    (например "шт"), реальные чернила заканчиваются на несколько пикселей
+    ВЫШЕ нижнего края font.HEIGHT — выравнивание по font.HEIGHT (как раньше
+    делал draw_text_with_trailing) визуально "приподнимало" такой текст над
+    базовой линией соседнего числа. Считаем реальный нижний край вместо
+    того, чтобы полагаться на HEIGHT."""
+    glyphs = font.GLYPHS
+    height = font.HEIGHT
+    bottom = -1
+    for ch in text:
+        glyph = glyphs.get(ch)
+        if glyph is None:
+            continue
+        gw, data = glyph
+        row_bytes = (gw + 7) // 8
+        for gy in range(height - 1, bottom, -1):
+            base = gy * row_bytes
+            if any(data[base + gx // 8] & (1 << (7 - (gx % 8))) for gx in range(gw)):
+                if gy > bottom:
+                    bottom = gy
+                break
+    return bottom
+
+
 def draw_text(fb, font, text, x, y, color=1, scale=1):
     """x, y — левый верхний угол текста."""
     glyphs = font.GLYPHS
@@ -69,9 +102,17 @@ def draw_text_with_trailing(
 ):
     """trailing — список (text, font, scale), дорисовываются подряд правее
     big_text (с отступом gap перед каждым), низ каждого выровнен по низу
-    big_text (нижний индекс — как копейки у выручки "12.3K" или подпись
-    "шт" у заказов "128 шт"; можно и то, и другое сразу: trailing=[(".3K",
-    decimal_font, s1), (" шт", suffix_font, s2)]).
+    РЕАЛЬНЫХ ЧЕРНИЛ big_text, не по границе его bitmap-бокса (нижний индекс
+    — как копейки у выручки "12.3K" или подпись "шт" у заказов "128 шт";
+    можно и то, и другое сразу: trailing=[(".3K", decimal_font, s1),
+    (" шт", suffix_font, s2)]).
+
+    Выравнивание по _ink_bottom_row(), а не по font.HEIGHT — нужно, потому
+    что у Verdana (используется для кириллических суффиксов/подписей)
+    font.HEIGHT подогнан под самый нижний глиф всего charset, включая буквы
+    со спускающимися хвостиками ("р", "у", "д" и т.п.); у текста без таких
+    букв ("шт") реальные чернила выше нижнего края font.HEIGHT — выравнивая
+    по HEIGHT, "шт" визуально "повисало" над базовой линией числа.
 
     center_whole решает, ЧТО именно центрируется по (center_x, center_y):
     - False (дефолт) — только big_text, хвосты в расчёт центра не идут и
@@ -93,7 +134,11 @@ def draw_text_with_trailing(
 
     x = center_x - total_w // 2
     y_big = center_y - big_h // 2
-    bottom = y_big + big_h
+
+    big_ink_bottom = _ink_bottom_row(big_font, big_text)
+    if big_ink_bottom < 0:
+        big_ink_bottom = big_font.HEIGHT - 1
+    bottom = y_big + (big_ink_bottom + 1) * big_scale
 
     draw_text(fb, big_font, big_text, x, y_big, color, big_scale)
 
@@ -102,7 +147,10 @@ def draw_text_with_trailing(
         if not text:
             continue
         cx += gap
-        h = font.HEIGHT * scale
+        ink_bottom = _ink_bottom_row(font, text)
+        if ink_bottom < 0:
+            ink_bottom = font.HEIGHT - 1
+        h = (ink_bottom + 1) * scale
         y = bottom - h
         draw_text(fb, font, text, cx, y, color, scale)
         cx += text_width(font, text, scale)
