@@ -45,8 +45,6 @@ API_URL = "https://statistics-api.wildberries.ru/api/v1/supplier/orders"
 # относится и к WB.
 NEW_ORDERS_URL = "https://marketplace-api.wildberries.ru/api/v3/orders/new"
 
-_last_good_pending = {}
-
 
 class WBClient(MarketplaceClient):
     id = "wb"
@@ -76,9 +74,14 @@ class WBClient(MarketplaceClient):
         result = {"orders": count, "revenue": revenue}
         try:
             pending = self._fetch_pending_count(headers)
-            _last_good_pending[self.key] = pending
         except MarketplaceError as exc:
-            pending = _last_good_pending.get(self.key, 0)
+            # НЕ откатываемся на "последнее успешное" значение — см.
+            # подробное объяснение у yandex.py (fetch_daily_stats): для
+            # этого конкретного счётчика стухший кэш может ЗАЛИПНУТЬ
+            # реминдер "Собрать FBS" горящим даже после того, как заказ
+            # реально собрали/отменили, если ошибка API совпала именно с
+            # этим моментом. Честный 0 — меньшее из двух зол.
+            pending = 0
             result["partial_error"] = "несобранные заказы: %s" % exc
         result["fbs_orders"] = pending
         return result

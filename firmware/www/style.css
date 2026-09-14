@@ -120,7 +120,7 @@ button {
 
 button:active { opacity: 0.8; }
 
-.msg { font-size: 13px; color: var(--good); min-height: 16px; }
+.msg { font-size: 13px; color: var(--good); min-height: 16px; overflow-wrap: anywhere; }
 .msg.error { color: var(--bad); }
 
 .stats-row { display: flex; gap: 16px; }
@@ -182,6 +182,11 @@ button:active { opacity: 0.8; }
 .mp-stats-error-note {
   color: var(--bad);
   font-size: 11px;
+  /* Длинный текст ошибки (URL, JSON от API маркетплейса) без пробелов
+     иначе может растянуть таблицу шире карточки — сам текст теперь и так
+     укорочен на бэкенде (см. utils/http.py), но это подстраховка на
+     случай будущей длинной ошибки без единого пробела. */
+  overflow-wrap: anywhere;
 }
 
 .mp-type {

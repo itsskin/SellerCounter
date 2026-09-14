@@ -92,8 +92,9 @@ class OzonClient(MarketplaceClient):
             "Content-Type": "application/json",
         }
 
+        pending_error = None
         try:
-            fbs_count, fbs_revenue, fbs_pending = self._fetch_fbs(headers)
+            fbs_count, fbs_revenue, fbs_pending, pending_error = self._fetch_fbs(headers)
             _last_good_fbs[self.key] = (fbs_count, fbs_revenue, fbs_pending)
             fbs_error = None
         except MarketplaceError as exc:
@@ -137,7 +138,7 @@ class OzonClient(MarketplaceClient):
             # отсутствие как 0.
             "fbs_orders": fbs_pending,
         }
-        if fbs_error is not None or fbo_error is not None:
+        if fbs_error is not None or fbo_error is not None or pending_error is not None:
             # Ровно ОДИН канал упал (оба сразу — см. raise выше) — это уже
             # не "всё в порядке", хоть и не повод отбрасывать данные
             # рабочего канала (см. комментарий у _last_good_fbs/_last_good_fbo
@@ -157,6 +158,8 @@ class OzonClient(MarketplaceClient):
                 parts.append("FBS: %s" % fbs_error)
             if fbo_error is not None:
                 parts.append("FBO: %s" % fbo_error)
+            if pending_error is not None:
+                parts.append("несобранные заказы: %s" % pending_error)
             result["partial_error"] = "; ".join(parts)
         return result
 
@@ -177,8 +180,21 @@ class OzonClient(MarketplaceClient):
         data = request_json("POST", FBS_URL, headers=headers, json_body=body)
         postings = data.get("result", {}).get("postings", [])
         count, revenue = _sum_postings(postings)
-        pending = self._fetch_pending_fbs_count(headers)
-        return count, revenue, pending
+        # Отдельный try/except — сбой ИМЕННО этого (более редкого, более
+        # широкого) запроса не должен ронять уже успешно полученные
+        # count/revenue выше. И сознательно НЕ откатываемся на последнее
+        # успешное значение pending при сбое (в отличие от FBS/FBO целиком
+        # ниже, см. fetch_daily_stats) — честный 0 тут меньшее зло, чем
+        # риск залипшего реминдера "Собрать FBS", если заказ реально
+        # собрали/отменили именно в момент этого сбоя. Подробное
+        # объяснение того же решения — см. yandex.py fetch_daily_stats.
+        try:
+            pending = self._fetch_pending_fbs_count(headers)
+            pending_error = None
+        except MarketplaceError as exc:
+            pending = 0
+            pending_error = exc
+        return count, revenue, pending, pending_error
 
     def _fetch_pending_fbs_count(self, headers, lookback_days=7):
         # ОТДЕЛЬНЫЙ запрос за более широкое окно (по умолчанию 7 дней) —

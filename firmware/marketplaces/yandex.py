@@ -28,8 +28,6 @@ CANCELLED_STATUS = "CANCELLED"
 PENDING_STATUS = "PROCESSING"
 PENDING_SUBSTATUS = "STARTED"
 
-_last_good_pending = {}
-
 
 class YandexClient(MarketplaceClient):
     id = "yandex"
@@ -58,9 +56,20 @@ class YandexClient(MarketplaceClient):
         result = {"orders": count, "revenue": revenue}
         try:
             pending = self._fetch_pending_count(headers)
-            _last_good_pending[self.key] = pending
         except MarketplaceError as exc:
-            pending = _last_good_pending.get(self.key, 0)
+            # НЕ откатываемся на "последнее успешное" значение — в отличие
+            # от revenue/count (там стухшие данные лучше нуля), для этого
+            # счётчика стухший кэш может быть ХУЖЕ, чем честный 0: если
+            # заказ реально собрали/отменили именно в промежуток между
+            # последним успешным опросом и этим сбоем, кэш продолжал бы
+            # показывать его несобранным сколько угодно долго, пока API
+            # наконец не ответит успешно — то есть реминдер "Собрать FBS"
+            # мог бы залипнуть гореть даже после того, как заказ реально
+            # обработан. Честный 0 самое худшее ненадолго спрячет
+            # реальный несобранный заказ (до следующего опроса через
+            # poll_interval_sec) — и то только если сбой API совпал именно
+            # с моментом появления НОВОГО несобранного заказа, что редко.
+            pending = 0
             result["partial_error"] = "несобранные заказы: %s" % exc
         result["fbs_orders"] = pending
         return result

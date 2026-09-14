@@ -106,8 +106,16 @@ def _do_request(method, url, headers, json_body, timeout):
         )
         if response.status_code >= 400:
             retry_after = _retry_after_from_headers(getattr(response, "headers", None))
+            # Только путь, без query-строки (?fromDate=...&toDate=...) — она
+            # не несёт диагностической пользы, а на широких 7-дневных
+            # запросах (см. marketplaces/ozon.py, wb.py, yandex.py —
+            # проверка "ещё не собран") делает сообщение длинным и уродливым
+            # в веб-интерфейсе (HW-подтверждено: полный URL+JSON растягивал
+            # карточку статистики). Тело ответа тоже укорочено — 150, не
+            # 400 символов, обычно этого достаточно понять суть ошибки.
+            url_path = url.split("?", 1)[0]
             raise MarketplaceError(
-                "HTTP %d from %s: %s" % (response.status_code, url, response.text[:400]),
+                "HTTP %d from %s: %s" % (response.status_code, url_path, response.text[:150]),
                 retry_after_sec=retry_after,
             )
         return response.json()
