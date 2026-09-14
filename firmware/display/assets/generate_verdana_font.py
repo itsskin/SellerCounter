@@ -45,7 +45,11 @@ SIZES = [15, 28]
 # FBS" рисовалась как одна буква "т").
 _LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 _CYRILLIC = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя"
-CHARSET = lib.DEFAULT_CHARSET + " " + _LATIN + _CYRILLIC
+# ":" — понадобился для fbs_label.text вида "Собрать FBS:" (запятая/
+# восклицательный знак и т.п. добавляй сюда же по той же логике, если
+# понадобятся — иначе draw_text() их молча пропустит, см. коммент выше).
+_PUNCT = ":"
+CHARSET = lib.DEFAULT_CHARSET + " " + _LATIN + _CYRILLIC + _PUNCT
 
 
 if __name__ == "__main__":

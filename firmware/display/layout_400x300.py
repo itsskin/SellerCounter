@@ -344,8 +344,12 @@ def update_numbers(fb, data):
         fbs_text = LAYOUT.cfg_text(cfg, res_key("fbs_label", "text", RES))
         if fbs_text:
             fbs_font, fbs_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("fbs_label", "font", RES)))
+            # Общее число FBS-заказов, ждущих сборки (сумма по ВСЕМ
+            # маркетплейсам сразу) — просто часть той же строки, не
+            # отдельно расположенный элемент: "Собрать FBS: 3шт" целиком.
+            full_text = "%s %sшт" % (fbs_text, data.get("fbs_pending_count", 0))
             custom_font.draw_text_centered(
-                fb, fbs_font, fbs_text,
+                fb, fbs_font, full_text,
                 LAYOUT.cfg_int(cfg, res_key("fbs_label", "x", RES)),
                 LAYOUT.cfg_int(cfg, res_key("fbs_label", "y", RES)),
                 scale=fbs_scale,

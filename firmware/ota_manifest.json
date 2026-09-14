@@ -22,13 +22,13 @@
   "display/fonts/orbitron_84.py": "aa8974762b315b4415606151c87e64118e40e281eb467504031629b5700060fc",
   "display/fonts/orbitron_90.py": "3de1e53891a400c47b378c67f5d9a8c142d6e277e58131d0e1456254b606b531",
   "display/fonts/orbitron_96.py": "f686748b873df9839e78c1d5fff0230bb62f2532fe1296457e47b085293613a0",
-  "display/fonts/verdana_15.py": "ea7c73bf846f78e6c59149166685cca99800aebb8f1cc5e247259a615fd206ea",
-  "display/fonts/verdana_28.py": "14606374a57cdc9edbc082f638a82f7facee046bb1eac7b78cfe930a4c16f79f",
+  "display/fonts/verdana_15.py": "6cca3c07901e77589d0f149635996921321573cc8e4910037bf1ef3afa729b27",
+  "display/fonts/verdana_28.py": "145dec9b52a96081749682acbc4a1a9efc8d907042d9dca7a7398dd1f1d3950e",
   "display/framebuf_sim.py": "f3c6e694d95a2d596f5d28964b60d984e8bff78f0dc1e354c46174cb483810c5",
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
-  "display/layout_200x200.py": "999938c3621ce92ceada9514248ee3b12964baf76c37bdaa43333e5dc96f3d93",
-  "display/layout_400x300.py": "e2c21abae99d4f754149ad4aab081726a596612de2a9590dfc1fcb7fcfc8db88",
-  "display/layout_common.py": "5eb938c7b023e79918a4c8afae3718472508745d4ea6dd1c086f86d471d8d2ce",
+  "display/layout_200x200.py": "ec2c7e51502494e9cc81887b625dd72039f84634f6a925cce82ba53424489bbf",
+  "display/layout_400x300.py": "5d593d2967e23832233d7658be162ae1f1c69896e03115f334ba89f9b04eac2f",
+  "display/layout_common.py": "4f1c91d8c06eb1e22084358bd40e9ae408e4a2365f76e81d37186f813426593e",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
   "lib/microdot/__init__.py": "600f59c25bc576bb6659e3ad4697a82c3c7a225f0063cc6024f8fc439c4a0a7c",
@@ -43,7 +43,7 @@
   "marketplaces/wb.py": "a4672722870b83a0cffe494b425f9212806cefe8fc3146beb42dc60b4f686715",
   "marketplaces/yandex.py": "a6fbea48eefef7cedde1ac655d999c69e1587f68175c4ce57328959e112e0081",
   "ota.py": "3f413a5c2137cbe9cdc348dfbec884a4d5ee52226ad0a38c6ef04804a6f2f2ae",
-  "stats_engine.py": "5c9f2c2023dca6f1d25380031443f142190695e8f176443bb9b36fe2b1c93cb2",
+  "stats_engine.py": "e694db4ea97b2a17db8c80890e597864db1f168a28a5b0a6a6b5351710a29771",
   "utils/http.py": "de8f3b5a2bc492757b5fc041020e369a3fb850556d54b24dc770263f6bf4b218",
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
   "web_server.py": "a88c3b5e0a56f363f466be797ce9c68dbcbac4171130249612bfd8c42b6fba9c",
@@ -52,5 +52,5 @@
   "www/index.html": "e2a2932b409d133a7efdd822a2af06cac58a28f0886585e3592c749d3cf303a5",
   "www/style.css": "d96299ab9fd8a77c5fbd0124ed860555d718ed16de1af1f7f4278fd4746690e7"
  },
- "version": 27
+ "version": 28
 }

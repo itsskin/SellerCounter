@@ -493,6 +493,10 @@ class StatsEngine:
                     and self.latest.get("fbs_orders", 0) > 0
                 )
             ),
+            # Сколько всего FBS-заказов ждут сборки прямо сейчас (сумма по
+            # ВСЕМ маркетплейсам сразу, не по одному) — дописывается после
+            # текста fbs_label.text (см. fbs_label.gap.* в layout.txt).
+            "fbs_pending_count": self.latest.get("fbs_orders", 0),
             # Экран "детализация по маркетплейсам" (только 400x300, см.
             # display/layout_400x300.py) — per_marketplace передаётся как
             # есть (per-площадка выручка/заказы/short_label), сам layout
