@@ -25,7 +25,7 @@
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
   "display/layout_200x200.py": "999938c3621ce92ceada9514248ee3b12964baf76c37bdaa43333e5dc96f3d93",
   "display/layout_400x300.py": "6ee7293dd5c33e6e4b5a11864a75604b4ef59145ee0064e031ce430e84484eae",
-  "display/layout_common.py": "365bd6ff06a96491e9deb55e7f28fbce4b02d8000028662a1b1ac05abb10fcc3",
+  "display/layout_common.py": "e46eb6089077ad2bf21b14e6c895a03dc10b16a5a1825658b62656f2c5de333e",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
   "lib/microdot/__init__.py": "600f59c25bc576bb6659e3ad4697a82c3c7a225f0063cc6024f8fc439c4a0a7c",
@@ -49,5 +49,5 @@
   "www/index.html": "b8cfad7e8272af9dac6c767d5045917a4879663cf6135799d032bf5308cbf71c",
   "www/style.css": "498f6021a230b696489ceadf7caf9f361ba25d9f2dc6c034224c1c9351e85cb8"
  },
- "version": 19
+ "version": 20
 }
