@@ -144,7 +144,7 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     orders_font_name = LAYOUT.cfg_str(cfg, "mp_row.orders_font")
     orders_font, orders_scale = resolve_font(orders_font_name)
     orders_decimal_font, orders_decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.orders_decimal_font"))
-    max_width = LAYOUT.cfg_int(cfg, "mp_row.max_width")
+    column_margin = LAYOUT.cfg_int(cfg, "mp_row.column_margin")
     area_x = LAYOUT.cfg_int(cfg, "mp_row.area_x")
     area_width = LAYOUT.cfg_int(cfg, "mp_row.area_width")
     label_y = LAYOUT.cfg_int(cfg, "mp_row.label_y")
@@ -153,6 +153,13 @@ def _draw_marketplace_breakdown(fb, cfg, data):
 
     n = len(columns)
     slot_w = area_width // n
+    # НЕ фиксированный бюджет — иначе при 1-2 видимых маркетплейсах (столбик
+    # заметно шире area_width/3) числа так и остаются мелкими, хотя места
+    # вокруг полно (см. запрос пользователя — "экран полностью не
+    # заполняется"). max_width растёт вместе со slot_w, так что
+    # shrink_font_to_fit при необходимости всё равно ужмёт, но уже от
+    # честного, актуального бюджета, а не от заниженного под 3 колонки.
+    max_width = max(1, slot_w - column_margin)
 
     def _draw_number(value, x, y, font, font_name, decimal_font, decimal_scale, scale, max_decimals, min_abbrev=0):
         text = custom_font.format_compact(

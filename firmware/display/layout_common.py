@@ -425,7 +425,14 @@ DEFAULTS = {
     # главная).
     "mp_row.orders_font": "orbitron_36",
     "mp_row.orders_decimal_font": "orbitron_20",
-    "mp_row.max_width": "120",
+    # Бюджет ширины под число — НЕ фиксированный: столбик_ширина минус
+    # column_margin (отступ с обеих сторон вместе). При 3 столбиках (узкие)
+    # даёт немного места под цифры; когда часть маркетплейсов скрыта и
+    # столбиков остаётся 1-2 (каждый заметно шире), тот же отступ даёт
+    # намного больше места — числа/шрифт (см. shrink_font_to_fit) сами
+    # используют освободившуюся ширину, а не остаются мелкими с пустым
+    # местом по бокам, как было с фиксированным max_width.
+    "mp_row.column_margin": "10",
     "mp_row.area_x": "5",
     "mp_row.area_width": "390",
     # Подпись — высоко над числами; выручка сразу под ней, вплотную.
@@ -535,14 +542,17 @@ fbs_label.text.400x300 = {fbs_label.text.400x300}
 # столбика — сверху вниз подпись ("Oz"/"Wb"/"Ya"), выручка (крупно,
 # округляется до целых K/M — revenue_font), заказы (мельче — orders_font);
 # label_y/revenue_y/orders_y — ОБЩАЯ на все столбики высота каждой строки
-# (у столбиков отличается только x).
+# (у столбиков отличается только x). column_margin — не фиксированная
+# ширина под число, а отступ: бюджет = ширина_столбика - column_margin,
+# так что при 1-2 видимых маркетплейсах (столбики шире) шрифт сам
+# использует освободившееся место, а не остаётся мелким посреди пустоты.
 mp_row.name = {mp_row.name}
 mp_row.label_font = {mp_row.label_font}
 mp_row.revenue_font = {mp_row.revenue_font}
 mp_row.revenue_decimal_font = {mp_row.revenue_decimal_font}
 mp_row.orders_font = {mp_row.orders_font}
 mp_row.orders_decimal_font = {mp_row.orders_decimal_font}
-mp_row.max_width = {mp_row.max_width}
+mp_row.column_margin = {mp_row.column_margin}
 mp_row.area_x = {mp_row.area_x}
 mp_row.area_width = {mp_row.area_width}
 mp_row.label_y = {mp_row.label_y}
