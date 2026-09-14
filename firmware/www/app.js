@@ -120,6 +120,18 @@ function renderSettings(state) {
   document.getElementById("ota-current-version").textContent = state.ota_version ?? "?";
 }
 
+function collectMarketplaceTestValues() {
+  const perMarketplace = {};
+  document.querySelectorAll(".mp-test-revenue, .mp-test-orders").forEach((input) => {
+    const mpId = input.dataset.mpId;
+    if (!input.value) return;
+    if (!perMarketplace[mpId]) perMarketplace[mpId] = {};
+    const field = input.classList.contains("mp-test-revenue") ? "revenue" : "orders";
+    perMarketplace[mpId][field] = Number(input.value);
+  });
+  return perMarketplace;
+}
+
 function shopCardHtml(available, shop) {
   const fields = available.required_fields
     .map((field) => {
@@ -218,6 +230,12 @@ function renderMarketplaces(state) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ display: { marketplace_breakdown_visible: updated } }),
         });
+        await api("/api/display/test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ per_marketplace: collectMarketplaceTestValues() }),
+        });
+        refreshPreview();
       } catch (err) {
         ev.target.checked = !ev.target.checked;
         alert("Ошибка: " + err.message);
@@ -237,6 +255,17 @@ function renderMarketplaces(state) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ display: { marketplace_breakdown_order: newOrder } }),
       });
+      // Сразу перерисовываем — иначе новый порядок виден на экране только
+      // после следующего обычного опроса/изменения продаж. Подставляем те
+      // же тестовые значения, что уже могли быть введены в полях выше —
+      // иначе смена порядка молча сбросила бы тестовое превью на реальные
+      // данные.
+      await api("/api/display/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ per_marketplace: collectMarketplaceTestValues() }),
+      });
+      refreshPreview();
       loadState(true);
     } catch (err) {
       alert("Ошибка: " + err.message);
@@ -764,14 +793,7 @@ document.getElementById("set-marketplace-breakdown").addEventListener("change", 
 document.getElementById("mp-breakdown-test-apply").addEventListener("click", async (ev) => {
   const button = ev.target;
   const msg = document.getElementById("mp-breakdown-test-msg");
-  const perMarketplace = {};
-  document.querySelectorAll(".mp-test-revenue, .mp-test-orders").forEach((input) => {
-    const mpId = input.dataset.mpId;
-    if (!input.value) return;
-    if (!perMarketplace[mpId]) perMarketplace[mpId] = {};
-    const field = input.classList.contains("mp-test-revenue") ? "revenue" : "orders";
-    perMarketplace[mpId][field] = Number(input.value);
-  });
+  const perMarketplace = collectMarketplaceTestValues();
   button.disabled = true;
   msg.classList.remove("error");
   try {

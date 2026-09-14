@@ -24,7 +24,7 @@
   "display/framebuf_sim.py": "f3c6e694d95a2d596f5d28964b60d984e8bff78f0dc1e354c46174cb483810c5",
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
   "display/layout_200x200.py": "999938c3621ce92ceada9514248ee3b12964baf76c37bdaa43333e5dc96f3d93",
-  "display/layout_400x300.py": "3063771e10544962f16a06379de99105fe47343bfad8e8024f91dac3ad771cb0",
+  "display/layout_400x300.py": "aa4f240a64d06b3a41fa17851c3fde12bd1521420b7c9887b5dc5dc9c948e1da",
   "display/layout_common.py": "18640854a8167556e4914facc2d4c1beb249b9346151fd4135dddcf270fccc24",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
@@ -40,14 +40,14 @@
   "marketplaces/wb.py": "a4672722870b83a0cffe494b425f9212806cefe8fc3146beb42dc60b4f686715",
   "marketplaces/yandex.py": "a6fbea48eefef7cedde1ac655d999c69e1587f68175c4ce57328959e112e0081",
   "ota.py": "3f413a5c2137cbe9cdc348dfbec884a4d5ee52226ad0a38c6ef04804a6f2f2ae",
-  "stats_engine.py": "cb0a999349cc4f652c9c09e85eeec20368c086b4cd39ec9c142a876d4342a411",
+  "stats_engine.py": "68198fd4f6a5f7363ef24ececc16b7b388b910b9aabdc917aefe5c37bfc10742",
   "utils/http.py": "de8f3b5a2bc492757b5fc041020e369a3fb850556d54b24dc770263f6bf4b218",
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
   "web_server.py": "bde4c7f00b0383d6ea56fc46d8a2dd30c5c4fd7139375a548d4068ef9a888313",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
-  "www/app.js": "7b39b1ef7526d4f02d4c636a36ecaec3304baa8730bbba723e0c095b2997c4e5",
-  "www/index.html": "42be08d1fd0a2a5a1928416bfa8cf4ddbd98e8269a6e052d65482f5ededaef84",
+  "www/app.js": "7634b0c62d28b9925faaeaf2c0c6acbad487448946b92c5cb0521e353d9e12f8",
+  "www/index.html": "052fd1eb089e3a31c3d4923b628770ae16f3bfa85ec7fdf191e095a993a01798",
   "www/style.css": "d96299ab9fd8a77c5fbd0124ed860555d718ed16de1af1f7f4278fd4746690e7"
  },
- "version": 21
+ "version": 22
 }

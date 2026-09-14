@@ -8,7 +8,7 @@ except ImportError:
 import breadcrumb
 from display import layout
 from marketplaces.base import MarketplaceError
-from marketplaces.registry import build_enabled_clients
+from marketplaces.registry import available_marketplaces, build_enabled_clients
 from utils.time_sync import today_local_bounds
 
 # Пауза между запросами к РАЗНЫМ магазинам ОДНОЙ площадки (см. poll_once) —
@@ -474,7 +474,24 @@ class StatsEngine:
             "show_marketplace_breakdown": self.cfg["display"].get("show_marketplace_breakdown", False),
             "per_marketplace": per_marketplace,
             "marketplace_breakdown_visible": self.cfg["display"].get("marketplace_breakdown_visible", {}),
-            "marketplace_breakdown_order": self.cfg["display"].get("marketplace_breakdown_order", []),
+            # Порядок столбиков — сохранённый + канонический (REGISTRY_ORDER
+            # из marketplaces/registry.py, тот же порядок, что веб-интерфейс
+            # показывает по умолчанию, ДО того как что-то настроили руками)
+            # для всех id, которых нет в сохранённом списке. Раньше "пусто"
+            # тут откатывалось на порядок in per_marketplace dict — а это
+            # порядок хранения в cfg["marketplaces"] на КОНКРЕТНОМ устройстве
+            # (зависит от того, в каком порядке когда-то добавляли магазины
+            # через веб) — почти всегда совпадает с каноническим, но не
+            # гарантированно, и тогда веб (всегда канонический порядок) и
+            # экран (порядок хранения) расходились без единой настроенной
+            # сортировки.
+            "marketplace_breakdown_order": (
+                self.cfg["display"].get("marketplace_breakdown_order", [])
+                + [
+                    m["id"] for m in available_marketplaces()
+                    if m["id"] not in self.cfg["display"].get("marketplace_breakdown_order", [])
+                ]
+            ),
         }
         breadcrumb.mark("redrawing display")
         try:

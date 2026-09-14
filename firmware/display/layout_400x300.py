@@ -123,7 +123,13 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     # порядок как в per_marketplace (естественный).
     per_marketplace = data.get("per_marketplace") or {}
     order = data.get("marketplace_breakdown_order") or []
-    ordered_ids = [mp_id for mp_id in order if mp_id in per_marketplace]
+    # "not in ordered_ids" тут же и дедуплицирует — если order (например
+    # из-за старого/битого cfg) содержит один id дважды, второе вхождение
+    # просто не пройдёт эту проверку.
+    ordered_ids = []
+    for mp_id in order:
+        if mp_id in per_marketplace and mp_id not in ordered_ids:
+            ordered_ids.append(mp_id)
     ordered_ids += [mp_id for mp_id in per_marketplace if mp_id not in ordered_ids]
     columns = [
         (mp_id, per_marketplace[mp_id]) for mp_id in ordered_ids if visible.get(mp_id, True)
