@@ -43,14 +43,14 @@
   "marketplaces/wb.py": "a4672722870b83a0cffe494b425f9212806cefe8fc3146beb42dc60b4f686715",
   "marketplaces/yandex.py": "a6fbea48eefef7cedde1ac655d999c69e1587f68175c4ce57328959e112e0081",
   "ota.py": "3f413a5c2137cbe9cdc348dfbec884a4d5ee52226ad0a38c6ef04804a6f2f2ae",
-  "stats_engine.py": "ad5ea8a42c86e8933ff772c63d393db7858f47184fcf50862a9f04296c07e639",
+  "stats_engine.py": "5c9f2c2023dca6f1d25380031443f142190695e8f176443bb9b36fe2b1c93cb2",
   "utils/http.py": "de8f3b5a2bc492757b5fc041020e369a3fb850556d54b24dc770263f6bf4b218",
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
-  "web_server.py": "bde4c7f00b0383d6ea56fc46d8a2dd30c5c4fd7139375a548d4068ef9a888313",
+  "web_server.py": "a88c3b5e0a56f363f466be797ce9c68dbcbac4171130249612bfd8c42b6fba9c",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
   "www/app.js": "5c0e9a7fd367104dcd00c3e9cb1dce22a4dd7098510a19fc7c9feeab034cad54",
   "www/index.html": "e2a2932b409d133a7efdd822a2af06cac58a28f0886585e3592c749d3cf303a5",
   "www/style.css": "d96299ab9fd8a77c5fbd0124ed860555d718ed16de1af1f7f4278fd4746690e7"
  },
- "version": 26
+ "version": 27
 }

@@ -299,9 +299,13 @@ async def api_display_test(request):
     # {marketplace_id: {"revenue": .., "orders": ..}} — тест экрана
     # "детализация по маркетплейсам" (см. web_server.py's marketplaces-list
     # в www/, поля "Тест: выручка"/"Тест: заказы" у каждого маркетплейса).
+    # "is not None", НЕ просто truthy — {} тоже валидный явный вызов (все
+    # тестовые поля очищены в вебе), должен снять сохранённый ранее
+    # "липкий" оверрайд (см. StatsEngine._redraw), а не быть неотличимым
+    # от "параметр вообще не передавали".
     per_marketplace_override = None
     raw_override = body.get("per_marketplace")
-    if raw_override:
+    if raw_override is not None:
         per_marketplace_override = {}
         try:
             for mp_id, values in raw_override.items():

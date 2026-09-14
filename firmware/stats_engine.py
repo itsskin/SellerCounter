@@ -109,6 +109,19 @@ class StatsEngine:
         # заказы/выручка реально изменились — при включении первый кадр
         # рисует main.py напрямую, сюда это не относится.
         self._displayed = None
+        # "Липкий" тестовый оверрайд для экрана "детализация по
+        # маркетплейсам" (см. web_server.py /api/display/test, www/app.js
+        # "Тест: выручка"/"Тест: заказы") — {marketplace_id: {"revenue":..,
+        # "orders":..}}. В отличие от orders_override/revenue_override
+        # ниже (которые применяются РОВНО на один _redraw() и стираются
+        # следующим обычным опросом) — этот держится до следующего явного
+        # изменения тестовых полей в вебе, переживая обычные опросы
+        # маркетплейсов: раз это заполнено вручную для проверки экрана, а
+        # не мгновенный "показать один раз" тест, реальный опрос не должен
+        # молча стирать его каждые poll_interval_sec. НЕ сохраняется на
+        # флеш — сбрасывается при перезагрузке платы, это ожидаемо для
+        # временных тестовых данных.
+        self._mp_test_override = {}
 
     async def run(self):
         while True:
@@ -428,19 +441,32 @@ class StatsEngine:
         "orders": ..}}, для ручного теста экрана "детализация по
         маркетплейсам" (см. web_server.py /api/display/test) — подставляет
         значения ТОЛЬКО для указанных площадок, остальные остаются
-        реальными. self.per_marketplace (настоящие данные) не трогается —
-        как и у orders/revenue выше, следующий обычный опрос перерисует
-        настоящими цифрами."""
+        реальными. В ОТЛИЧИЕ от orders/revenue выше — "липкий": сохраняется
+        (self._mp_test_override) и продолжает применяться на КАЖДОЙ
+        следующей перерисовке, включая обычные опросы, пока не будет явно
+        заменён (в том числе на {} — так поля очищаются в вебе). None
+        (по умолчанию, если параметр вообще не передан) — не трогает
+        сохранённое значение, просто использует то, что уже было.
+        self.per_marketplace (настоящие данные с опроса) не трогается
+        никогда — оверрайд применяется только к тому, что уходит на
+        экран."""
         await self._redraw(orders, revenue, per_marketplace_override)
 
     async def _redraw(self, orders_override=None, revenue_override=None, per_marketplace_override=None):
         tz = self.cfg.get("timezone_offset_hours", 3)
+        if per_marketplace_override is not None:
+            # Явный вызов (см. redraw()) обновляет "липкий" оверрайд — в
+            # том числе {} (все тестовые поля очищены в вебе), это и есть
+            # способ его снять. Обычный опрос (poll_once -> self._redraw()
+            # без аргументов) сюда не попадает и продолжает использовать
+            # то, что было сохранено раньше.
+            self._mp_test_override = per_marketplace_override
         per_marketplace = self.per_marketplace
-        if per_marketplace_override:
+        if self._mp_test_override:
             # Копия, не мутируем self.per_marketplace — настоящие данные
             # должны остаться нетронутыми для следующей обычной перерисовки.
             per_marketplace = dict(self.per_marketplace)
-            for mp_id, override in per_marketplace_override.items():
+            for mp_id, override in self._mp_test_override.items():
                 base = dict(per_marketplace.get(mp_id) or {})
                 base.setdefault("short_label", mp_id[:1].upper() + mp_id[1:2])
                 if override.get("revenue") is not None:
