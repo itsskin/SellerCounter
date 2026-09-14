@@ -390,6 +390,48 @@ DEFAULTS = {
     "fbs_label.font.400x300": "verdana_28",
     "fbs_label.text.200x200": "Собрать FBS",
     "fbs_label.text.400x300": "Собрать FBS",
+
+    # Экран "детализация по маркетплейсам" — ТОЛЬКО 400x300 (см.
+    # cfg["display"]["show_marketplace_breakdown"], display/layout_400x300
+    # ._draw_marketplace_breakdown()), поэтому поля тут БЕЗ суффикса
+    # разрешения (в отличие от всех элементов выше) — на 200x200 у этого
+    # режима вообще нет реализации. Включается/выключается через чекбокс в
+    # веб-интерфейсе, не через layout.txt — тут только позиционирование.
+    #
+    # Маркетплейсы — СТОЛБИКАМИ рядом друг с другом (1-3 штуки, по числу
+    # подключённых и видимых), не строками друг под другом: делят
+    # area_width поровну и центрируются в area_x..area_x+area_width — так
+    # при отключении одного из трёх оставшиеся два (или один) не жмутся в
+    # левую треть экрана, а красиво распределяются по всей ширине области.
+    # Внутри КАЖДОГО столбика — вертикальный стек, как на общем экране:
+    # подпись сверху, выручка выше центра, заказы ниже (та же y-раскладка
+    # что revenue.y/orders.y у общего вида, только чуть компактнее и общая
+    # на все столбики — не x, а y тут ФИКСИРОВАННЫЙ, отдельный на каждый
+    # столбик только x).
+    "mp_row.name": "Детализация по маркетплейсам",
+    # default_10 — растеризован из встроенного 8x8-шрифта framebuf (см.
+    # generate_default_font.py), умеет латиницу (Orbitron — нет вообще,
+    # только цифры+.-KM) и остаётся чётким на мелких размерах, где Orbitron
+    # уже разваливается.
+    "mp_row.label_font": "default_10",
+    # Выручка — крупно, с округлением до целых K/M (без ".8K", только
+    # "2K") — так остаётся широкий запас по ширине даже под большой
+    # шрифт в узком столбике. decimal_font тут почти не используется
+    # (max_decimals=0 в коде), но нужен на случай, если даже "2K" не влезет
+    # и придётся ужимать шрифт с хвостом-буквой отдельно.
+    "mp_row.revenue_font": "orbitron_70",
+    "mp_row.revenue_decimal_font": "orbitron_36",
+    # Заказы — заметно мельче выручки (это дополнительная цифра, не
+    # главная).
+    "mp_row.orders_font": "orbitron_36",
+    "mp_row.orders_decimal_font": "orbitron_20",
+    "mp_row.max_width": "120",
+    "mp_row.area_x": "5",
+    "mp_row.area_width": "390",
+    # Подпись — высоко над числами; выручка сразу под ней, вплотную.
+    "mp_row.label_y": "20",
+    "mp_row.revenue_y": "58",
+    "mp_row.orders_y": "225",
 }
 
 LAYOUT_TXT_TEMPLATE = """\
@@ -482,6 +524,30 @@ fbs_label.x.400x300 = {fbs_label.x.400x300}
 fbs_label.y.400x300 = {fbs_label.y.400x300}
 fbs_label.font.400x300 = {fbs_label.font.400x300}
 fbs_label.text.400x300 = {fbs_label.text.400x300}
+
+# "Детализация по маркетплейсам" — включается чекбоксом в веб-интерфейсе
+# (раздел "Маркетплейсы"), не тут (там же — порядок столбиков, стрелками
+# вверх/вниз, и тестовые поля для ручного превью без реальных заказов).
+# Поля ниже — только 400x300, БЕЗ суффикса разрешения. Маркетплейсы —
+# столбиками рядом (1-3 штуки, по числу подключённых и видимых — см.
+# галочки "Отображать на экране детализации" у каждого): делят area_width
+# поровну и центрируются в area_x..area_x+area_width. Внутри КАЖДОГО
+# столбика — сверху вниз подпись ("Oz"/"Wb"/"Ya"), выручка (крупно,
+# округляется до целых K/M — revenue_font), заказы (мельче — orders_font);
+# label_y/revenue_y/orders_y — ОБЩАЯ на все столбики высота каждой строки
+# (у столбиков отличается только x).
+mp_row.name = {mp_row.name}
+mp_row.label_font = {mp_row.label_font}
+mp_row.revenue_font = {mp_row.revenue_font}
+mp_row.revenue_decimal_font = {mp_row.revenue_decimal_font}
+mp_row.orders_font = {mp_row.orders_font}
+mp_row.orders_decimal_font = {mp_row.orders_decimal_font}
+mp_row.max_width = {mp_row.max_width}
+mp_row.area_x = {mp_row.area_x}
+mp_row.area_width = {mp_row.area_width}
+mp_row.label_y = {mp_row.label_y}
+mp_row.revenue_y = {mp_row.revenue_y}
+mp_row.orders_y = {mp_row.orders_y}
 """
 
 LAYOUT = LayoutTxtConfig(LAYOUT_TXT_PATH, DEFAULTS, LAYOUT_TXT_TEMPLATE, "layout")

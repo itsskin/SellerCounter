@@ -91,6 +91,7 @@ function renderSettings(state) {
   document.getElementById("set-yesterday").checked = (state.debug_day_offset || 0) !== 0;
   document.getElementById("set-fbs-reminder").checked = !!(state.display && state.display.show_fbs_reminder);
   document.getElementById("set-fbs-test-label").checked = !!(state.display && state.display.show_fbs_test_label);
+  document.getElementById("set-marketplace-breakdown").checked = !!(state.display && state.display.show_marketplace_breakdown);
 
   // Чекбокс "выключить звук" — инверсия buzzer.enabled (checked = звук
   // ВЫКЛЮЧЕН). Дефолт enabled=true (см. config.py), так что если поля нет
@@ -145,13 +146,31 @@ function shopCardHtml(available, shop) {
     </div>`;
 }
 
-function marketplaceTypeHtml(available, shops) {
+function marketplaceTypeHtml(available, shops, breakdownVisible, orderInfo) {
   const cards = shops.map((shop) => shopCardHtml(available, shop)).join("");
   return `
     <div class="mp-type" data-mp-id="${available.id}">
       <div class="mp-type-head">
         <h3>${available.name}</h3>
         <button type="button" class="mp-add-shop">+ Добавить магазин</button>
+      </div>
+      <div class="mp-breakdown-row">
+        <label class="checkbox">
+          <input type="checkbox" class="mp-breakdown-visible" data-mp-id="${available.id}" ${breakdownVisible ? "checked" : ""}>
+          Отображать на экране детализации
+        </label>
+        <span class="mp-reorder">
+          <button type="button" class="mp-move-up" data-mp-id="${available.id}" ${orderInfo.isFirst ? "disabled" : ""}>▲</button>
+          <button type="button" class="mp-move-down" data-mp-id="${available.id}" ${orderInfo.isLast ? "disabled" : ""}>▼</button>
+        </span>
+      </div>
+      <div class="override-row">
+        <label>Тест: выручка
+          <input type="number" class="mp-test-revenue" data-mp-id="${available.id}" min="0" placeholder="реальная">
+        </label>
+        <label>Тест: заказы
+          <input type="number" class="mp-test-orders" data-mp-id="${available.id}" min="0" placeholder="реальные">
+        </label>
       </div>
       ${cards || '<p class="hint">Магазинов нет — нажми "+ Добавить магазин".</p>'}
     </div>`;
@@ -165,10 +184,70 @@ function renderMarketplaces(state) {
     if (!shopsById[m.id]) shopsById[m.id] = [];
     shopsById[m.id].push(m);
   });
+  const breakdownVisibleMap = (state.display && state.display.marketplace_breakdown_visible) || {};
+  const available = state.marketplaces_available || [];
+  const availableById = {};
+  available.forEach((a) => (availableById[a.id] = a));
 
-  (state.marketplaces_available || []).forEach((available) => {
-    const shops = shopsById[available.id] || [];
-    container.insertAdjacentHTML("beforeend", marketplaceTypeHtml(available, shops));
+  // Порядок столбиков детализации: сохранённый cfg.display.marketplace_
+  // breakdown_order — но только реально существующие id — плюс всё
+  // остальное в естественном порядке (marketplaces_available) следом, на
+  // случай если порядок настроен не полностью или появился новый маркетплейс.
+  const savedOrder = (state.display && state.display.marketplace_breakdown_order) || [];
+  const order = savedOrder.filter((id) => availableById[id]);
+  available.forEach((a) => {
+    if (!order.includes(a.id)) order.push(a.id);
+  });
+
+  order.forEach((mpId, i) => {
+    const shops = shopsById[mpId] || [];
+    const visible = breakdownVisibleMap[mpId] !== false; // нет записи = по умолчанию показан
+    const orderInfo = { isFirst: i === 0, isLast: i === order.length - 1 };
+    container.insertAdjacentHTML(
+      "beforeend", marketplaceTypeHtml(availableById[mpId], shops, visible, orderInfo)
+    );
+  });
+
+  container.querySelectorAll(".mp-breakdown-visible").forEach((checkbox) => {
+    checkbox.addEventListener("change", async (ev) => {
+      const mpId = ev.target.dataset.mpId;
+      const updated = Object.assign({}, breakdownVisibleMap, { [mpId]: ev.target.checked });
+      try {
+        await api("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ display: { marketplace_breakdown_visible: updated } }),
+        });
+      } catch (err) {
+        ev.target.checked = !ev.target.checked;
+        alert("Ошибка: " + err.message);
+      }
+    });
+  });
+
+  async function moveMarketplace(mpId, delta) {
+    const idx = order.indexOf(mpId);
+    const swapWith = idx + delta;
+    if (swapWith < 0 || swapWith >= order.length) return;
+    const newOrder = order.slice();
+    [newOrder[idx], newOrder[swapWith]] = [newOrder[swapWith], newOrder[idx]];
+    try {
+      await api("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ display: { marketplace_breakdown_order: newOrder } }),
+      });
+      loadState(true);
+    } catch (err) {
+      alert("Ошибка: " + err.message);
+    }
+  }
+
+  container.querySelectorAll(".mp-move-up").forEach((btn) => {
+    btn.addEventListener("click", () => moveMarketplace(btn.dataset.mpId, -1));
+  });
+  container.querySelectorAll(".mp-move-down").forEach((btn) => {
+    btn.addEventListener("click", () => moveMarketplace(btn.dataset.mpId, 1));
   });
 
   container.querySelectorAll("form[data-key]").forEach((form) => {
@@ -656,6 +735,58 @@ document.getElementById("set-watchdog-sound").addEventListener("change", async (
     msg.textContent = "Ошибка: " + err.message;
     msg.classList.add("error");
   }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("set-marketplace-breakdown").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("marketplace-breakdown-msg");
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { show_marketplace_breakdown: ev.target.checked } }),
+    });
+    await api("/api/display/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    msg.textContent = "Сохранено и перерисовано";
+    msg.classList.remove("error");
+    refreshPreview();
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("mp-breakdown-test-apply").addEventListener("click", async (ev) => {
+  const button = ev.target;
+  const msg = document.getElementById("mp-breakdown-test-msg");
+  const perMarketplace = {};
+  document.querySelectorAll(".mp-test-revenue, .mp-test-orders").forEach((input) => {
+    const mpId = input.dataset.mpId;
+    if (!input.value) return;
+    if (!perMarketplace[mpId]) perMarketplace[mpId] = {};
+    const field = input.classList.contains("mp-test-revenue") ? "revenue" : "orders";
+    perMarketplace[mpId][field] = Number(input.value);
+  });
+  button.disabled = true;
+  msg.classList.remove("error");
+  try {
+    await api("/api/display/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ per_marketplace: perMarketplace }),
+    });
+    msg.textContent = "Показано на экране";
+    refreshPreview();
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  button.disabled = false;
   setTimeout(() => (msg.textContent = ""), 3000);
 });
 

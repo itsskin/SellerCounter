@@ -20,6 +20,10 @@ class MarketplaceClient:
 
     id = "base"
     name = "Base marketplace"
+    # Короткая подпись (2 латинские буквы) для экрана "детализация по
+    # маркетплейсам" (см. display/layout_400x300.py, cfg["display"]
+    # ["show_marketplace_breakdown"]) — там нет места под полное name.
+    short_label = "??"
     # Список ключей настроек, которые нужны в config["marketplaces"][i],
     # помимо "id" и "enabled". Используется веб-формой, чтобы знать какие
     # поля показать пользователю.

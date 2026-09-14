@@ -83,6 +83,7 @@ _last_good_fbo = {}
 class OzonClient(MarketplaceClient):
     id = "ozon"
     name = "Ozon"
+    short_label = "Oz"
     required_fields = ("client_id", "api_key")
 
     def fetch_daily_stats(self):

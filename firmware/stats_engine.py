@@ -197,6 +197,10 @@ class StatsEngine:
             mp_fbs_orders = 0
             shop_errors = []
             mp_name = shops[0].name
+            # .title()/.capitalize() нет в MicroPython — вручную: первая
+            # буква заглавная, остальное как есть (id и так всегда
+            # lowercase, см. MarketplaceClient.id).
+            mp_short_label = getattr(shops[0], "short_label", None) or (mp_id[:1].upper() + mp_id[1:2])
             for i, client in enumerate(shops):
                 # Время берём заново перед каждым запросом — иначе по логам
                 # не видно, сколько реально ждали именно этот запрос
@@ -298,6 +302,7 @@ class StatsEngine:
             total_revenue += mp_revenue
             per_marketplace[mp_id] = {
                 "name": mp_name,
+                "short_label": mp_short_label,
                 "orders": mp_orders,
                 "revenue": mp_revenue,
                 "fbs_orders": mp_fbs_orders,
@@ -406,7 +411,7 @@ class StatsEngine:
         # окно через полночь, например "22:00"-"08:00"
         return cur >= start or cur < end
 
-    async def redraw(self, orders=None, revenue=None):
+    async def redraw(self, orders=None, revenue=None, per_marketplace_override=None):
         """Публичная обёртка над _redraw() — перерисовать экран прямо
         сейчас, без нового опроса маркетплейсов. Нужна например после смены
         фона через веб (см. web_server.py /api/background) — картинка на
@@ -417,11 +422,32 @@ class StatsEngine:
         self.latest (см. web_server.py /api/display/test — ручной ввод
         цифр в веб-интерфейсе, чтобы посмотреть, как это будет выглядеть,
         не дожидаясь реальных данных с такими значениями). 0/None — как
-        будто override не задан, показываем реальные данные."""
-        await self._redraw(orders, revenue)
+        будто override не задан, показываем реальные данные.
 
-    async def _redraw(self, orders_override=None, revenue_override=None):
+        per_marketplace_override — {marketplace_id: {"revenue": ..,
+        "orders": ..}}, для ручного теста экрана "детализация по
+        маркетплейсам" (см. web_server.py /api/display/test) — подставляет
+        значения ТОЛЬКО для указанных площадок, остальные остаются
+        реальными. self.per_marketplace (настоящие данные) не трогается —
+        как и у orders/revenue выше, следующий обычный опрос перерисует
+        настоящими цифрами."""
+        await self._redraw(orders, revenue, per_marketplace_override)
+
+    async def _redraw(self, orders_override=None, revenue_override=None, per_marketplace_override=None):
         tz = self.cfg.get("timezone_offset_hours", 3)
+        per_marketplace = self.per_marketplace
+        if per_marketplace_override:
+            # Копия, не мутируем self.per_marketplace — настоящие данные
+            # должны остаться нетронутыми для следующей обычной перерисовки.
+            per_marketplace = dict(self.per_marketplace)
+            for mp_id, override in per_marketplace_override.items():
+                base = dict(per_marketplace.get(mp_id) or {})
+                base.setdefault("short_label", mp_id[:1].upper() + mp_id[1:2])
+                if override.get("revenue") is not None:
+                    base["revenue"] = override["revenue"]
+                if override.get("orders") is not None:
+                    base["orders"] = override["orders"]
+                per_marketplace[mp_id] = base
         data = {
             "orders": orders_override if orders_override else self.latest["orders"],
             "revenue": revenue_override if revenue_override else self.latest["revenue"],
@@ -441,6 +467,14 @@ class StatsEngine:
                     and self.latest.get("fbs_orders", 0) > 0
                 )
             ),
+            # Экран "детализация по маркетплейсам" (только 400x300, см.
+            # display/layout_400x300.py) — per_marketplace передаётся как
+            # есть (per-площадка выручка/заказы/short_label), сам layout
+            # решает, кого из них рисовать (marketplace_breakdown_visible).
+            "show_marketplace_breakdown": self.cfg["display"].get("show_marketplace_breakdown", False),
+            "per_marketplace": per_marketplace,
+            "marketplace_breakdown_visible": self.cfg["display"].get("marketplace_breakdown_visible", {}),
+            "marketplace_breakdown_order": self.cfg["display"].get("marketplace_breakdown_order", []),
         }
         breadcrumb.mark("redrawing display")
         try:

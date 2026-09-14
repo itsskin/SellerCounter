@@ -17,9 +17,11 @@ raw REPL, см. tools/mpy-raw-serial) — этому скрипту нужна �
 Зачем вообще нужен — Orbitron на маленьких размерах (10px и ниже) визуально
 разваливается (тонкие диагональные засечки геометричного шрифта), тогда как
 встроенный шрифт framebuf спроектирован именно под мелкие пиксельные
-надписи и остаётся чётким. Кириллицу не умеет (как и Orbitron) — только
-ASCII, поэтому алфавит тот же DEFAULT_CHARSET (цифры+.-KM), что и у
-Orbitron, не полный latin/cyrillic набор Verdana.
+надписи и остаётся чётким. Кириллицу он не умеет (компилируется в прошивку
+как обычный ASCII-набор) — алфавит цифры+.-KM + латиница (для коротких
+латинских подписей вроде "Oz"/"Wb"/"Ya" на экране детализации по
+маркетплейсам, см. layout_400x300._draw_marketplace_breakdown), не полный
+latin+cyrillic набор Verdana.
 
 Запуск (плата должна быть подключена):
     python3 generate_default_font.py
@@ -35,7 +37,8 @@ import font_render_lib as lib
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "fonts")
 NAME = "default_10"
-CHARSET = lib.DEFAULT_CHARSET
+_LATIN = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+CHARSET = lib.DEFAULT_CHARSET + " " + _LATIN
 
 # Код, выполняемый НА ПЛАТЕ — рисует каждый символ встроенным шрифтом в
 # отдельный 8x8 FrameBuffer (MONO_HLSB — тот же 1bpp построчный формат,

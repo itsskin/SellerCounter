@@ -49,6 +49,7 @@ NEW_ORDERS_URL = "https://marketplace-api.wildberries.ru/api/v3/orders/new"
 class WBClient(MarketplaceClient):
     id = "wb"
     name = "Wildberries"
+    short_label = "Wb"
     required_fields = ("api_key",)
 
     def fetch_daily_stats(self):

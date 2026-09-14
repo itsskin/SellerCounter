@@ -32,6 +32,7 @@ PENDING_SUBSTATUS = "STARTED"
 class YandexClient(MarketplaceClient):
     id = "yandex"
     name = "Yandex Market"
+    short_label = "Ya"
     required_fields = ("campaign_id", "api_key")
 
     def fetch_daily_stats(self):

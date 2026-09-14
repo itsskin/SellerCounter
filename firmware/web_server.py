@@ -296,8 +296,27 @@ async def api_display_test(request):
     except (TypeError, ValueError):
         return {"ok": False, "error": "orders/revenue должны быть числами"}, 400
 
+    # {marketplace_id: {"revenue": .., "orders": ..}} — тест экрана
+    # "детализация по маркетплейсам" (см. web_server.py's marketplaces-list
+    # в www/, поля "Тест: выручка"/"Тест: заказы" у каждого маркетплейса).
+    per_marketplace_override = None
+    raw_override = body.get("per_marketplace")
+    if raw_override:
+        per_marketplace_override = {}
+        try:
+            for mp_id, values in raw_override.items():
+                entry = {}
+                if values.get("revenue") is not None:
+                    entry["revenue"] = float(values["revenue"])
+                if values.get("orders") is not None:
+                    entry["orders"] = int(values["orders"])
+                if entry:
+                    per_marketplace_override[mp_id] = entry
+        except (TypeError, ValueError):
+            return {"ok": False, "error": "per_marketplace: revenue/orders должны быть числами"}, 400
+
     try:
-        await engine.redraw(orders=orders, revenue=revenue)
+        await engine.redraw(orders=orders, revenue=revenue, per_marketplace_override=per_marketplace_override)
     except Exception as exc:
         return {"ok": False, "error": str(exc)}, 500
 

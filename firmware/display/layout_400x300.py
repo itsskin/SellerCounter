@@ -20,6 +20,11 @@
 #   "orders": int,
 #   "revenue": float,
 #   "ip": str,
+#   # "детализация по маркетплейсам" (см. _draw_marketplace_breakdown) —
+#   # заменяет обычные orders/revenue выше, когда включена:
+#   "show_marketplace_breakdown": bool,
+#   "per_marketplace": {mp_id: {"short_label": str, "orders": int, "revenue": float, ...}},
+#   "marketplace_breakdown_visible": {mp_id: bool},
 # }
 
 import framebuf
@@ -102,6 +107,87 @@ def check_new_background():
     return applied
 
 
+def _draw_marketplace_breakdown(fb, cfg, data):
+    """"Детализация по маркетплейсам" — вместо одной общей суммы СТОЛБИК на
+    каждый подключённый и видимый маркетплейс (короткая подпись + его
+    выручка/заказы), рядом друг с другом. Внутри столбика — сверху вниз,
+    как на общем экране: подпись, выручка, заказы. См. cfg["display"]
+    ["show_marketplace_breakdown"]/["marketplace_breakdown_visible"] и
+    комментарий у mp_row.* в layout_common.DEFAULTS."""
+    visible = data.get("marketplace_breakdown_visible") or {}
+    # per_marketplace — обычный dict, вставленный stats_engine.py в порядке
+    # опроса (cfg["marketplaces"], по умолчанию Ozon/WB/Yandex). order —
+    # cfg["display"]["marketplace_breakdown_order"], список id в желаемом
+    # порядке столбиков (веб-интерфейс, раздел "Маркетплейсы", стрелки
+    # вверх/вниз) — пусто или неполный список, значит для отсутствующих id
+    # порядок как в per_marketplace (естественный).
+    per_marketplace = data.get("per_marketplace") or {}
+    order = data.get("marketplace_breakdown_order") or []
+    ordered_ids = [mp_id for mp_id in order if mp_id in per_marketplace]
+    ordered_ids += [mp_id for mp_id in per_marketplace if mp_id not in ordered_ids]
+    columns = [
+        (mp_id, per_marketplace[mp_id]) for mp_id in ordered_ids if visible.get(mp_id, True)
+    ]
+    if not columns:
+        return
+
+    label_font, label_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.label_font"))
+    revenue_font_name = LAYOUT.cfg_str(cfg, "mp_row.revenue_font")
+    revenue_font, revenue_scale = resolve_font(revenue_font_name)
+    revenue_decimal_font, revenue_decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.revenue_decimal_font"))
+    orders_font_name = LAYOUT.cfg_str(cfg, "mp_row.orders_font")
+    orders_font, orders_scale = resolve_font(orders_font_name)
+    orders_decimal_font, orders_decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.orders_decimal_font"))
+    max_width = LAYOUT.cfg_int(cfg, "mp_row.max_width")
+    area_x = LAYOUT.cfg_int(cfg, "mp_row.area_x")
+    area_width = LAYOUT.cfg_int(cfg, "mp_row.area_width")
+    label_y = LAYOUT.cfg_int(cfg, "mp_row.label_y")
+    revenue_y = LAYOUT.cfg_int(cfg, "mp_row.revenue_y")
+    orders_y = LAYOUT.cfg_int(cfg, "mp_row.orders_y")
+
+    n = len(columns)
+    slot_w = area_width // n
+
+    def _draw_number(value, x, y, font, font_name, decimal_font, decimal_scale, scale, max_decimals, min_abbrev=0):
+        text = custom_font.format_compact(
+            font, value, max_width, scale,
+            decimal_font=decimal_font, decimal_scale=decimal_scale, max_decimals=max_decimals,
+            min_abbrev=min_abbrev,
+        )
+        big, tail = split_compact(text)
+        trailing = [(tail, decimal_font, decimal_scale)] if tail else []
+        tail_width = custom_font.text_width(decimal_font, tail, decimal_scale) if tail else 0
+        if custom_font.text_width(font, big, scale) + tail_width > max_width:
+            font, scale = shrink_font_to_fit(font_name, big, max_width, extra_width=tail_width)
+        custom_font.draw_text_with_trailing(
+            fb, font, big, x, y, trailing, big_scale=scale, center_whole=True,
+        )
+
+    for i, (mp_id, entry) in enumerate(columns):
+        col_x = area_x + slot_w * i + slot_w // 2
+
+        label = entry.get("short_label") or (mp_id[:1].upper() + mp_id[1:2])
+        custom_font.draw_text_centered(fb, label_font, label, col_x, label_y, scale=label_scale)
+
+        # Выручка — крупно, округление до целых K/M (max_decimals=0, "2K"
+        # не "1.8K") — при таком большом шрифте в узком столбике decimal
+        # часть почти никогда не влезла бы всё равно.
+        # min_abbrev=1000 — иначе, например, 220 (меньше 0.5K) округлилась
+        # бы до "0K" (max_decimals=0) при попытке K-сокращения — вместо
+        # этого до 1000 показываем число как есть, шрифт сам ужмётся
+        # (см. shrink_font_to_fit выше), если не влезает целиком.
+        _draw_number(
+            entry.get("revenue", 0), col_x, revenue_y,
+            revenue_font, revenue_font_name, revenue_decimal_font, revenue_decimal_scale, revenue_scale,
+            max_decimals=0, min_abbrev=1000,
+        )
+        _draw_number(
+            entry.get("orders", 0), col_x, orders_y,
+            orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
+            max_decimals=1, min_abbrev=10000,
+        )
+
+
 def update_numbers(fb, data):
     # Фон перезагружаем на каждой перерисовке (не только один раз при
     # старте) — та же причина, что у layout_200x200: текст не должен
@@ -109,7 +195,9 @@ def update_numbers(fb, data):
     _load_background(fb)
     cfg = LAYOUT.get()
 
-    if LAYOUT.cfg_bool(cfg, res_key("revenue", "show", RES)):
+    if data.get("show_marketplace_breakdown"):
+        _draw_marketplace_breakdown(fb, cfg, data)
+    elif LAYOUT.cfg_bool(cfg, res_key("revenue", "show", RES)):
         revenue_font, revenue_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("revenue", "font", RES)))
         decimal_font, decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("revenue", "decimal_font", RES)))
         revenue_max_width = LAYOUT.cfg_int(cfg, res_key("revenue", "max_width", RES))
@@ -137,7 +225,7 @@ def update_numbers(fb, data):
             center_whole=True,
         )
 
-    if LAYOUT.cfg_bool(cfg, res_key("orders", "show", RES)):
+    if not data.get("show_marketplace_breakdown") and LAYOUT.cfg_bool(cfg, res_key("orders", "show", RES)):
         orders_font, orders_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("orders", "font", RES)))
         orders_decimal_font, orders_decimal_scale = resolve_font(
             LAYOUT.cfg_str(cfg, res_key("orders", "decimal_font", RES))
