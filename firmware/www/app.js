@@ -115,6 +115,9 @@ function renderSettings(state) {
   document.getElementById("set-display-driver").value =
     (state.display && state.display.driver) || "epd1in54";
 
+  document.getElementById("set-full-refresh-every").value =
+    (state.display && state.display.full_refresh_every) || 50;
+
   document.getElementById("set-layout-override").value =
     (state.display && state.display.layout_override) || "";
 
@@ -600,6 +603,24 @@ document.getElementById("display-driver-save").addEventListener("click", async (
     msg.classList.add("error");
     button.disabled = false;
   }
+});
+
+document.getElementById("set-full-refresh-every").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("full-refresh-every-msg");
+  const value = Number(ev.target.value) || 50;
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { full_refresh_every: value } }),
+    });
+    msg.textContent = "Сохранено";
+    msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
 });
 
 document.getElementById("preview-refresh").addEventListener("click", refreshPreview);

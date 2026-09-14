@@ -240,6 +240,13 @@ async def api_settings(request):
         cfg["debug_day_offset"] = int(body["debug_day_offset"])
     if "display" in body:
         cfg["display"].update(body["display"])
+        display = _state["display"]
+        if display is not None and "full_refresh_every" in body["display"]:
+            # Живой объект уже создан при старте (см. main.py _get_display)
+            # — применяем сразу, без перезагрузки платы (в отличие от
+            # driver/screen выше, которые меняют физическую SPI/пин-
+            # конфигурацию и требуют настоящего рестарта).
+            display.full_refresh_every = cfg["display"].get("full_refresh_every", 50)
     if "buzzer" in body:
         cfg["buzzer"].update(body["buzzer"])
         buzzer = _state["buzzer"]

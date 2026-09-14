@@ -114,7 +114,10 @@ class Epd1in54Display(DisplayDriver):
 
     # Каждое N-ное обновление — честный full refresh (см. show()), не
     # "fast full" — чистит накопившиеся от температурного трюка призраки.
-    FULL_REFRESH_EVERY = 10
+    # Дефолт на случай, если main.py не переопределит инстанс-атрибутом
+    # (см. cfg["display"]["full_refresh_every"], config.py) — переопределяется
+    # СРАЗУ, без перезагрузки платы, см. web_server.py /api/settings.
+    full_refresh_every = 50
 
     def __init__(self):
         super().__init__()
@@ -131,7 +134,7 @@ class Epd1in54Display(DisplayDriver):
         self._rst = Pin(PINS["rst"], Pin.OUT, value=1)
         self._busy = Pin(PINS["busy"], Pin.IN)
         self._hw_ready = False
-        # См. FULL_REFRESH_EVERY выше и show() — стартует с 0, так что
+        # См. full_refresh_every выше и show() — стартует с 0, так что
         # первый show() после включения платы тоже честный (не "fast full").
         self._update_count = 0
         self._log("init: pins ok")
@@ -255,12 +258,12 @@ class Epd1in54Display(DisplayDriver):
         #
         # По HW-наблюдению этот трюк при частом повторении подряд оставляет
         # лёгкие призраки предыдущих кадров, несмотря на "полное"
-        # перещёлкивание пикселей на бумаге. Раз в FULL_REFRESH_EVERY
+        # перещёлкивание пикселей на бумаге. Раз в self.full_refresh_every
         # обновлений (и первым делом после включения — self._update_count
         # стартует с 0 в __init__) пропускаем температурный трюк и
         # используем настоящий медленный LUT (0x22=0xF7), который их убирает.
         self._update_count += 1
-        full = self._update_count == 1 or self._update_count % self.FULL_REFRESH_EVERY == 0
+        full = self._update_count == 1 or self._update_count % self.full_refresh_every == 0
         if not full:
             self._cmd(CMD_TEMP_WRITE, bytes([0x64]))
         self._cmd(CMD_DISP_CTRL2, bytes([0xF7 if full else 0xD7]))

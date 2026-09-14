@@ -42,18 +42,28 @@ def _get_display(cfg):
     driver_name = cfg["display"].get("driver", "sim")
     if driver_name == "epd4in2":
         from display.epd4in2 import Epd4in2Display
-        return Epd4in2Display()
-    if driver_name == "epd1in54":
+        display = Epd4in2Display()
+    elif driver_name == "epd1in54":
         from display.epd1in54 import Epd1in54Display
-        return Epd1in54Display()
-    # "sim" — превью в браузере без физического экрана; какой размер
-    # симулировать, берём из cfg["display"]["screen"] (независимо от
-    # driver, чтобы можно было проверить оба макета без железа).
-    from display.framebuf_sim import SimDisplay
-    screen = cfg["display"].get("screen", "400x300")
-    if screen == "200x200":
-        return SimDisplay(width=200, height=200)
-    return SimDisplay(width=400, height=300)
+        display = Epd1in54Display()
+    else:
+        # "sim" — превью в браузере без физического экрана; какой размер
+        # симулировать, берём из cfg["display"]["screen"] (независимо от
+        # driver, чтобы можно было проверить оба макета без железа).
+        from display.framebuf_sim import SimDisplay
+        screen = cfg["display"].get("screen", "400x300")
+        if screen == "200x200":
+            display = SimDisplay(width=200, height=200)
+        else:
+            display = SimDisplay(width=400, height=300)
+    # full_refresh_every не существует у SimDisplay (нет реального
+    # температурного трюка, которым нужно управлять) — устанавливаем
+    # безусловно всё равно, простой лишний атрибут ей не мешает, а
+    # реальным epd4in2/epd1in54 это подхватывает cfg сразу при старте, а не
+    # только дефолт класса (см. config.py, web_server.py /api/settings —
+    # там же живое обновление без перезагрузки платы).
+    display.full_refresh_every = cfg["display"].get("full_refresh_every", 50)
+    return display
 
 
 # 3 минуты — компромисс между двумя разными сценариями:
