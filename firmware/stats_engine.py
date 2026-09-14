@@ -492,6 +492,9 @@ class StatsEngine:
                     if m["id"] not in self.cfg["display"].get("marketplace_breakdown_order", [])
                 ]
             ),
+            "marketplace_breakdown_show_total_revenue": self.cfg["display"].get(
+                "marketplace_breakdown_show_total_revenue", False
+            ),
         }
         breadcrumb.mark("redrawing display")
         try:

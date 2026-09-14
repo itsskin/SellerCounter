@@ -425,13 +425,16 @@ DEFAULTS = {
     # главная).
     "mp_row.orders_font": "orbitron_36",
     "mp_row.orders_decimal_font": "orbitron_20",
-    # Бюджет ширины под число — НЕ фиксированный: столбик_ширина минус
-    # column_margin (отступ с обеих сторон вместе). При 3 столбиках (узкие)
-    # даёт немного места под цифры; когда часть маркетплейсов скрыта и
-    # столбиков остаётся 1-2 (каждый заметно шире), тот же отступ даёт
-    # намного больше места — числа/шрифт (см. shrink_font_to_fit) сами
-    # используют освободившуюся ширину, а не остаются мелкими с пустым
-    # местом по бокам, как было с фиксированным max_width.
+    # column_width — ФИКСИРОВАННАЯ ширина одного столбика (не area_width
+    # делённая на число видимых маркетплейсов) — иначе при 1-2 столбиках
+    # (вместо обычных 3) они растягивались на всю area_width, разъезжаясь
+    # к противоположным краям экрана с пустым разрывом посередине. Группа
+    # из N столбиков по column_width каждый просто центрируется в
+    # area_x..area_x+area_width — при меньшем числе столбиков свободное
+    # место остаётся СНАРУЖИ группы (симметричные поля по краям), а не
+    # разрывом внутри неё. max_width (бюджет под число) — column_width
+    # минус column_margin (отступ с обеих сторон вместе).
+    "mp_row.column_width": "130",
     "mp_row.column_margin": "10",
     "mp_row.area_x": "5",
     "mp_row.area_width": "390",
@@ -552,6 +555,7 @@ mp_row.revenue_font = {mp_row.revenue_font}
 mp_row.revenue_decimal_font = {mp_row.revenue_decimal_font}
 mp_row.orders_font = {mp_row.orders_font}
 mp_row.orders_decimal_font = {mp_row.orders_decimal_font}
+mp_row.column_width = {mp_row.column_width}
 mp_row.column_margin = {mp_row.column_margin}
 mp_row.area_x = {mp_row.area_x}
 mp_row.area_width = {mp_row.area_width}

@@ -145,6 +145,7 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     orders_font, orders_scale = resolve_font(orders_font_name)
     orders_decimal_font, orders_decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.orders_decimal_font"))
     column_margin = LAYOUT.cfg_int(cfg, "mp_row.column_margin")
+    column_width = LAYOUT.cfg_int(cfg, "mp_row.column_width")
     area_x = LAYOUT.cfg_int(cfg, "mp_row.area_x")
     area_width = LAYOUT.cfg_int(cfg, "mp_row.area_width")
     label_y = LAYOUT.cfg_int(cfg, "mp_row.label_y")
@@ -152,14 +153,15 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     orders_y = LAYOUT.cfg_int(cfg, "mp_row.orders_y")
 
     n = len(columns)
-    slot_w = area_width // n
-    # НЕ фиксированный бюджет — иначе при 1-2 видимых маркетплейсах (столбик
-    # заметно шире area_width/3) числа так и остаются мелкими, хотя места
-    # вокруг полно (см. запрос пользователя — "экран полностью не
-    # заполняется"). max_width растёт вместе со slot_w, так что
-    # shrink_font_to_fit при необходимости всё равно ужмёт, но уже от
-    # честного, актуального бюджета, а не от заниженного под 3 колонки.
-    max_width = max(1, slot_w - column_margin)
+    # column_width — ФИКСИРОВАННАЯ ширина под столбик, не area_width/n:
+    # при area_width/n столбики растягивались на всю ширину области даже
+    # когда их 1-2 (реже 3), разъезжаясь к противоположным краям экрана с
+    # пустым разрывом посередине — визуально хуже, чем группа столбиков
+    # постоянной ширины, отцентрированная в area_x..area_x+area_width с
+    # запасом СНАРУЖИ группы, а не разрывом ВНУТРИ нее.
+    group_width = column_width * n
+    group_x = area_x + (area_width - group_width) // 2
+    max_width = max(1, column_width - column_margin)
 
     def _draw_number(value, x, y, font, font_name, decimal_font, decimal_scale, scale, max_decimals, min_abbrev=0):
         text = custom_font.format_compact(
@@ -177,7 +179,7 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         )
 
     for i, (mp_id, entry) in enumerate(columns):
-        col_x = area_x + slot_w * i + slot_w // 2
+        col_x = group_x + column_width * i + column_width // 2
 
         label = entry.get("short_label") or (mp_id[:1].upper() + mp_id[1:2])
         custom_font.draw_text_centered(fb, label_font, label, col_x, label_y, scale=label_scale)
@@ -194,11 +196,23 @@ def _draw_marketplace_breakdown(fb, cfg, data):
             revenue_font, revenue_font_name, revenue_decimal_font, revenue_decimal_scale, revenue_scale,
             max_decimals=0, min_abbrev=1000,
         )
-        _draw_number(
-            entry.get("orders", 0), col_x, orders_y,
-            orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
-            max_decimals=1, min_abbrev=10000,
-        )
+        # Нижнее число — обычно заказы ЭТОГО маркетплейса, но галочка в
+        # веб-интерфейсе (раздел "Маркетплейсы") может заменить его на
+        # ОБЩУЮ выручку по всем маркетплейсам сразу (одно и то же число
+        # повторяется под каждым столбиком) — чтобы сразу видеть долю
+        # каждого от общего рядом с его собственной выручкой сверху.
+        if data.get("marketplace_breakdown_show_total_revenue"):
+            _draw_number(
+                data.get("revenue", 0), col_x, orders_y,
+                orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
+                max_decimals=0, min_abbrev=1000,
+            )
+        else:
+            _draw_number(
+                entry.get("orders", 0), col_x, orders_y,
+                orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
+                max_decimals=1, min_abbrev=10000,
+            )
 
 
 def update_numbers(fb, data):

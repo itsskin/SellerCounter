@@ -92,6 +92,7 @@ function renderSettings(state) {
   document.getElementById("set-fbs-reminder").checked = !!(state.display && state.display.show_fbs_reminder);
   document.getElementById("set-fbs-test-label").checked = !!(state.display && state.display.show_fbs_test_label);
   document.getElementById("set-marketplace-breakdown").checked = !!(state.display && state.display.show_marketplace_breakdown);
+  document.getElementById("set-mp-total-revenue").checked = !!(state.display && state.display.marketplace_breakdown_show_total_revenue);
 
   // Чекбокс "выключить звук" — инверсия buzzer.enabled (checked = звук
   // ВЫКЛЮЧЕН). Дефолт enabled=true (см. config.py), так что если поля нет
@@ -130,6 +131,31 @@ function collectMarketplaceTestValues() {
     perMarketplace[mpId][field] = Number(input.value);
   });
   return perMarketplace;
+}
+
+// Тестовые поля живут только в браузере (per_marketplace-override никогда
+// не сохраняется в cfg платы) — без этого любая перерисовка списка
+// маркетплейсов (смена порядка, видимости, обновление страницы) стирает
+// введённые числа, и их приходится вписывать заново каждый раз.
+function mpTestValueStorageKey(mpId, field) {
+  return "sc_mp_test_" + mpId + "_" + field;
+}
+
+function getStoredMpTestValue(mpId, field) {
+  try {
+    return localStorage.getItem(mpTestValueStorageKey(mpId, field)) || "";
+  } catch (err) {
+    return "";
+  }
+}
+
+function setStoredMpTestValue(mpId, field, value) {
+  try {
+    if (value) localStorage.setItem(mpTestValueStorageKey(mpId, field), value);
+    else localStorage.removeItem(mpTestValueStorageKey(mpId, field));
+  } catch (err) {
+    // приватный режим/запрет на localStorage — просто не запоминаем между перезагрузками
+  }
 }
 
 function shopCardHtml(available, shop) {
@@ -178,10 +204,12 @@ function marketplaceTypeHtml(available, shops, breakdownVisible, orderInfo) {
       </div>
       <div class="override-row">
         <label>Тест: выручка
-          <input type="number" class="mp-test-revenue" data-mp-id="${available.id}" min="0" placeholder="реальная">
+          <input type="number" class="mp-test-revenue" data-mp-id="${available.id}" min="0" placeholder="реальная"
+            value="${getStoredMpTestValue(available.id, "revenue")}">
         </label>
         <label>Тест: заказы
-          <input type="number" class="mp-test-orders" data-mp-id="${available.id}" min="0" placeholder="реальные">
+          <input type="number" class="mp-test-orders" data-mp-id="${available.id}" min="0" placeholder="реальные"
+            value="${getStoredMpTestValue(available.id, "orders")}">
         </label>
       </div>
       ${cards || '<p class="hint">Магазинов нет — нажми "+ Добавить магазин".</p>'}
@@ -277,6 +305,13 @@ function renderMarketplaces(state) {
   });
   container.querySelectorAll(".mp-move-down").forEach((btn) => {
     btn.addEventListener("click", () => moveMarketplace(btn.dataset.mpId, 1));
+  });
+
+  container.querySelectorAll(".mp-test-revenue, .mp-test-orders").forEach((input) => {
+    input.addEventListener("input", () => {
+      const field = input.classList.contains("mp-test-revenue") ? "revenue" : "orders";
+      setStoredMpTestValue(input.dataset.mpId, field, input.value);
+    });
   });
 
   container.querySelectorAll("form[data-key]").forEach((form) => {
@@ -778,7 +813,30 @@ document.getElementById("set-marketplace-breakdown").addEventListener("change", 
     await api("/api/display/test", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ per_marketplace: collectMarketplaceTestValues() }),
+    });
+    msg.textContent = "Сохранено и перерисовано";
+    msg.classList.remove("error");
+    refreshPreview();
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("set-mp-total-revenue").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("mp-total-revenue-msg");
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { marketplace_breakdown_show_total_revenue: ev.target.checked } }),
+    });
+    await api("/api/display/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ per_marketplace: collectMarketplaceTestValues() }),
     });
     msg.textContent = "Сохранено и перерисовано";
     msg.classList.remove("error");
