@@ -313,6 +313,22 @@ async def api_layout_text_get(request):
     return {"ok": True, "path": layout_common.LAYOUT.path, "text": layout_common.LAYOUT.read_text()}
 
 
+@app.route("/api/layout/fonts")
+async def api_layout_fonts(request):
+    """Список имён шрифтов, РЕАЛЬНО доступных на этой плате сейчас (сканирует
+    display/fonts/*.py) — то, что можно подставлять в поля *.font.* в
+    layout.txt. Не статический список из репозитория — плата могла ещё не
+    получить свежий OTA с новыми шрифтами, так что это честная проверка "по
+    факту"."""
+    try:
+        names = sorted(
+            n[:-3] for n in os.listdir("/display/fonts") if n.endswith(".py")
+        )
+    except OSError as exc:
+        return {"ok": False, "error": str(exc)}, 500
+    return {"ok": True, "fonts": names}
+
+
 @app.route("/api/layout/text", methods=["POST"])
 async def api_layout_text_post(request):
     """Сохраняет отредактированный layout.txt и сразу перерисовывает экран

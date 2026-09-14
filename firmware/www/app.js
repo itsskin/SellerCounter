@@ -737,6 +737,14 @@ async function loadLayoutText() {
     msg.textContent = "Ошибка загрузки: " + err.message;
     msg.classList.add("error");
   }
+
+  const fontsEl = document.getElementById("layout-fonts-list");
+  try {
+    const res = await api("/api/layout/fonts");
+    fontsEl.textContent = res.fonts.join(", ");
+  } catch (err) {
+    fontsEl.textContent = "не удалось получить список: " + err.message;
+  }
 }
 
 document.getElementById("layout-text-reload").addEventListener("click", loadLayoutText);

@@ -2,9 +2,13 @@
 Не грузится на устройство как данные — просто справка для правки
 display/assets/layout.txt (поле font).
 
+default:
+  имя файла          реальная высота цифр на экране
+  default_10       8px
+
 orbitron:
   имя файла          реальная высота цифр на экране
-  orbitron_10       7px
+  orbitron_12       9px
   orbitron_20       15px
   orbitron_24       17px
   orbitron_36       26px
