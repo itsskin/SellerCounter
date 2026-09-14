@@ -4,6 +4,7 @@ display/assets/layout.txt (поле font).
 
 orbitron:
   имя файла          реальная высота цифр на экране
+  orbitron_10       7px
   orbitron_20       15px
   orbitron_24       17px
   orbitron_36       26px

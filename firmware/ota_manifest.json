@@ -8,7 +8,8 @@
   "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
   "display/epd1in54.py": "7e16bb3020cfe9d7497ef4acb94e28916888fceef9faac6a9be0fa05654acda0",
   "display/epd4in2.py": "8071e11bfb3564694d15109e910f41deea5fd819d5fc9f42012fa037b0c7e3a6",
-  "display/fonts/available_sizes.txt": "1378ccefaf4142ebe88b11a89576540541ecdf7f78698d633f63291e24b7d841",
+  "display/fonts/available_sizes.txt": "27f285b5047d9f50c45fb932267b94c2cad9e6a5c60d9d82417cefd4e328686c",
+  "display/fonts/orbitron_10.py": "f3c857eba957e99090859c5c43e5c1195f911c60c48e72c4bf5e13552d0366e9",
   "display/fonts/orbitron_128.py": "4806d7a20dee526c8c2eb569aaa2a35a4c6cae1409204cd5030df4d02a27ba3f",
   "display/fonts/orbitron_20.py": "b2e6ab2fda18210d3aeec6de16f92f17b09fb99d6b1a7a0a0a15edefc43b79cc",
   "display/fonts/orbitron_24.py": "478ccf8cecc5a251c25b8112eb1e9343e4a139dc2c42039c35eecb78e0586ccc",
@@ -47,5 +48,5 @@
   "www/index.html": "55d30c38093293943f9734e8c3af01b635982dba9db62f34df4ac26a1cd722e2",
   "www/style.css": "498f6021a230b696489ceadf7caf9f361ba25d9f2dc6c034224c1c9351e85cb8"
  },
- "version": 17
+ "version": 18
 }
