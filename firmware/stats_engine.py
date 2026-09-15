@@ -67,6 +67,20 @@ class StatsEngine:
         # orders могли бы не вырасти вообще, а FBS-заказ, требующий сборки
         # прямо сейчас, всё равно появился — см. poll_once).
         self._last_fbs_orders_by_mp = {}
+        # _last_orders_by_mp/_last_fbs_orders_by_mp живут только в памяти
+        # (не на флеше) — на каждой перезагрузке платы (краш по watchdog,
+        # OTA, ручной ресет) стартуют пустыми. Без этого флага первый опрос
+        # после ЛЮБОЙ перезагрузки сравнивал бы реальные "заказов сегодня
+        # уже 8" с пустым prev=0 — 8 > 0 считалось бы РОСТОМ, и звук играл
+        # бы на уже существующие заказы, как будто это новая продажа (HW-
+        # подтверждено пользователем: сигнал продажи прозвучал, хотя число
+        # заказов не изменилось). False — ставим ИМЕННО на этом (первом за
+        # сессию) опросе счётчики как есть (seed), но без звука; True —
+        # обычное сравнение с прошлым опросом, звук работает как задумано.
+        # Сбрасывается в False там же, где обнуляются сами счётчики — см.
+        # poll_once(), смена дня — по той же причине (0 -> реальное число
+        # заказов дня не должно звучать как продажа).
+        self._sound_baseline_ready = False
         # Последние УСПЕШНО полученные orders/revenue по каждому МАГАЗИНУ
         # отдельно (ключ — entry["key"] из config.json, не marketplace id —
         # на одной площадке может быть несколько магазинов/API-ключей, см.
@@ -183,6 +197,14 @@ class StatsEngine:
             self._last_orders_by_mp = {}
             self._last_fbs_orders_by_mp = {}
             self._last_good_by_shop = {}
+            # См. self._sound_baseline_ready в __init__ — та же защита:
+            # первый опрос нового дня сравнивал бы уже накопленные (если
+            # опрос запустился не ровно в полночь) заказы с только что
+            # обнулённым prev=0. Изредка это будет ценой пропущенного звука
+            # на самый первый заказ дня, если он случится ровно на границе
+            # смены даты — принято сознательно, вместо гораздо более
+            # частого ложного "продажа!" на весь уже накопленный итог дня.
+            self._sound_baseline_ready = False
 
         total_orders = 0
         total_revenue = 0.0
@@ -343,10 +365,18 @@ class StatsEngine:
         # магазинов. Список, а не одна проверка "выросло ли суммарно" —
         # чтобы у каждой площадки играть СВОЮ мелодию (notification_sounds),
         # а не одну общую на всех.
+        # seeding — первый опрос за сессию (после включения платы ИЛИ
+        # смены дня, см. self._sound_baseline_ready) — только запоминаем
+        # текущие значения как точку отсчёта, звук не играем ни для кого:
+        # prev=0 для всех (счётчики только что обнулены/только что
+        # созданы) сделал бы любой уже существующий заказ похожим на
+        # "рост с нуля", хотя реально это просто первый взгляд на уже
+        # имеющиеся данные, не новая продажа.
+        seeding = not self._sound_baseline_ready
         grown = []
         for mp_id, entry in per_marketplace.items():
             prev = self._last_orders_by_mp.get(mp_id, 0)
-            if entry["orders"] > prev:
+            if not seeding and entry["orders"] > prev:
                 grown.append(mp_id)
             self._last_orders_by_mp[mp_id] = entry["orders"]
 
@@ -358,9 +388,10 @@ class StatsEngine:
             # дважды за один и тот же mp_id не нужно — append только если
             # его там ещё нет.
             fbs_prev = self._last_fbs_orders_by_mp.get(mp_id, 0)
-            if entry.get("fbs_orders", 0) > fbs_prev and mp_id not in grown:
+            if not seeding and entry.get("fbs_orders", 0) > fbs_prev and mp_id not in grown:
                 grown.append(mp_id)
             self._last_fbs_orders_by_mp[mp_id] = entry.get("fbs_orders", 0)
+        self._sound_baseline_ready = True
 
         beep_enabled = self.cfg["display"].get("beep_on_sale", True)
         if grown and beep_enabled:
