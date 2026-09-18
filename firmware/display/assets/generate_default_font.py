@@ -93,6 +93,7 @@ if __name__ == "__main__":
     # (те же байты на выходе), так что заодно держит каталог в одном месте
     # синхронным со всеми тремя семействами разом.
     import generate_orbitron_font as orbitron
+    import generate_pixelmix_font as pixelmix
     import generate_verdana_font as verdana
 
     families = {
@@ -103,6 +104,10 @@ if __name__ == "__main__":
         ),
         verdana.NAME_PREFIX: lib.render_family(
             verdana.FONT_PATH, verdana.OUT_DIR, verdana.NAME_PREFIX, verdana.SIZES, verdana.CHARSET, verdana.SPACING
+        ),
+        pixelmix.NAME_PREFIX: lib.render_family(
+            pixelmix.FONT_PATH, pixelmix.OUT_DIR, pixelmix.NAME_PREFIX, pixelmix.SIZES, pixelmix.CHARSET,
+            pixelmix.SPACING,
         ),
     }
     lib.write_catalog(OUT_DIR, families)
