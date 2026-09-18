@@ -8,7 +8,7 @@
   "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
   "display/epd1in54.py": "8ccc9bd35bb30f943a4ee9260dce6a29ed2908e18da8b01c7af0b04bbf6e8a19",
   "display/epd4in2.py": "17d704526611463e715cd4767b387298c5215e72aadd11afdd7a35e412990986",
-  "display/fonts/available_sizes.txt": "983b83dadb992928d4d82cf63a9084c599a38726d68101cbe51754cf3bbfc1ab",
+  "display/fonts/available_sizes.txt": "70c9da395ac048355e321f28dcd7073446ed4e484076044056e813c66519785d",
   "display/fonts/default_10.py": "26f32b9563db20a2b7719ad67b0da3e4dbe07e47e37e910ae008a8afddda2407",
   "display/fonts/orbitron_12.py": "58d5840e2e288849dd85c279b1c553520238a863e8c9f8ad3987bf495536f717",
   "display/fonts/orbitron_128.py": "4806d7a20dee526c8c2eb569aaa2a35a4c6cae1409204cd5030df4d02a27ba3f",
@@ -23,6 +23,7 @@
   "display/fonts/orbitron_90.py": "3de1e53891a400c47b378c67f5d9a8c142d6e277e58131d0e1456254b606b531",
   "display/fonts/orbitron_96.py": "f686748b873df9839e78c1d5fff0230bb62f2532fe1296457e47b085293613a0",
   "display/fonts/pixelmix_7.py": "2c805ae8a6ab6e1e2ef64d9710a6f0fe48a47c7907f6b8bee97efb00e06e821b",
+  "display/fonts/pixelmix_8.py": "416068b9bc41f988606116a436ea760af9a8780f81d6bb57f8f3eb80c2b59b75",
   "display/fonts/verdana_15.py": "6cca3c07901e77589d0f149635996921321573cc8e4910037bf1ef3afa729b27",
   "display/fonts/verdana_28.py": "145dec9b52a96081749682acbc4a1a9efc8d907042d9dca7a7398dd1f1d3950e",
   "display/framebuf_sim.py": "f3c6e694d95a2d596f5d28964b60d984e8bff78f0dc1e354c46174cb483810c5",
@@ -53,5 +54,5 @@
   "www/index.html": "e6e35c9b5e766450e8b0501c63be5efb1998653c9ecd6f4daa9a9528f28ee15b",
   "www/style.css": "d96299ab9fd8a77c5fbd0124ed860555d718ed16de1af1f7f4278fd4746690e7"
  },
- "version": 32
+ "version": 33
 }
