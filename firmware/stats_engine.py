@@ -528,6 +528,16 @@ class StatsEngine:
             # ВСЕМ маркетплейсам сразу, не по одному) — дописывается после
             # текста fbs_label.text (см. fbs_label.gap.* в layout.txt).
             "fbs_pending_count": self.latest.get("fbs_orders", 0),
+            # [(short_label, count)] только по маркетплейсам с ненулевым
+            # FBS, в каноническом порядке Oz/Wb/Ya — для строки "FBS: Oz - 1 шт | Wb - 2 шт".
+            "fbs_by_marketplace": [
+                (
+                    self.per_marketplace[m["id"]].get("short_label") or (m["id"][:1].upper() + m["id"][1:2]),
+                    self.per_marketplace[m["id"]].get("fbs_orders", 0),
+                )
+                for m in available_marketplaces()
+                if m["id"] in self.per_marketplace and self.per_marketplace[m["id"]].get("fbs_orders", 0) > 0
+            ],
             # Экран "детализация по маркетплейсам" (только 400x300, см.
             # display/layout_400x300.py) — per_marketplace передаётся как
             # есть (per-площадка выручка/заказы/short_label), сам layout

@@ -31,6 +31,7 @@ import framebuf
 
 from display import custom_font
 from display.layout_common import (
+    fbs_line,
     LAYOUT,
     res_key,
     resolve_font,
@@ -344,10 +345,11 @@ def update_numbers(fb, data):
         fbs_text = LAYOUT.cfg_text(cfg, res_key("fbs_label", "text", RES))
         if fbs_text:
             fbs_font, fbs_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("fbs_label", "font", RES)))
-            # Общее число FBS-заказов, ждущих сборки (сумма по ВСЕМ
-            # маркетплейсам сразу) — просто часть той же строки, не
-            # отдельно расположенный элемент: "Собрать FBS: 3шт" целиком.
-            full_text = "%s %sшт" % (fbs_text, data.get("fbs_pending_count", 0))
+            # Одна строка целиком: "FBS: Oz - 1 шт | Wb - 29 шт".
+            full_text = fbs_line(fbs_text, data.get("fbs_by_marketplace"), data.get("fbs_pending_count", 0))
+            fbs_font, fbs_scale = shrink_font_to_fit(
+                LAYOUT.cfg_str(cfg, res_key("fbs_label", "font", RES)), full_text, 400 - 4
+            )
             custom_font.draw_text_centered(
                 fb, fbs_font, full_text,
                 LAYOUT.cfg_int(cfg, res_key("fbs_label", "x", RES)),

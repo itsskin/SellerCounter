@@ -176,6 +176,12 @@ def uniform_font_for_items(name, items, max_width):
     return import_font("%s_%d" % (family, sizes[0])), 1
 
 
+def fbs_line(title, by_marketplace, total):
+    if not by_marketplace:
+        return "%s %s шт" % (title, total)
+    return "%s %s" % (title, " | ".join("%s - %s шт" % (label, n) for label, n in by_marketplace))
+
+
 def split_compact(text):
     """Разбивает "13.5K"/"158K"/"13500" на (крупная часть, мелкий хвост) —
     хвост это всё начиная с первого не-цифрового символа: точка десятичных
@@ -429,8 +435,8 @@ DEFAULTS = {
     # дописывается прямо в этот текст при отрисовке ("Собрать FBS: 3шт") —
     # само поле fbs_label.text.* остаётся только "заголовочной" частью, без
     # числа — не редактируется отдельным полем.
-    "fbs_label.text.200x200": "Собрать FBS:",
-    "fbs_label.text.400x300": "Собрать FBS:",
+    "fbs_label.text.200x200": "FBS:",
+    "fbs_label.text.400x300": "FBS:",
 
     # Экран "детализация по маркетплейсам" — ТОЛЬКО 400x300 (см.
     # cfg["display"]["show_marketplace_breakdown"], display/layout_400x300
