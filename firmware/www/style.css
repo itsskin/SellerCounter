@@ -41,7 +41,7 @@ header h1 { font-size: 20px; margin: 0; }
 .badge.bad { background: rgba(255, 92, 92, 0.15); color: var(--bad); }
 
 main {
-  max-width: 480px;
+  max-width: 600px;
   margin: 0 auto;
   padding: 16px;
   display: flex;
@@ -158,6 +158,23 @@ button:active { opacity: 0.8; }
 .override-row label,
 .override-row button {
   flex: 1;
+  min-width: 0;
+}
+
+.override-row input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .mp-stats-table {
