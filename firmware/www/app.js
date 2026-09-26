@@ -124,13 +124,19 @@ function renderSettings(state) {
   document.getElementById("ota-current-version").textContent = state.ota_version ?? "?";
 }
 
+function mpTestField(input) {
+  if (input.classList.contains("mp-test-revenue")) return "revenue";
+  if (input.classList.contains("mp-test-fbs")) return "fbs_orders";
+  return "orders";
+}
+
 function collectMarketplaceTestValues() {
   const perMarketplace = {};
-  document.querySelectorAll(".mp-test-revenue, .mp-test-orders").forEach((input) => {
+  document.querySelectorAll(".mp-test-revenue, .mp-test-orders, .mp-test-fbs").forEach((input) => {
     const mpId = input.dataset.mpId;
     if (!input.value) return;
     if (!perMarketplace[mpId]) perMarketplace[mpId] = {};
-    const field = input.classList.contains("mp-test-revenue") ? "revenue" : "orders";
+    const field = mpTestField(input);
     perMarketplace[mpId][field] = Number(input.value);
   });
   return perMarketplace;
@@ -213,6 +219,10 @@ function marketplaceTypeHtml(available, shops, breakdownVisible, orderInfo) {
         <label>Тест: заказы
           <input type="number" class="mp-test-orders" data-mp-id="${available.id}" min="0" placeholder="реальные"
             value="${getStoredMpTestValue(available.id, "orders")}">
+        </label>
+        <label>Тест: FBS
+          <input type="number" class="mp-test-fbs" data-mp-id="${available.id}" min="0" placeholder="реальное"
+            value="${getStoredMpTestValue(available.id, "fbs_orders")}">
         </label>
       </div>
       ${cards || '<p class="hint">Магазинов нет — нажми "+ Добавить магазин".</p>'}
@@ -310,9 +320,9 @@ function renderMarketplaces(state) {
     btn.addEventListener("click", () => moveMarketplace(btn.dataset.mpId, 1));
   });
 
-  container.querySelectorAll(".mp-test-revenue, .mp-test-orders").forEach((input) => {
+  container.querySelectorAll(".mp-test-revenue, .mp-test-orders, .mp-test-fbs").forEach((input) => {
     input.addEventListener("input", () => {
-      const field = input.classList.contains("mp-test-revenue") ? "revenue" : "orders";
+      const field = mpTestField(input);
       setStoredMpTestValue(input.dataset.mpId, field, input.value);
     });
   });

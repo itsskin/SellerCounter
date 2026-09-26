@@ -504,7 +504,18 @@ class StatsEngine:
                     base["revenue"] = override["revenue"]
                 if override.get("orders") is not None:
                     base["orders"] = override["orders"]
+                if override.get("fbs_orders") is not None:
+                    base["fbs_orders"] = override["fbs_orders"]
                 per_marketplace[mp_id] = base
+        fbs_by_marketplace = [
+            (
+                per_marketplace[m["id"]].get("short_label") or (m["id"][:1].upper() + m["id"][1:2]),
+                per_marketplace[m["id"]].get("fbs_orders", 0),
+            )
+            for m in available_marketplaces()
+            if m["id"] in per_marketplace and per_marketplace[m["id"]].get("fbs_orders", 0) > 0
+        ]
+        fbs_total = sum(n for _, n in fbs_by_marketplace)
         data = {
             "orders": orders_override if orders_override else self.latest["orders"],
             "revenue": revenue_override if revenue_override else self.latest["revenue"],
@@ -521,23 +532,16 @@ class StatsEngine:
                 self.cfg["display"].get("show_fbs_test_label", False)
                 or (
                     self.cfg["display"].get("show_fbs_reminder", False)
-                    and self.latest.get("fbs_orders", 0) > 0
+                    and fbs_total > 0
                 )
             ),
             # Сколько всего FBS-заказов ждут сборки прямо сейчас (сумма по
             # ВСЕМ маркетплейсам сразу, не по одному) — дописывается после
             # текста fbs_label.text (см. fbs_label.gap.* в layout.txt).
-            "fbs_pending_count": self.latest.get("fbs_orders", 0),
+            "fbs_pending_count": fbs_total,
             # [(short_label, count)] только по маркетплейсам с ненулевым
             # FBS, в каноническом порядке Oz/Wb/Ya — для строки "FBS: Oz - 1 шт | Wb - 2 шт".
-            "fbs_by_marketplace": [
-                (
-                    self.per_marketplace[m["id"]].get("short_label") or (m["id"][:1].upper() + m["id"][1:2]),
-                    self.per_marketplace[m["id"]].get("fbs_orders", 0),
-                )
-                for m in available_marketplaces()
-                if m["id"] in self.per_marketplace and self.per_marketplace[m["id"]].get("fbs_orders", 0) > 0
-            ],
+            "fbs_by_marketplace": fbs_by_marketplace,
             # Экран "детализация по маркетплейсам" (только 400x300, см.
             # display/layout_400x300.py) — per_marketplace передаётся как
             # есть (per-площадка выручка/заказы/short_label), сам layout

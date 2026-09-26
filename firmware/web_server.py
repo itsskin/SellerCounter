@@ -321,6 +321,8 @@ async def api_display_test(request):
                     entry["revenue"] = float(values["revenue"])
                 if values.get("orders") is not None:
                     entry["orders"] = int(values["orders"])
+                if values.get("fbs_orders") is not None:
+                    entry["fbs_orders"] = int(values["fbs_orders"])
                 if entry:
                     per_marketplace_override[mp_id] = entry
         except (TypeError, ValueError):
