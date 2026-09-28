@@ -121,6 +121,40 @@ def check_new_background():
     return applied
 
 
+COLUMN_DOTS_PATH = "/display/column.png"
+_column_dots = None
+
+
+def _get_column_dots():
+    """Точечный разделитель из display/column.png (1bpp, читается один раз).
+    Нет файла или не разобрался — None, разделителей не будет."""
+    global _column_dots
+    if _column_dots is None:
+        try:
+            from display import png_to_bin
+
+            _column_dots = png_to_bin.decode_to_1bpp(COLUMN_DOTS_PATH)
+        except Exception as exc:
+            print("layout_400x300: не смог прочитать %s (%s)" % (COLUMN_DOTS_PATH, exc))
+            _column_dots = (0, 0, b"")
+    return _column_dots if _column_dots[0] else None
+
+
+def _draw_column_dividers(fb, cfg, centers):
+    dots = _get_column_dots()
+    if dots is None or len(centers) < 2:
+        return
+    w, h, buf = dots
+    row_bytes = (w + 7) // 8
+    y0 = LAYOUT.cfg_int(cfg, "mp_row.divider_y")
+    for a, b in zip(centers, centers[1:]):
+        x0 = (a + b) // 2 - w // 2
+        for row in range(h):
+            for col in range(w):
+                if buf[row * row_bytes + col // 8] & (0x80 >> (col % 8)):
+                    fb.pixel(x0 + col, y0 + row, 1)
+
+
 def _draw_marketplace_breakdown(fb, cfg, data):
     """"Детализация по маркетплейсам" — вместо одной общей суммы СТОЛБИК на
     каждый подключённый и видимый маркетплейс (короткая подпись + его
@@ -201,6 +235,7 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         big, tail = split_compact(text)
         revenue_items.append((mp_id, entry, big, tail))
 
+    centers = []
     for i, (mp_id, entry, big, tail) in enumerate(revenue_items):
         col_x = group_x + column_width * i + column_width // 2
         # Отступ крайних столбиков от краёв: первый сдвигается вправо,
@@ -210,6 +245,7 @@ def _draw_marketplace_breakdown(fb, cfg, data):
                 col_x += edge_margin
             elif i == n - 1:
                 col_x -= edge_margin
+        centers.append(col_x)
 
         # FBS этой площадки — просто число под заказами, без подписи и
         # "шт" (подпись "FBS" уже есть на фоне). Положение по y и шрифт —
@@ -240,6 +276,8 @@ def _draw_marketplace_breakdown(fb, cfg, data):
                 orders_font, orders_decimal_font, orders_decimal_scale, orders_scale,
                 max_decimals=1, min_abbrev=10000,
             )
+
+    _draw_column_dividers(fb, cfg, centers)
 
     if show_total:
         # Сумма именно по ОТОБРАЖАЕМЫМ столбикам (columns, уже отфильтрован

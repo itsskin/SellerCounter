@@ -466,6 +466,8 @@ DEFAULTS = {
     "mp_row.area_width": "390",
     # Отступ крайних столбиков от краёв (px): первый вправо, последний влево.
     "mp_row.edge_margin": "0",
+    # Верхний y точечного разделителя между столбиками (display/column.png).
+    "mp_row.divider_y": "187",
     # Подпись — высоко над числами; выручка сразу под ней, вплотную.
     "mp_row.label_y": "20",
     "mp_row.revenue_y": "58",
@@ -605,6 +607,8 @@ mp_row.area_x = {mp_row.area_x}
 mp_row.area_width = {mp_row.area_width}
 # Отступ крайних столбиков от краёв, px (первый вправо, последний влево)
 mp_row.edge_margin = {mp_row.edge_margin}
+# Верхний y точечных разделителей между столбиками (картинка display/column.png)
+mp_row.divider_y = {mp_row.divider_y}
 mp_row.label_y = {mp_row.label_y}
 mp_row.revenue_y = {mp_row.revenue_y}
 mp_row.orders_y = {mp_row.orders_y}
