@@ -100,7 +100,7 @@ function renderSettings(state) {
   document.getElementById("set-boot-sound").checked = !(state.buzzer && state.buzzer.boot_sound === false);
   document.getElementById("set-watchdog-sound").checked = !(state.buzzer && state.buzzer.watchdog_sound === false);
 
-  const volume = (state.buzzer && state.buzzer.volume) || 100;
+  const volume = (state.buzzer && state.buzzer.volume) ?? 100;
   document.getElementById("set-volume").value = volume;
   document.getElementById("volume-value").textContent = volume;
   document.getElementById("set-volume-curve").value = (state.buzzer && state.buzzer.volume_curve) || "linear";

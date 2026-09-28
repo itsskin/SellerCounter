@@ -75,6 +75,10 @@ MIN_PWM_FREQ = 20
 MAX_PWM_FREQ = 20000
 WAV_PWM_CARRIER_FREQ = 32000  # несущая частота PWM для потокового WAV
 
+# Ползунок громкости 0-100% (cfg["buzzer"]["volume"]) — 100% на нём это 80%
+# реальной громкости.
+VOLUME_SCALE = 0.8
+
 VOLUME_CURVES = ("linear", "capped", "quadratic")
 DEFAULT_VOLUME_CURVE = "linear"
 
@@ -118,7 +122,7 @@ class Buzzer:
         # 50% скважности (32768) — физический максимум громкости тона при
         # 3.3В. volume>100 для тонов эффекта не даёт, только 0-100 уменьшают.
         # Как именно pct переходит в duty — см. VOLUME_CURVES в шапке файла.
-        pct = max(0, min(100, self.volume)) / 100.0
+        pct = max(0, min(100, self.volume)) * VOLUME_SCALE / 100.0
         if self.volume_curve == "quadratic":
             pct = pct * pct
         elif self.volume_curve == "capped":
@@ -223,7 +227,7 @@ class Buzzer:
                 remaining = data_size
                 # Q8 fixed-point (volume=100 -> gain_q8=256=1.0x), чтобы не
                 # тащить float в @micropython.native функцию.
-                gain_q8 = int(max(0, self.volume) / 100.0 * 256)
+                gain_q8 = int(max(0, min(100, self.volume)) * VOLUME_SCALE / 100.0 * 256)
                 try:
                     while remaining > 0:
                         want = min(chunk_size, remaining)
