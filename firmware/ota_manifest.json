@@ -3,7 +3,7 @@
   "boot.py": "c125b2cd03296b74ae2f5eabffe2f33274c3b0aa1fc4f313bdf4839d5eac53d6",
   "breadcrumb.py": "9f0f73d1fd0dfebf62a4dc14ae5fbb11c33d831aebb278b8dc9a9a271d084f41",
   "buzzer.py": "7989fe2f6dde1ce3a48e56bde321a41541a2abdc9c9ef6f67be2a5aad5177a6e",
-  "config.py": "24bfa45213c949059f7f5785e63c88cd6d388374296d55c2b6d2afe51faaadea",
+  "config.py": "1223758f11262521f57343ab7c5f972aa5751f87ec45ad2b500ac36d79cdc94a",
   "display/base.py": "d8d9f68ccb2b1f6dc42e5621852ba0927593329a87700aed9bd908ff540c5848",
   "display/column.png": "668eea8362fc9a3b867e5e53c5fe2417489b9893489237f75db7a0a46f346328",
   "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
@@ -50,14 +50,14 @@
   "marketplaces/wb.py": "a4672722870b83a0cffe494b425f9212806cefe8fc3146beb42dc60b4f686715",
   "marketplaces/yandex.py": "a6fbea48eefef7cedde1ac655d999c69e1587f68175c4ce57328959e112e0081",
   "ota.py": "3f413a5c2137cbe9cdc348dfbec884a4d5ee52226ad0a38c6ef04804a6f2f2ae",
-  "stats_engine.py": "9c1f7f55101edbb64fc8c1a0abf377be8e480ff4722953ba4c475a5ae5cc4cbb",
+  "stats_engine.py": "0c1b655bb337e052c8098eb90d8a9061a68c64e838bb50954c6ff16ac111f9cd",
   "utils/http.py": "de8f3b5a2bc492757b5fc041020e369a3fb850556d54b24dc770263f6bf4b218",
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
-  "web_server.py": "2942d657aa823c432019299bf8905ab27d59e9010643d93138ed42b1570a2459",
+  "web_server.py": "51c76f251837369c6c76961eccb0904baf58ce112729d63fed59da17020fe21b",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
-  "www/app.js": "c9c1ac2da187e7730b16b8b61bd3d0147b5790f136d8ae60bed339b9cb37b956",
+  "www/app.js": "0b0a2556f9ae44f907dec8ae4add735bac8d555560cae5a441d1fa4216304c4e",
   "www/index.html": "3db017e122d1f8c60bbbc1f1ccb230ff3d0c624f2eb03a311141a8dcddb1a6fe",
   "www/style.css": "8d03cf6b831134921f9a8077b67996354d6eb946132bf5b3528882fd7a90121c"
  },
- "version": 59
+ "version": 60
 }

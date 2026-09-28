@@ -345,6 +345,12 @@ class StatsEngine:
                 "orders": mp_orders,
                 "revenue": mp_revenue,
                 "fbs_orders": mp_fbs_orders,
+                # Цифры по каждому магазину (последние успешные, как и в
+                # сумме выше) — экран «Маркеты» суммирует только выбранные.
+                "shops": {
+                    c.key: dict(self._last_good_by_shop.get(c.key) or {"orders": 0, "revenue": 0.0, "fbs_orders": 0})
+                    for c in shops
+                },
                 "error": "; ".join(shop_errors) if shop_errors else None,
                 "updated_at": _now_hms(self.cfg.get("timezone_offset_hours", 3)),
             }
@@ -497,10 +503,29 @@ class StatsEngine:
             # то, что было сохранено раньше.
             self._mp_test_override = per_marketplace_override
         per_marketplace = self.per_marketplace
+        if self.cfg["display"].get("show_marketplace_breakdown", False):
+            # Экран «Маркеты»: суммируем только магазины с галочкой; у
+            # маркетплейса без выбранных магазинов колонки нет.
+            shop_visible = self.cfg["display"].get("marketplace_shop_visible", {})
+            filtered = {}
+            for mp_id, entry in per_marketplace.items():
+                shops = entry.get("shops")
+                if not shops:
+                    filtered[mp_id] = entry
+                    continue
+                keep = [v for k, v in shops.items() if shop_visible.get(k, True)]
+                if not keep:
+                    continue
+                e = dict(entry)
+                e["orders"] = sum(v.get("orders", 0) for v in keep)
+                e["revenue"] = sum(v.get("revenue", 0) for v in keep)
+                e["fbs_orders"] = sum(v.get("fbs_orders", 0) for v in keep)
+                filtered[mp_id] = e
+            per_marketplace = filtered
         if self._mp_test_override:
             # Копия, не мутируем self.per_marketplace — настоящие данные
             # должны остаться нетронутыми для следующей обычной перерисовки.
-            per_marketplace = dict(self.per_marketplace)
+            per_marketplace = dict(per_marketplace)
             for mp_id, override in self._mp_test_override.items():
                 base = dict(per_marketplace.get(mp_id) or {})
                 base.setdefault("short_label", mp_id[:1].upper() + mp_id[1:2])

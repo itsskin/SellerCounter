@@ -243,10 +243,11 @@ async def api_settings(request):
         # Видимость маркетплейсов — словарь {id: bool}: сливаем, а не
         # заменяем целиком, иначе устаревшая копия из открытой страницы
         # затирает галочки, снятые до неё.
-        if isinstance(display_updates.get("marketplace_breakdown_visible"), dict):
-            merged = dict(cfg["display"].get("marketplace_breakdown_visible") or {})
-            merged.update(display_updates["marketplace_breakdown_visible"])
-            display_updates["marketplace_breakdown_visible"] = merged
+        for dict_key in ("marketplace_breakdown_visible", "marketplace_shop_visible"):
+            if isinstance(display_updates.get(dict_key), dict):
+                merged = dict(cfg["display"].get(dict_key) or {})
+                merged.update(display_updates[dict_key])
+                display_updates[dict_key] = merged
         cfg["display"].update(display_updates)
         display = _state["display"]
         if display is not None and "full_refresh_every" in body["display"]:

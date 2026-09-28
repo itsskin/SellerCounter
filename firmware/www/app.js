@@ -169,6 +169,8 @@ function scheduleMpTestApply() {
   }, 700);
 }
 
+let shopVisibleFromState = {};
+
 function shopCardHtml(available, shop) {
   const fields = available.required_fields
     .map((field) => {
@@ -183,6 +185,10 @@ function shopCardHtml(available, shop) {
 
   return `
     <div class="mp-card" data-key="${shop.key}">
+      <label class="checkbox">
+        <input type="checkbox" class="shop-breakdown-visible" data-shop-key="${shop.key}" ${shopVisibleFromState[shop.key] !== false ? "checked" : ""}>
+        Показывать на экране «Маркеты»
+      </label>
       <form data-key="${shop.key}">
         <div class="mp-card-head">
           <span class="status ${shop.configured ? "ok" : ""}">${shop.configured ? "активен" : "нет ключей"}</span>
@@ -235,6 +241,7 @@ function renderMarketplaces(state) {
   const container = document.getElementById("marketplaces-list");
   container.innerHTML = "";
   mpTestOverrideFromState = (state.display && state.display.mp_test_override) || {};
+  shopVisibleFromState = (state.display && state.display.marketplace_shop_visible) || {};
   const shopsById = {};
   (state.marketplaces || []).forEach((m) => {
     if (!shopsById[m.id]) shopsById[m.id] = [];
@@ -274,6 +281,29 @@ function renderMarketplaces(state) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ display: { marketplace_breakdown_visible: updated } }),
         });
+        await api("/api/display/test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ per_marketplace: collectMarketplaceTestValues() }),
+        });
+        refreshPreview();
+      } catch (err) {
+        ev.target.checked = !ev.target.checked;
+        alert("Ошибка: " + err.message);
+      }
+    });
+  });
+
+  container.querySelectorAll(".shop-breakdown-visible").forEach((checkbox) => {
+    checkbox.addEventListener("change", async (ev) => {
+      const key = ev.target.dataset.shopKey;
+      try {
+        await api("/api/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ display: { marketplace_shop_visible: { [key]: ev.target.checked } } }),
+        });
+        shopVisibleFromState[key] = ev.target.checked;
         await api("/api/display/test", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
