@@ -516,14 +516,23 @@ class StatsEngine:
             if m["id"] in per_marketplace
         ]
         fbs_total = sum(n for _, n in fbs_by_marketplace)
+        # Общие выручка/заказы на экране детализации не включают
+        # маркетплейсы, скрытые галочкой "Отображать на экране детализации".
+        in_breakdown = self.cfg["display"].get("show_marketplace_breakdown", False)
+        breakdown_visible = self.cfg["display"].get("marketplace_breakdown_visible", {})
+        totals_from_columns = in_breakdown or bool(self._mp_test_override)
+        totals_entries = [
+            (mp_id, e) for mp_id, e in per_marketplace.items()
+            if not in_breakdown or breakdown_visible.get(mp_id, True)
+        ]
         data = {
             "orders": orders_override if orders_override else (
-                sum(e.get("orders", 0) for e in per_marketplace.values())
-                if self._mp_test_override else self.latest["orders"]
+                sum(e.get("orders", 0) for _, e in totals_entries)
+                if totals_from_columns else self.latest["orders"]
             ),
             "revenue": revenue_override if revenue_override else (
-                sum(e.get("revenue", 0) for e in per_marketplace.values())
-                if self._mp_test_override else self.latest["revenue"]
+                sum(e.get("revenue", 0) for _, e in totals_entries)
+                if totals_from_columns else self.latest["revenue"]
             ),
             "ip": self.get_ip() or "",
             "updated_at": _current_time_hhmm(tz),

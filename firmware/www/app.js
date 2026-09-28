@@ -263,7 +263,7 @@ function renderMarketplaces(state) {
   container.querySelectorAll(".mp-breakdown-visible").forEach((checkbox) => {
     checkbox.addEventListener("change", async (ev) => {
       const mpId = ev.target.dataset.mpId;
-      const updated = Object.assign({}, breakdownVisibleMap, { [mpId]: ev.target.checked });
+      const updated = { [mpId]: ev.target.checked }; // плата сама сливает с сохранёнными
       try {
         await api("/api/settings", {
           method: "POST",

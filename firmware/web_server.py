@@ -239,7 +239,15 @@ async def api_settings(request):
     if "debug_day_offset" in body:
         cfg["debug_day_offset"] = int(body["debug_day_offset"])
     if "display" in body:
-        cfg["display"].update(body["display"])
+        display_updates = dict(body["display"])
+        # Видимость маркетплейсов — словарь {id: bool}: сливаем, а не
+        # заменяем целиком, иначе устаревшая копия из открытой страницы
+        # затирает галочки, снятые до неё.
+        if isinstance(display_updates.get("marketplace_breakdown_visible"), dict):
+            merged = dict(cfg["display"].get("marketplace_breakdown_visible") or {})
+            merged.update(display_updates["marketplace_breakdown_visible"])
+            display_updates["marketplace_breakdown_visible"] = merged
+        cfg["display"].update(display_updates)
         display = _state["display"]
         if display is not None and "full_refresh_every" in body["display"]:
             # Живой объект уже создан при старте (см. main.py _get_display)
