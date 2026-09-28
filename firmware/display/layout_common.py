@@ -141,8 +141,8 @@ def shrink_font_to_fit(name, text, max_width, extra_width=0):
 
 def fbs_line(title, by_marketplace, total):
     if not by_marketplace:
-        return "%s %s шт" % (title, total)
-    return "%s %s" % (title, " | ".join("%s - %s шт" % (label, n) for label, n in by_marketplace))
+        return "%s %s" % (title, total)
+    return "%s %s" % (title, " | ".join("%s - %s" % (label, n) for label, n in by_marketplace))
 
 
 def split_compact(text):

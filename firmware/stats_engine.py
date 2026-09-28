@@ -513,7 +513,7 @@ class StatsEngine:
                 per_marketplace[m["id"]].get("fbs_orders", 0),
             )
             for m in available_marketplaces()
-            if m["id"] in per_marketplace and per_marketplace[m["id"]].get("fbs_orders", 0) > 0
+            if m["id"] in per_marketplace
         ]
         fbs_total = sum(n for _, n in fbs_by_marketplace)
         data = {
