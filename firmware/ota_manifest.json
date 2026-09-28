@@ -29,7 +29,7 @@
   "display/framebuf_sim.py": "f3c6e694d95a2d596f5d28964b60d984e8bff78f0dc1e354c46174cb483810c5",
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
   "display/layout_200x200.py": "7d1593086979e07c21086003bd56a21d86fe192ea65ba23371598cf65da85b76",
-  "display/layout_400x300.py": "9aebc643c85293b4559f473ac48b275859aa20355f18f3e10769baee1f5f687c",
+  "display/layout_400x300.py": "bb496528dfc105c5c03c677b32f337b6e2a5e5796d0f54f8976c07cda8513e07",
   "display/layout_common.py": "3c005f352a0317f3788878ac88d17f89a49ef9a65238a0c1906200ef42f57a44",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
@@ -54,5 +54,5 @@
   "www/index.html": "b17c3ab01318138b48d72869a3163b6fd4698665df71bfffd0f8a6762aea65f2",
   "www/style.css": "8d03cf6b831134921f9a8077b67996354d6eb946132bf5b3528882fd7a90121c"
  },
- "version": 42
+ "version": 43
 }

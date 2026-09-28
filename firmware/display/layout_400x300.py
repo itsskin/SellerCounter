@@ -203,6 +203,16 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     for i, (mp_id, entry, big, tail) in enumerate(revenue_items):
         col_x = group_x + column_width * i + column_width // 2
 
+        # FBS этой площадки — просто число под заказами, без подписи и
+        # "шт" (подпись "FBS" уже есть на фоне). Положение по y и шрифт —
+        # fbs_label.y/.font.400x300.
+        if data.get("show_fbs_label") and LAYOUT.cfg_bool(cfg, res_key("fbs_label", "show", RES)):
+            fbs_font, fbs_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("fbs_label", "font", RES)))
+            custom_font.draw_text_centered(
+                fb, fbs_font, str(entry.get("fbs_orders", 0)), col_x,
+                LAYOUT.cfg_int(cfg, res_key("fbs_label", "y", RES)), scale=fbs_scale,
+            )
+
         label = entry.get("short_label") or (mp_id[:1].upper() + mp_id[1:2])
         custom_font.draw_text_centered(fb, label_font, label, col_x, label_y, scale=label_scale)
 
@@ -335,7 +345,7 @@ def update_numbers(fb, data):
         custom_font.draw_text_centered(fb, ip_font, ip, ip_x, ip_y, scale=ip_scale)
 
     # Напоминание "Собрать FBS" — см. cfg["display"]["show_fbs_reminder"].
-    if data.get("show_fbs_label") and LAYOUT.cfg_bool(cfg, res_key("fbs_label", "show", RES)):
+    if not breakdown and data.get("show_fbs_label") and LAYOUT.cfg_bool(cfg, res_key("fbs_label", "show", RES)):
         fbs_text = LAYOUT.cfg_text(cfg, res_key("fbs_label", "text", RES))
         if fbs_text:
             fbs_font, fbs_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("fbs_label", "font", RES)))
