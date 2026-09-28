@@ -17,7 +17,7 @@ NAME_PREFIX = "orbitronbold"
 
 SPACING = 0
 
-SIZES = [14, 25, 45, 70]
+SIZES = [14, 26, 45, 70]
 
 # Как у обычного Orbitron — только цифры и .-KM, букв нет.
 CHARSET = lib.DEFAULT_CHARSET

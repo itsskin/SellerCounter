@@ -20,7 +20,7 @@ orbitron:
 orbitronbold:
   имя файла          реальная высота цифр на экране
   orbitronbold_14       10px
-  orbitronbold_25       18px
+  orbitronbold_26       19px
   orbitronbold_45       32px
   orbitronbold_70       50px
 

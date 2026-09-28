@@ -57,6 +57,15 @@ def render_variant(font_path, size, out_dir, name_prefix, charset, spacing=0):
         d = ImageDraw.Draw(canvas)
         d.text((0, ascent), ch, font=font, fill=0, anchor="ls")
         px = canvas.load()
+        # Чернила могут выходить правее advance (у жирных шрифтов на мелких
+        # размерах) — расширяем ширину глифа до реального правого края, иначе
+        # последний столбец пикселей срезается.
+        ink_right = max(
+            (x for x in range(width + 8) if any(px[x, y] < INK_THRESHOLD for y in range(canvas_h))),
+            default=-1,
+        )
+        if ink_right + 1 > width:
+            width = ink_right + 1
         rows_with_ink = [y for y in range(canvas_h) if any(px[x, y] < INK_THRESHOLD for x in range(width))]
         if rows_with_ink:
             top_min = min(top_min, rows_with_ink[0]) if top_min is not None else rows_with_ink[0]
