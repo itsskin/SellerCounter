@@ -34,6 +34,29 @@ DEFAULT_CHARSET = "0123456789.-KM"
 # без такого побочного эффекта.
 INK_THRESHOLD = 190
 
+# Зеркально-симметричные по замыслу глифы: на мелких размерах порог по
+# антиалиасингу срезает левые и правые углы по-разному ("8" получала
+# скошенные на 2 ряда левые углы и на 1 ряд правые) — правую половину
+# берём зеркально из левой. {NAME_PREFIX: "символы"}.
+MIRROR_CHARS = {"orbitron": "8", "orbitronbold": "8"}
+
+
+def _mirror_left_half(buf, width, height, row_bytes):
+    def get(y, x):
+        return buf[y * row_bytes + x // 8] & (0x80 >> (x % 8))
+
+    xs = [x for x in range(width) if any(get(y, x) for y in range(height))]
+    if not xs:
+        return buf
+    lo, hi = xs[0], xs[-1]
+    out = bytearray(len(buf))
+    for y in range(height):
+        for x in range(lo, hi + 1):
+            src = x if x <= (lo + hi) // 2 else lo + hi - x
+            if get(y, src):
+                out[y * row_bytes + x // 8] |= 0x80 >> (x % 8)
+    return out
+
 
 def render_variant(font_path, size, out_dir, name_prefix, charset, spacing=0):
     name = "%s_%d" % (name_prefix, size)
@@ -85,6 +108,8 @@ def render_variant(font_path, size, out_dir, name_prefix, charset, spacing=0):
                     idx = y * row_bytes + x // 8
                     bit = 7 - (x % 8)
                     buf[idx] |= 1 << bit
+        if ch in MIRROR_CHARS.get(name_prefix, ""):
+            buf = _mirror_left_half(buf, width, height, row_bytes)
         glyphs[ch] = (width, bytes(buf))
 
     os.makedirs(out_dir, exist_ok=True)
