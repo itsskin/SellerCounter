@@ -522,19 +522,9 @@ class StatsEngine:
             "ip": self.get_ip() or "",
             "updated_at": _current_time_hhmm(tz),
             "updated_date": _current_date_ddmmyyyy(tz),
-            # Показываем, если функция включена в настройках И реально есть
-            # хотя бы один FBS-заказ за сегодня — ИЛИ если включён отдельный
-            # отладочный чекбокс show_fbs_test_label (веб-интерфейс, раздел
-            # "Маркетплейсы") — форсирует надпись всегда, чтобы проверить
-            # положение/шрифт (см. layout.txt), не дожидаясь настоящего
-            # несобранного заказа.
-            "show_fbs_label": (
-                self.cfg["display"].get("show_fbs_test_label", False)
-                or (
-                    self.cfg["display"].get("show_fbs_reminder", False)
-                    and fbs_total > 0
-                )
-            ),
+            # Показываем, если функция включена в настройках И есть хотя бы
+            # один FBS-заказ (реальный или тестовый из полей маркетплейсов).
+            "show_fbs_label": self.cfg["display"].get("show_fbs_reminder", False) and fbs_total > 0,
             # Сколько всего FBS-заказов ждут сборки прямо сейчас (сумма по
             # ВСЕМ маркетплейсам сразу, не по одному) — дописывается после
             # текста fbs_label.text (см. fbs_label.gap.* в layout.txt).
