@@ -347,6 +347,12 @@ async def api_display_test(request):
     except Exception as exc:
         return {"ok": False, "error": str(exc)}, 500
 
+    if per_marketplace_override is not None:
+        cfg = _state["cfg"]
+        if cfg["display"].get("mp_test_override") != per_marketplace_override:
+            cfg["display"]["mp_test_override"] = per_marketplace_override
+            config_module.save(cfg)
+
     return {"ok": True}
 
 

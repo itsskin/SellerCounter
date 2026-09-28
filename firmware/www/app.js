@@ -141,29 +141,33 @@ function collectMarketplaceTestValues() {
   return perMarketplace;
 }
 
-// Тестовые поля живут только в браузере (per_marketplace-override никогда
-// не сохраняется в cfg платы) — без этого любая перерисовка списка
-// маркетплейсов (смена порядка, видимости, обновление страницы) стирает
-// введённые числа, и их приходится вписывать заново каждый раз.
-function mpTestValueStorageKey(mpId, field) {
-  return "sc_mp_test_" + mpId + "_" + field;
-}
+// Тестовые значения хранятся на плате (cfg.display.mp_test_override) и
+// применяются сразу при вводе — страница только показывает то, что пришло
+// в state.
+let mpTestOverrideFromState = {};
 
 function getStoredMpTestValue(mpId, field) {
-  try {
-    return localStorage.getItem(mpTestValueStorageKey(mpId, field)) || "";
-  } catch (err) {
-    return "";
-  }
+  const v = (mpTestOverrideFromState[mpId] || {})[field];
+  return v === undefined || v === null ? "" : String(v);
 }
 
-function setStoredMpTestValue(mpId, field, value) {
-  try {
-    if (value) localStorage.setItem(mpTestValueStorageKey(mpId, field), value);
-    else localStorage.removeItem(mpTestValueStorageKey(mpId, field));
-  } catch (err) {
-    // приватный режим/запрет на localStorage — просто не запоминаем между перезагрузками
-  }
+let mpTestApplyTimer = null;
+function scheduleMpTestApply() {
+  clearTimeout(mpTestApplyTimer);
+  mpTestApplyTimer = setTimeout(async () => {
+    try {
+      const values = collectMarketplaceTestValues();
+      await api("/api/display/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ per_marketplace: values }),
+      });
+      mpTestOverrideFromState = values;
+      refreshPreview();
+    } catch (err) {
+      console.error("тестовые значения не применились:", err);
+    }
+  }, 700);
 }
 
 function shopCardHtml(available, shop) {
@@ -231,6 +235,7 @@ function marketplaceTypeHtml(available, shops, breakdownVisible, orderInfo) {
 function renderMarketplaces(state) {
   const container = document.getElementById("marketplaces-list");
   container.innerHTML = "";
+  mpTestOverrideFromState = (state.display && state.display.mp_test_override) || {};
   const shopsById = {};
   (state.marketplaces || []).forEach((m) => {
     if (!shopsById[m.id]) shopsById[m.id] = [];
@@ -321,8 +326,7 @@ function renderMarketplaces(state) {
 
   container.querySelectorAll(".mp-test-revenue, .mp-test-orders, .mp-test-fbs").forEach((input) => {
     input.addEventListener("input", () => {
-      const field = mpTestField(input);
-      setStoredMpTestValue(input.dataset.mpId, field, input.value);
+      scheduleMpTestApply();
     });
   });
 
