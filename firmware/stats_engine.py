@@ -530,7 +530,10 @@ class StatsEngine:
             "updated_date": _current_date_ddmmyyyy(tz),
             # Показываем, если функция включена в настройках И есть хотя бы
             # один FBS-заказ (реальный или тестовый из полей маркетплейсов).
-            "show_fbs_label": self.cfg["display"].get("show_fbs_reminder", False) and fbs_total > 0,
+            # На экране детализации число FBS под колонками рисуется и при 0.
+            "show_fbs_label": self.cfg["display"].get("show_fbs_reminder", False) and (
+                fbs_total > 0 or self.cfg["display"].get("show_marketplace_breakdown", False)
+            ),
             # Сколько всего FBS-заказов ждут сборки прямо сейчас (сумма по
             # ВСЕМ маркетплейсам сразу, не по одному) — дописывается после
             # текста fbs_label.text (см. fbs_label.gap.* в layout.txt).
