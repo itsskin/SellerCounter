@@ -1,0 +1,137 @@
+# Расположение текста на экранах SellerCounter — ОДИН файл на оба
+# разрешения (200x200 и 400x300), значения у каждого поля указаны для
+# обоих сразу. Правь и сохраняй — подхватится на следующей перерисовке,
+# перезапускать плату не нужно. Опечатка в отдельном поле не ломает экран
+# — просто для этого поля вернётся значение по умолчанию.
+#
+# <элемент>.name — просто название для человека, ни на что не влияет.
+# <элемент>.show.<разрешение> — рисовать ли элемент вообще на этом экране
+#   ("0" или "1").
+# x / y — центр текста в пикселях (0,0 — левый верхнии угол экрана).
+# font — <семейство>_<размер> из display/fonts/, без ".py" (сейчас есть
+#   orbitron_* и verdana_*; полный список размеров — см.
+#   display/fonts/available_sizes.txt). Размера с точным числом нет —
+#   возьмётся ближайший меньший из того же семейства и увеличится до
+#   нужного (апскейл, чуть "кубиками", но разборчиво).
+# max_width — если число по ширине не влезает в столько пикселей, оно
+#   сокращается ("12345" -> "12.3K", "1234567" -> "1.2M").
+# decimal_font — часть после точки у сокращённого числа рисуется этим,
+#   обычно более мелким шрифтом (как копейки на ценнике).
+# orders.suffix — подпись после числа заказов (например "шт"). Пусто —
+#   не рисуется. suffix_font обязательно verdana_* (Orbitron кириллицу не
+#   умеет вообще).
+# ip.font — IP-адрес состоит только из цифр и точек, так что тут годится и
+#   orbitron_*, и verdana_*.
+# fbs_label — см. комментарий у fbs_label.show выше по смыслу поля.
+
+revenue.name = Выручка
+revenue.show.200x200 = 1
+revenue.x.200x200 = 100
+revenue.y.200x200 = 68
+revenue.font.200x200 = orbitron_52
+revenue.max_width.200x200 = 176
+revenue.decimal_font.200x200 = orbitron_36
+revenue.show.400x300 = 1
+revenue.x.400x300 = 200
+revenue.y.400x300 = 88
+revenue.font.400x300 = orbitron_128
+revenue.max_width.400x300 = 370
+revenue.decimal_font.400x300 = orbitronbold_70
+
+orders.name = Заказы
+orders.show.200x200 = 1
+orders.x.200x200 = 200
+orders.y.200x200 = 75
+orders.font.200x200 = orbitron_42
+orders.max_width.200x200 = 176
+orders.decimal_font.200x200 = orbitron_24
+orders.suffix.200x200 = шт
+orders.suffix_font.200x200 = verdana_15
+orders.show.400x300 = 1
+orders.x.400x300 = 200
+orders.y.400x300 = 211
+orders.font.400x300 = orbitronbold_45
+orders.max_width.400x300 = 300
+orders.decimal_font.400x300 = orbitronbold_45
+orders.suffix.400x300 = шт
+orders.suffix_font.400x300 = orbitron_30
+
+clock.name = Дата
+clock.show.200x200 = 1
+clock.x.200x200 = 30
+clock.y.200x200 = 6
+clock.font.200x200 = pixelmix_4
+clock.show.400x300 = 1
+clock.x.400x300 = 87
+clock.y.400x300 = 3
+clock.font.400x300 = pixelmix_8
+
+ip.name = IP-адрес
+ip.show.200x200 = 1
+ip.x.200x200 = 100
+ip.y.200x200 = 185
+ip.font.200x200 = pixelmix_7
+ip.show.400x300 = 1
+ip.x.400x300 = 314
+ip.y.400x300 = 3
+ip.font.400x300 = pixelmix_8
+
+fbs_label.name = Напоминание "Собрать FBS"
+fbs_label.show.200x200 = 1
+fbs_label.x.200x200 = 100
+fbs_label.y.200x200 = 165
+fbs_label.font.200x200 = verdana_15
+fbs_label.text.200x200 = FBS
+fbs_label.show.400x300 = 1
+fbs_label.x.400x300 = 200
+fbs_label.y.400x300 = 245
+fbs_label.font.400x300 = verdana_15
+fbs_label.text.400x300 = FBS
+
+# Автодобавлено (новая версия прошивки добавила эти поля):
+mp_row.orders_font = orbitronbold_26
+mp_row.area_x = 5
+mp_row.area_width = 390
+mp_row.revenue_font = orbitronbold_26
+mp_row.revenue_decimal_font = orbitron_16
+mp_row.orders_decimal_font = orbitron_16
+
+#Шрифт для Oz, Wb, Ya
+mp_row.label_font = default_10
+
+#вертикальное положение Oz, Wb, Ya
+mp_row.label_y = 285
+
+#вертикальное положение Выручки
+mp_row.revenue_y = 202
+
+#вертикальное положение Заказов
+mp_row.orders_y = 228
+mp_row.name = Экран «Маркеты»: колонки
+
+# Отступы от краев (новая версия прошивки добавила эти поля):
+mp_row.column_margin = 30
+
+# Автодобавлено (новая версия прошивки добавила эти поля):
+
+# Автодобавлено (новая версия прошивки добавила эти поля):
+
+# Экран «Маркеты»: общие цифры сверху, отступ крайних колонок, точечные разделители
+mp_total_orders.name = Экран «Маркеты»: общие заказы
+mp_total_orders.show = 1
+mp_total_orders.font = orbitronbold_45
+mp_total_orders.x = 200
+mp_total_orders.y = 130
+mp_total_orders.decimal_font = orbitronbold_45
+mp_total_orders.suffix =
+mp_total_orders.max_width = 220
+mp_total_orders.suffix_font = verdana_28
+mp_total_revenue.name = Экран «Маркеты»: общая выручка
+mp_total_revenue.x = 200
+mp_total_revenue.y = 63
+mp_total_revenue.show = 1
+mp_total_revenue.decimal_font = orbitronbold_45
+mp_total_revenue.font = orbitronbold_70
+mp_total_revenue.max_width = 220
+mp_row.edge_margin = 10
+mp_row.divider_y = 187
