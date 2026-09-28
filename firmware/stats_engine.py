@@ -511,15 +511,18 @@ class StatsEngine:
                 if override.get("fbs_orders") is not None:
                     base["fbs_orders"] = override["fbs_orders"]
                 per_marketplace[mp_id] = base
+        # Только маркетплейсы с FBS > 0, полные имена ("Ozon", "Wildberries",
+        # "Yandex") — для строки на экране Итоги: "FBS Ozon 1 | Wildberries 2".
         fbs_by_marketplace = [
-            (
-                per_marketplace[m["id"]].get("short_label") or (m["id"][:1].upper() + m["id"][1:2]),
-                per_marketplace[m["id"]].get("fbs_orders", 0),
-            )
+            (m["name"].split(" ")[0], per_marketplace[m["id"]].get("fbs_orders", 0))
             for m in available_marketplaces()
-            if m["id"] in per_marketplace
+            if m["id"] in per_marketplace and per_marketplace[m["id"]].get("fbs_orders", 0) > 0
         ]
         fbs_total = sum(n for _, n in fbs_by_marketplace)
+        # Заполнено хотя бы одно тестовое поле FBS (даже 0) — строку показываем.
+        fbs_test_filled = any(
+            e.get("fbs_orders") is not None for e in self._mp_test_override.values()
+        )
         # Общие выручка/заказы на экране детализации не включают
         # маркетплейсы, скрытые галочкой "Отображать на экране детализации".
         in_breakdown = self.cfg["display"].get("show_marketplace_breakdown", False)
@@ -545,7 +548,9 @@ class StatsEngine:
             # один FBS-заказ (реальный или тестовый из полей маркетплейсов).
             # На экране детализации число FBS под колонками рисуется и при 0.
             "show_fbs_label": self.cfg["display"].get("show_fbs_reminder", False) and (
-                fbs_total > 0 or self.cfg["display"].get("show_marketplace_breakdown", False)
+                fbs_total > 0
+                or fbs_test_filled
+                or self.cfg["display"].get("show_marketplace_breakdown", False)
             ),
             # Сколько всего FBS-заказов ждут сборки прямо сейчас (сумма по
             # ВСЕМ маркетплейсам сразу, не по одному) — дописывается после
