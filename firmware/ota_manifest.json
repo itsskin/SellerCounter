@@ -29,8 +29,8 @@
   "display/framebuf_sim.py": "f3c6e694d95a2d596f5d28964b60d984e8bff78f0dc1e354c46174cb483810c5",
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
   "display/layout_200x200.py": "7d1593086979e07c21086003bd56a21d86fe192ea65ba23371598cf65da85b76",
-  "display/layout_400x300.py": "3138f9c9b2c5f60370775a2efc8b9113114621edbc339feac45db80871f13ed0",
-  "display/layout_common.py": "efc0dc86539f65da44455099d27d4f178042ac40f1dde00fd0153b244d01ce8b",
+  "display/layout_400x300.py": "202e18efde239c4e971b0e1e721afa8ff7a35c3207466c601b58c8564a7e9d0c",
+  "display/layout_common.py": "2fe395fa3923951aac323e2fe4aa7a19c99f790aeb93226a3abf8f9553ef88e0",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
   "lib/microdot/__init__.py": "600f59c25bc576bb6659e3ad4697a82c3c7a225f0063cc6024f8fc439c4a0a7c",
@@ -54,5 +54,5 @@
   "www/index.html": "e6e35c9b5e766450e8b0501c63be5efb1998653c9ecd6f4daa9a9528f28ee15b",
   "www/style.css": "8d03cf6b831134921f9a8077b67996354d6eb946132bf5b3528882fd7a90121c"
  },
- "version": 36
+ "version": 37
 }

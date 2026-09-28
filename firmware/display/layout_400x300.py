@@ -37,7 +37,6 @@ from display.layout_common import (
     resolve_font,
     shrink_font_to_fit,
     split_compact,
-    uniform_font_for_items,
 )
 
 WIDTH = 400
@@ -140,11 +139,9 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         return
 
     label_font, label_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.label_font"))
-    revenue_font_name = LAYOUT.cfg_str(cfg, "mp_row.revenue_font")
-    revenue_font, revenue_scale = resolve_font(revenue_font_name)
+    revenue_font, revenue_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.revenue_font"))
     revenue_decimal_font, revenue_decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.revenue_decimal_font"))
-    orders_font_name = LAYOUT.cfg_str(cfg, "mp_row.orders_font")
-    orders_font, orders_scale = resolve_font(orders_font_name)
+    orders_font, orders_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.orders_font"))
     orders_decimal_font, orders_decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.orders_decimal_font"))
     column_margin = LAYOUT.cfg_int(cfg, "mp_row.column_margin")
     area_x = LAYOUT.cfg_int(cfg, "mp_row.area_x")
@@ -158,16 +155,11 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     # // n), не раздельные: пробовали раздельно (фиксированный шаг между
     # столбиками + растущий бюджет ширины) — при 1-2 столбиках текст
     # вырастал шире расстояния между столбиками и сливался с соседним.
-    # Раз оба растут синхронно, столбик просто занимает БОЛЬШЕ И места, И
-    # текста при малом числе столбиков, без риска наложения — а
-    # "прижатость к краям" на самом деле была больше о МЕЛКОМ тексте в
-    # широком слоте (нечем заполнить середину), чем о самой позиции слота
-    # — рост текста (см. uniform_font_for_items ниже) её и решает.
     column_width = area_width // n
     group_x = area_x
     max_width = max(1, column_width - column_margin)
 
-    def _draw_number(value, x, y, font, font_name, decimal_font, decimal_scale, scale, max_decimals, min_abbrev=0):
+    def _draw_number(value, x, y, font, decimal_font, decimal_scale, scale, max_decimals, min_abbrev=0):
         text = custom_font.format_compact(
             font, value, max_width, scale,
             decimal_font=decimal_font, decimal_scale=decimal_scale, max_decimals=max_decimals,
@@ -175,24 +167,16 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         )
         big, tail = split_compact(text)
         trailing = [(tail, decimal_font, decimal_scale)] if tail else []
-        tail_width = custom_font.text_width(decimal_font, tail, decimal_scale) if tail else 0
-        if custom_font.text_width(font, big, scale) + tail_width > max_width:
-            font, scale = shrink_font_to_fit(font_name, big, max_width, extra_width=tail_width)
         custom_font.draw_text_with_trailing(
             fb, font, big, x, y, trailing, big_scale=scale, center_whole=True,
         )
 
     show_total = data.get("marketplace_breakdown_show_total_revenue")
 
-    # Выручка — двумя проходами, не как заказы ниже. Первый проход считает
-    # компактный текст ("2K"/"18K"/...) для КАЖДОЙ колонки на базовом
-    # revenue_font (только чтобы понять, нужно ли K/M-сокращение вообще);
-    # второй — подбирает ОДИН общий размер шрифта, куда влезают ВСЕ
-    # колонки сразу (см. uniform_font_for_items) и рисует им все разом.
-    # Раздельный подбор размера под каждую колонку (как раньше) давал
-    # разный РОСТ у визуально сопоставимых чисел — у "1" глиф уже, чем у
-    # "5"/"7", так что "13K" помещался в кегль крупнее, чем "57K" при той
-    # же длине строки, хотя оба должны выглядеть одного размера.
+    # Размеры шрифтов (mp_row.revenue_font/orders_font) — ручные: рисуем
+    # ровно тем, что указано в layout.txt, без авто-подгонки под ширину.
+    # Не влезло — обрежется/наложится, это уже забота автора layout.txt.
+    # Сокращение "K"/"M" (format_compact) остаётся — это про формат числа.
     revenue_items = []
     for mp_id, entry in columns:
         text = custom_font.format_compact(
@@ -201,14 +185,9 @@ def _draw_marketplace_breakdown(fb, cfg, data):
             max_decimals=0, min_abbrev=1000,
         )
         big, tail = split_compact(text)
-        tail_width = custom_font.text_width(revenue_decimal_font, tail, revenue_decimal_scale) if tail else 0
-        revenue_items.append((mp_id, entry, big, tail, tail_width))
+        revenue_items.append((mp_id, entry, big, tail))
 
-    common_revenue_font, common_revenue_scale = uniform_font_for_items(
-        revenue_font_name, [(big, tail_width) for _, _, big, _, tail_width in revenue_items], max_width,
-    )
-
-    for i, (mp_id, entry, big, tail, _) in enumerate(revenue_items):
+    for i, (mp_id, entry, big, tail) in enumerate(revenue_items):
         col_x = group_x + column_width * i + column_width // 2
 
         label = entry.get("short_label") or (mp_id[:1].upper() + mp_id[1:2])
@@ -216,8 +195,8 @@ def _draw_marketplace_breakdown(fb, cfg, data):
 
         trailing = [(tail, revenue_decimal_font, revenue_decimal_scale)] if tail else []
         custom_font.draw_text_with_trailing(
-            fb, common_revenue_font, big, col_x, revenue_y, trailing,
-            big_scale=common_revenue_scale, center_whole=True,
+            fb, revenue_font, big, col_x, revenue_y, trailing,
+            big_scale=revenue_scale, center_whole=True,
         )
 
         # Нижнее число — заказы ЭТОГО маркетплейса. Когда включена галочка
@@ -227,7 +206,7 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         if not show_total:
             _draw_number(
                 entry.get("orders", 0), col_x, orders_y,
-                orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
+                orders_font, orders_decimal_font, orders_decimal_scale, orders_scale,
                 max_decimals=1, min_abbrev=10000,
             )
 
@@ -239,7 +218,7 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         total_revenue = sum(entry.get("revenue", 0) for _, entry in columns)
         _draw_number(
             total_revenue, WIDTH // 2, orders_y,
-            orders_font, orders_font_name, orders_decimal_font, orders_decimal_scale, orders_scale,
+            orders_font, orders_decimal_font, orders_decimal_scale, orders_scale,
             max_decimals=0, min_abbrev=1000,
         )
 
