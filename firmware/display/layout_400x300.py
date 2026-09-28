@@ -45,19 +45,30 @@ RES = "400x300"
 
 ASSETS_DIR = "/display/assets"
 BG_PATH = ASSETS_DIR + "/bg_400x300.bin"
+# Отдельный фон для экрана детализации по маркетплейсам. Нет файла —
+# используется обычный BG_PATH.
+BG_BREAKDOWN_PATH = ASSETS_DIR + "/bg_400x300_breakdown.bin"
 
 
-def _load_background(fb):
+def _load_background(fb, breakdown=False):
     fb.fill(0)
-    try:
-        with open(BG_PATH, "rb") as f:
-            data = bytearray(f.read())
-    except OSError as exc:
-        print(
-            "layout_400x300: не смог загрузить %s (%s) — заливал firmware/display/assets/? "
-            "Рисую пустой экран." % (BG_PATH, exc)
-        )
-        return
+    data = None
+    if breakdown:
+        try:
+            with open(BG_BREAKDOWN_PATH, "rb") as f:
+                data = bytearray(f.read())
+        except OSError:
+            data = None
+    if data is None:
+        try:
+            with open(BG_PATH, "rb") as f:
+                data = bytearray(f.read())
+        except OSError as exc:
+            print(
+                "layout_400x300: не смог загрузить %s (%s) — заливал firmware/display/assets/? "
+                "Рисую пустой экран." % (BG_PATH, exc)
+            )
+            return
     bg_fb = framebuf.FrameBuffer(data, WIDTH, HEIGHT, framebuf.MONO_HLSB)
     fb.blit(bg_fb, 0, 0)
 
@@ -95,10 +106,12 @@ def check_new_background():
                     % (name, w, h, WIDTH, HEIGHT)
                 )
             else:
-                with open(BG_PATH, "wb") as f:
+                # Имя файла с "breakdown" — фон экрана детализации.
+                target = BG_BREAKDOWN_PATH if "breakdown" in name.lower() else BG_PATH
+                with open(target, "wb") as f:
                     f.write(buf)
                 applied = True
-                print("layout_400x300: %s стал новым фоном" % name)
+                print("layout_400x300: %s стал новым фоном (%s)" % (name, target))
         except Exception as exc:
             print("layout_400x300: не смог обработать %s (%s)" % (name, exc))
         try:
@@ -227,7 +240,7 @@ def update_numbers(fb, data):
     # Фон перезагружаем на каждой перерисовке (не только один раз при
     # старте) — та же причина, что у layout_200x200: текст не должен
     # оставлять "призраков" от старого значения.
-    _load_background(fb)
+    _load_background(fb, breakdown=bool(data.get("show_marketplace_breakdown")))
     cfg = LAYOUT.get()
 
     if data.get("show_marketplace_breakdown"):

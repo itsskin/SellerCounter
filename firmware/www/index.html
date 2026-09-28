@@ -68,6 +68,12 @@
       редактируется — просто пакуется в чёрно-белый растр по порогу яркости, так что готовь её
       заранее чёрно-белой. Применяется сразу, без перезагрузки платы.
     </p>
+    <label>Для какого экрана
+      <select id="bg-target">
+        <option value="">Обычный</option>
+        <option value="breakdown">Детализация по маркетплейсам (только 400x300)</option>
+      </select>
+    </label>
     <input type="file" id="bg-file" accept="image/png">
     <button id="bg-upload" type="button">Загрузить как новый фон</button>
     <p id="bg-msg" class="msg"></p>

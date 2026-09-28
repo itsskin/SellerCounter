@@ -407,7 +407,13 @@ async def api_background(request):
     if check_bg is None:
         return {"ok": False, "error": "у этого макета экрана нет смены фона картинкой"}, 400
 
-    path = ASSETS_DIR + "/" + BACKGROUND_UPLOAD_NAME
+    upload_name = BACKGROUND_UPLOAD_NAME
+    if request.args.get("target") == "breakdown":
+        if display.width != 400 or not hasattr(layout_mod, "BG_BREAKDOWN_PATH"):
+            return {"ok": False, "error": "отдельный фон детализации есть только у макета 400x300"}, 400
+        upload_name = "web_upload_breakdown.png"
+
+    path = ASSETS_DIR + "/" + upload_name
     try:
         with open(path, "wb") as f:
             f.write(body)

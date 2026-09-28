@@ -681,7 +681,8 @@ document.getElementById("bg-upload").addEventListener("click", async () => {
   try {
     // Тело запроса — сырые байты файла (не FormData/multipart) — так
     // проще на плате, см. web_server.py /api/background.
-    const res = await fetch("/api/background", {
+    const target = document.getElementById("bg-target").value;
+    const res = await fetch("/api/background" + (target ? "?target=" + target : ""), {
       method: "POST",
       headers: { "Content-Type": "application/octet-stream" },
       body: file,
