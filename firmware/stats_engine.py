@@ -492,6 +492,12 @@ class StatsEngine:
         никогда — оверрайд применяется только к тому, что уходит на
         экран."""
         await self._redraw(orders, revenue, per_marketplace_override)
+        if orders or revenue:
+            # Разовые тестовые цифры на экране: сбрасываем "что сейчас
+            # показано", иначе следующий опрос с неизменившимися реальными
+            # данными (например 0 продаж) не перерисует экран, и тестовые
+            # цифры останутся висеть вместо реальных.
+            self._displayed = None
 
     async def _redraw(self, orders_override=None, revenue_override=None, per_marketplace_override=None):
         tz = self.cfg.get("timezone_offset_hours", 3)
