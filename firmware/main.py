@@ -254,14 +254,15 @@ def main():
     breadcrumb.mark("connecting wifi (boot)")
     sta = wifi_manager.connect_sta(cfg["wifi"]["ssid"], cfg["wifi"]["password"])
     if sta is None:
-        print("Could not connect to saved Wi-Fi, staying in AP-only mode")
-        _run_provisioning(cfg, display, buzzer, wdt)
-        return
-
-    print("Wi-Fi connected: IP from router =", wifi_manager.get_sta_ip())
-
-    breadcrumb.mark("syncing ntp (boot)")
-    sync_ntp()
+        # Сеть недоступна (роутер выключен, другой диапазон и т.п.) —
+        # продолжаем в обычном режиме: экран, тестовые значения и веб-
+        # интерфейс через точку доступа работают, опрос API просто даёт
+        # ошибки. Раньше тут был режим "только AP", без движка и экрана.
+        print("Could not connect to saved Wi-Fi, running offline (AP always-on)")
+    else:
+        print("Wi-Fi connected: IP from router =", wifi_manager.get_sta_ip())
+        breadcrumb.mark("syncing ntp (boot)")
+        sync_ntp()
 
     # Три разных случая, по причине сброса (machine.reset_cause()), и для
     # каждого — свой отдельный переключатель в настройках (независимо от
