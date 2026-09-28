@@ -219,8 +219,6 @@ def _draw_marketplace_breakdown(fb, cfg, data):
             fb, font, big, x, y, trailing, big_scale=scale, center_whole=True,
         )
 
-    show_total = data.get("marketplace_breakdown_show_total_revenue")
-
     # Размеры шрифтов (mp_row.revenue_font/orders_font) — ручные: рисуем
     # ровно тем, что указано в layout.txt, без авто-подгонки под ширину.
     # Не влезло — обрежется/наложится, это уже забота автора layout.txt.
@@ -266,30 +264,14 @@ def _draw_marketplace_breakdown(fb, cfg, data):
             big_scale=revenue_scale, center_whole=True,
         )
 
-        # Нижнее число — заказы ЭТОГО маркетплейса. Когда включена галочка
-        # "показывать общую выручку" (см. ниже, после цикла) — тут вообще
-        # ничего не рисуем, общая сумма выводится ОДНИМ числом по центру,
-        # не под каждым столбиком отдельно.
-        if not show_total:
-            _draw_number(
-                entry.get("orders", 0), col_x, orders_y,
-                orders_font, orders_decimal_font, orders_decimal_scale, orders_scale,
-                max_decimals=1, min_abbrev=10000,
-            )
+        # Нижнее число — заказы этого маркетплейса.
+        _draw_number(
+            entry.get("orders", 0), col_x, orders_y,
+            orders_font, orders_decimal_font, orders_decimal_scale, orders_scale,
+            max_decimals=1, min_abbrev=10000,
+        )
 
     _draw_column_dividers(fb, cfg, centers)
-
-    if show_total:
-        # Сумма именно по ОТОБРАЖАЕМЫМ столбикам (columns, уже отфильтрован
-        # по visible и, при тесте, содержит тестовые значения) — не общий
-        # data["revenue"] с платы, который не в курсе ни скрытых
-        # маркетплейсов, ни ручного теста.
-        total_revenue = sum(entry.get("revenue", 0) for _, entry in columns)
-        _draw_number(
-            total_revenue, WIDTH // 2, orders_y,
-            orders_font, orders_decimal_font, orders_decimal_scale, orders_scale,
-            max_decimals=0, min_abbrev=1000,
-        )
 
 
 def _draw_revenue(fb, cfg, value, key):

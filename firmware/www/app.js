@@ -91,7 +91,6 @@ function renderSettings(state) {
   document.getElementById("set-yesterday").checked = (state.debug_day_offset || 0) !== 0;
   document.getElementById("set-fbs-reminder").checked = !!(state.display && state.display.show_fbs_reminder);
   document.getElementById("set-marketplace-breakdown").checked = !!(state.display && state.display.show_marketplace_breakdown);
-  document.getElementById("set-mp-total-revenue").checked = !!(state.display && state.display.marketplace_breakdown_show_total_revenue);
 
   // Чекбокс "выключить звук" — инверсия buzzer.enabled (checked = звук
   // ВЫКЛЮЧЕН). Дефолт enabled=true (см. config.py), так что если поля нет
@@ -844,29 +843,6 @@ document.getElementById("set-marketplace-breakdown").addEventListener("change", 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ display: { show_marketplace_breakdown: ev.target.checked } }),
-    });
-    await api("/api/display/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ per_marketplace: collectMarketplaceTestValues() }),
-    });
-    msg.textContent = "Сохранено и перерисовано";
-    msg.classList.remove("error");
-    refreshPreview();
-  } catch (err) {
-    msg.textContent = "Ошибка: " + err.message;
-    msg.classList.add("error");
-  }
-  setTimeout(() => (msg.textContent = ""), 3000);
-});
-
-document.getElementById("set-mp-total-revenue").addEventListener("change", async (ev) => {
-  const msg = document.getElementById("mp-total-revenue-msg");
-  try {
-    await api("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ display: { marketplace_breakdown_show_total_revenue: ev.target.checked } }),
     });
     await api("/api/display/test", {
       method: "POST",
