@@ -159,6 +159,7 @@ def _draw_marketplace_breakdown(fb, cfg, data):
     column_margin = LAYOUT.cfg_int(cfg, "mp_row.column_margin")
     area_x = LAYOUT.cfg_int(cfg, "mp_row.area_x")
     area_width = LAYOUT.cfg_int(cfg, "mp_row.area_width")
+    edge_margin = LAYOUT.cfg_int(cfg, "mp_row.edge_margin")
     label_y = LAYOUT.cfg_int(cfg, "mp_row.label_y")
     revenue_y = LAYOUT.cfg_int(cfg, "mp_row.revenue_y")
     orders_y = LAYOUT.cfg_int(cfg, "mp_row.orders_y")
@@ -202,6 +203,13 @@ def _draw_marketplace_breakdown(fb, cfg, data):
 
     for i, (mp_id, entry, big, tail) in enumerate(revenue_items):
         col_x = group_x + column_width * i + column_width // 2
+        # Отступ крайних столбиков от краёв: первый сдвигается вправо,
+        # последний влево (у единственного столбика сдвига нет).
+        if n > 1:
+            if i == 0:
+                col_x += edge_margin
+            elif i == n - 1:
+                col_x -= edge_margin
 
         # FBS этой площадки — просто число под заказами, без подписи и
         # "шт" (подпись "FBS" уже есть на фоне). Положение по y и шрифт —
