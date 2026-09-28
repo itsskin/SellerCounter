@@ -207,7 +207,7 @@ function marketplaceTypeHtml(available, shops, breakdownVisible, orderInfo) {
       <div class="mp-breakdown-row">
         <label class="checkbox">
           <input type="checkbox" class="mp-breakdown-visible" data-mp-id="${available.id}" ${breakdownVisible ? "checked" : ""}>
-          Отображать на экране детализации
+          Показывать на экране «Маркеты»
         </label>
         <span class="mp-reorder">
           <button type="button" class="mp-move-up" data-mp-id="${available.id}" ${orderInfo.isFirst ? "disabled" : ""}>▲</button>

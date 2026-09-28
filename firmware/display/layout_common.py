@@ -418,7 +418,7 @@ DEFAULTS = {
     # что revenue.y/orders.y у общего вида, только чуть компактнее и общая
     # на все столбики — не x, а y тут ФИКСИРОВАННЫЙ, отдельный на каждый
     # столбик только x).
-    "mp_row.name": "Детализация по маркетплейсам",
+    "mp_row.name": "Экран «Маркеты»: колонки",
     # default_10 — растеризован из встроенного 8x8-шрифта framebuf (см.
     # generate_default_font.py), умеет латиницу (Orbitron — нет вообще,
     # только цифры+.-KM) и остаётся чётким на мелких размерах, где Orbitron
@@ -443,17 +443,17 @@ DEFAULTS = {
     # из этой ширины под сам текст (нужна только для сокращения "K"/"M",
     # шрифт mp_row.*_font НЕ подгоняется под неё — размер ручной).
     "mp_row.column_margin": "10",
-    # Общие выручка/заказы на экране детализации — отдельно от revenue.*/
+    # Общие выручка/заказы на экране «Маркеты» — отдельно от revenue.*/
     # orders.* обычного экрана (другой фон, другие положение и размеры).
     # show = 0 — не рисуются.
-    "mp_total_revenue.name": "Общая выручка (экран детализации)",
+    "mp_total_revenue.name": "Экран «Маркеты»: общая выручка",
     "mp_total_revenue.show": "0",
     "mp_total_revenue.x": "200",
     "mp_total_revenue.y": "60",
     "mp_total_revenue.font": "orbitron_64",
     "mp_total_revenue.max_width": "220",
     "mp_total_revenue.decimal_font": "orbitron_36",
-    "mp_total_orders.name": "Общие заказы (экран детализации)",
+    "mp_total_orders.name": "Экран «Маркеты»: общие заказы",
     "mp_total_orders.show": "0",
     "mp_total_orders.x": "200",
     "mp_total_orders.y": "130",
