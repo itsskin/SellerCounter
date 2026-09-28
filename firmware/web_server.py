@@ -257,6 +257,12 @@ async def api_settings(request):
             buzzer.enabled = cfg["buzzer"].get("enabled", buzzer.enabled)
             buzzer.volume_curve = cfg["buzzer"].get("volume_curve", buzzer.volume_curve)
     config_module.save(cfg)
+    engine = _state["engine"]
+    if engine is not None and "show_marketplace_breakdown" in (body.get("display") or {}):
+        try:
+            await engine.redraw()
+        except Exception as exc:
+            print("web_server: не смог перерисовать экран после смены режима:", exc)
     return {"ok": True}
 
 
