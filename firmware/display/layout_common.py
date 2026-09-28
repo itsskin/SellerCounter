@@ -443,10 +443,25 @@ DEFAULTS = {
     # из этой ширины под сам текст (нужна только для сокращения "K"/"M",
     # шрифт mp_row.*_font НЕ подгоняется под неё — размер ручной).
     "mp_row.column_margin": "10",
-    # 1 — на экране детализации ДОПОЛНИТЕЛЬНО рисуются общие выручка и
-    # заказы (revenue.*/orders.* .400x300) — разнесите их по y выше колонок.
-    # 0 — только колонки, как раньше.
-    "mp_row.show_totals": "0",
+    # Общие выручка/заказы на экране детализации — отдельно от revenue.*/
+    # orders.* обычного экрана (другой фон, другие положение и размеры).
+    # show = 0 — не рисуются.
+    "mp_total_revenue.name": "Общая выручка (экран детализации)",
+    "mp_total_revenue.show": "0",
+    "mp_total_revenue.x": "200",
+    "mp_total_revenue.y": "60",
+    "mp_total_revenue.font": "orbitron_64",
+    "mp_total_revenue.max_width": "220",
+    "mp_total_revenue.decimal_font": "orbitron_36",
+    "mp_total_orders.name": "Общие заказы (экран детализации)",
+    "mp_total_orders.show": "0",
+    "mp_total_orders.x": "200",
+    "mp_total_orders.y": "130",
+    "mp_total_orders.font": "orbitron_48",
+    "mp_total_orders.max_width": "220",
+    "mp_total_orders.decimal_font": "orbitron_36",
+    "mp_total_orders.suffix": "шт",
+    "mp_total_orders.suffix_font": "verdana_28",
     "mp_row.area_x": "5",
     "mp_row.area_width": "390",
     # Подпись — высоко над числами; выручка сразу под ней, вплотную.
@@ -559,7 +574,6 @@ fbs_label.text.400x300 = {fbs_label.text.400x300}
 # (у столбиков отличается только x). column_margin — отступ под текст с
 # обеих сторон столбика вместе (бюджет = ширина_столбика - column_margin);
 # размеры шрифтов mp_row.*_font ручные — под ширину столбика не подгоняются.
-# show_totals = 1 — сверху дополнительно рисуются общие выручка и заказы.
 mp_row.name = {mp_row.name}
 mp_row.label_font = {mp_row.label_font}
 mp_row.revenue_font = {mp_row.revenue_font}
@@ -567,7 +581,24 @@ mp_row.revenue_decimal_font = {mp_row.revenue_decimal_font}
 mp_row.orders_font = {mp_row.orders_font}
 mp_row.orders_decimal_font = {mp_row.orders_decimal_font}
 mp_row.column_margin = {mp_row.column_margin}
-mp_row.show_totals = {mp_row.show_totals}
+
+mp_total_revenue.name = {mp_total_revenue.name}
+mp_total_revenue.show = {mp_total_revenue.show}
+mp_total_revenue.x = {mp_total_revenue.x}
+mp_total_revenue.y = {mp_total_revenue.y}
+mp_total_revenue.font = {mp_total_revenue.font}
+mp_total_revenue.max_width = {mp_total_revenue.max_width}
+mp_total_revenue.decimal_font = {mp_total_revenue.decimal_font}
+
+mp_total_orders.name = {mp_total_orders.name}
+mp_total_orders.show = {mp_total_orders.show}
+mp_total_orders.x = {mp_total_orders.x}
+mp_total_orders.y = {mp_total_orders.y}
+mp_total_orders.font = {mp_total_orders.font}
+mp_total_orders.max_width = {mp_total_orders.max_width}
+mp_total_orders.decimal_font = {mp_total_orders.decimal_font}
+mp_total_orders.suffix = {mp_total_orders.suffix}
+mp_total_orders.suffix_font = {mp_total_orders.suffix_font}
 mp_row.area_x = {mp_row.area_x}
 mp_row.area_width = {mp_row.area_width}
 mp_row.label_y = {mp_row.label_y}

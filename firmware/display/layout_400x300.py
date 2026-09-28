@@ -246,6 +246,77 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         )
 
 
+def _draw_revenue(fb, cfg, value, key):
+    revenue_font, revenue_scale = resolve_font(LAYOUT.cfg_str(cfg, key("font")))
+    decimal_font, decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, key("decimal_font")))
+    revenue_max_width = LAYOUT.cfg_int(cfg, key("max_width"))
+    revenue_text = custom_font.format_compact(
+        revenue_font,
+        value,
+        revenue_max_width,
+        revenue_scale,
+        decimal_font=decimal_font,
+        decimal_scale=decimal_scale,
+        max_decimals=1,
+    )
+    revenue_big, revenue_tail = split_compact(revenue_text)
+    revenue_trailing = [(revenue_tail, decimal_font, decimal_scale)] if revenue_tail else []
+    tail_width = custom_font.text_width(decimal_font, revenue_tail, decimal_scale) if revenue_tail else 0
+    if custom_font.text_width(revenue_font, revenue_big, revenue_scale) + tail_width > revenue_max_width:
+        revenue_font, revenue_scale = shrink_font_to_fit(
+            LAYOUT.cfg_str(cfg, key("font")), revenue_big, revenue_max_width,
+            extra_width=tail_width,
+        )
+    revenue_x = LAYOUT.cfg_int(cfg, key("x"))
+    revenue_y = LAYOUT.cfg_int(cfg, key("y"))
+    custom_font.draw_text_with_trailing(
+        fb, revenue_font, revenue_big, revenue_x, revenue_y, revenue_trailing, big_scale=revenue_scale,
+        center_whole=True,
+    )
+
+
+def _draw_orders(fb, cfg, value, key):
+    orders_font, orders_scale = resolve_font(LAYOUT.cfg_str(cfg, key("font")))
+    orders_decimal_font, orders_decimal_scale = resolve_font(
+        LAYOUT.cfg_str(cfg, key("decimal_font"))
+    )
+    suffix = LAYOUT.cfg_text(cfg, key("suffix"))
+    suffix_font = suffix_scale = None
+    orders_max_width = LAYOUT.cfg_int(cfg, key("max_width"))
+    if suffix:
+        suffix_font, suffix_scale = resolve_font(LAYOUT.cfg_str(cfg, key("suffix_font")))
+        suffix_text = " " + suffix
+        orders_max_width = max(
+            1, orders_max_width - custom_font.text_width(suffix_font, suffix_text, suffix_scale)
+        )
+
+    orders_text = custom_font.format_compact(
+        orders_font,
+        value,
+        orders_max_width,
+        orders_scale,
+        decimal_font=orders_decimal_font,
+        decimal_scale=orders_decimal_scale,
+        max_decimals=1,
+        min_abbrev=10000,  # до "9999" показываем полностью, как на 200x200
+    )
+    orders_big, orders_tail = split_compact(orders_text)
+    orders_trailing = [(orders_tail, orders_decimal_font, orders_decimal_scale)] if orders_tail else []
+    if not orders_tail:
+        if custom_font.text_width(orders_font, orders_big, orders_scale) > orders_max_width:
+            orders_font, orders_scale = shrink_font_to_fit(
+                LAYOUT.cfg_str(cfg, key("font")), orders_big, orders_max_width
+            )
+    if suffix:
+        orders_trailing.append((" " + suffix, suffix_font, suffix_scale))
+
+    orders_x = LAYOUT.cfg_int(cfg, key("x"))
+    orders_y = LAYOUT.cfg_int(cfg, key("y"))
+    custom_font.draw_text_with_trailing(
+        fb, orders_font, orders_big, orders_x, orders_y, orders_trailing, big_scale=orders_scale,
+    )
+
+
 def update_numbers(fb, data):
     # Фон перезагружаем на каждой перерисовке (не только один раз при
     # старте) — та же причина, что у layout_200x200: текст не должен
@@ -254,77 +325,20 @@ def update_numbers(fb, data):
     cfg = LAYOUT.get()
 
     breakdown = bool(data.get("show_marketplace_breakdown"))
-    show_totals = not breakdown or LAYOUT.cfg_bool(cfg, "mp_row.show_totals")
     if breakdown:
         _draw_marketplace_breakdown(fb, cfg, data)
-    if show_totals and LAYOUT.cfg_bool(cfg, res_key("revenue", "show", RES)):
-        revenue_font, revenue_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("revenue", "font", RES)))
-        decimal_font, decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("revenue", "decimal_font", RES)))
-        revenue_max_width = LAYOUT.cfg_int(cfg, res_key("revenue", "max_width", RES))
-        revenue_text = custom_font.format_compact(
-            revenue_font,
-            data.get("revenue", 0),
-            revenue_max_width,
-            revenue_scale,
-            decimal_font=decimal_font,
-            decimal_scale=decimal_scale,
-            max_decimals=1,
-        )
-        revenue_big, revenue_tail = split_compact(revenue_text)
-        revenue_trailing = [(revenue_tail, decimal_font, decimal_scale)] if revenue_tail else []
-        tail_width = custom_font.text_width(decimal_font, revenue_tail, decimal_scale) if revenue_tail else 0
-        if custom_font.text_width(revenue_font, revenue_big, revenue_scale) + tail_width > revenue_max_width:
-            revenue_font, revenue_scale = shrink_font_to_fit(
-                LAYOUT.cfg_str(cfg, res_key("revenue", "font", RES)), revenue_big, revenue_max_width,
-                extra_width=tail_width,
-            )
-        revenue_x = LAYOUT.cfg_int(cfg, res_key("revenue", "x", RES))
-        revenue_y = LAYOUT.cfg_int(cfg, res_key("revenue", "y", RES))
-        custom_font.draw_text_with_trailing(
-            fb, revenue_font, revenue_big, revenue_x, revenue_y, revenue_trailing, big_scale=revenue_scale,
-            center_whole=True,
-        )
-
-    if show_totals and LAYOUT.cfg_bool(cfg, res_key("orders", "show", RES)):
-        orders_font, orders_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("orders", "font", RES)))
-        orders_decimal_font, orders_decimal_scale = resolve_font(
-            LAYOUT.cfg_str(cfg, res_key("orders", "decimal_font", RES))
-        )
-        suffix = LAYOUT.cfg_text(cfg, res_key("orders", "suffix", RES))
-        suffix_font = suffix_scale = None
-        orders_max_width = LAYOUT.cfg_int(cfg, res_key("orders", "max_width", RES))
-        if suffix:
-            suffix_font, suffix_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("orders", "suffix_font", RES)))
-            suffix_text = " " + suffix
-            orders_max_width = max(
-                1, orders_max_width - custom_font.text_width(suffix_font, suffix_text, suffix_scale)
-            )
-
-        orders_text = custom_font.format_compact(
-            orders_font,
-            data.get("orders", 0),
-            orders_max_width,
-            orders_scale,
-            decimal_font=orders_decimal_font,
-            decimal_scale=orders_decimal_scale,
-            max_decimals=1,
-            min_abbrev=10000,  # до "9999" показываем полностью, как на 200x200
-        )
-        orders_big, orders_tail = split_compact(orders_text)
-        orders_trailing = [(orders_tail, orders_decimal_font, orders_decimal_scale)] if orders_tail else []
-        if not orders_tail:
-            if custom_font.text_width(orders_font, orders_big, orders_scale) > orders_max_width:
-                orders_font, orders_scale = shrink_font_to_fit(
-                    LAYOUT.cfg_str(cfg, res_key("orders", "font", RES)), orders_big, orders_max_width
-                )
-        if suffix:
-            orders_trailing.append((" " + suffix, suffix_font, suffix_scale))
-
-        orders_x = LAYOUT.cfg_int(cfg, res_key("orders", "x", RES))
-        orders_y = LAYOUT.cfg_int(cfg, res_key("orders", "y", RES))
-        custom_font.draw_text_with_trailing(
-            fb, orders_font, orders_big, orders_x, orders_y, orders_trailing, big_scale=orders_scale,
-        )
+        # Общие выручка/заказы на экране детализации — свои поля
+        # (mp_total_revenue.*/mp_total_orders.*): фон другой, положение и
+        # размеры не совпадают с обычным экраном.
+        if LAYOUT.cfg_bool(cfg, "mp_total_revenue.show"):
+            _draw_revenue(fb, cfg, data.get("revenue", 0), lambda f: "mp_total_revenue." + f)
+        if LAYOUT.cfg_bool(cfg, "mp_total_orders.show"):
+            _draw_orders(fb, cfg, data.get("orders", 0), lambda f: "mp_total_orders." + f)
+    else:
+        if LAYOUT.cfg_bool(cfg, res_key("revenue", "show", RES)):
+            _draw_revenue(fb, cfg, data.get("revenue", 0), lambda f: res_key("revenue", f, RES))
+        if LAYOUT.cfg_bool(cfg, res_key("orders", "show", RES)):
+            _draw_orders(fb, cfg, data.get("orders", 0), lambda f: res_key("orders", f, RES))
 
     # Дата — как на 200x200, по умолчанию выключена тут (clock.show.400x300
     # = 0 в DEFAULTS, место по умолчанию занято IP ниже).
