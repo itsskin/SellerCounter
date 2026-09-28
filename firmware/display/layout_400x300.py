@@ -243,9 +243,11 @@ def update_numbers(fb, data):
     _load_background(fb, breakdown=bool(data.get("show_marketplace_breakdown")))
     cfg = LAYOUT.get()
 
-    if data.get("show_marketplace_breakdown"):
+    breakdown = bool(data.get("show_marketplace_breakdown"))
+    show_totals = not breakdown or LAYOUT.cfg_bool(cfg, "mp_row.show_totals")
+    if breakdown:
         _draw_marketplace_breakdown(fb, cfg, data)
-    elif LAYOUT.cfg_bool(cfg, res_key("revenue", "show", RES)):
+    if show_totals and LAYOUT.cfg_bool(cfg, res_key("revenue", "show", RES)):
         revenue_font, revenue_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("revenue", "font", RES)))
         decimal_font, decimal_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("revenue", "decimal_font", RES)))
         revenue_max_width = LAYOUT.cfg_int(cfg, res_key("revenue", "max_width", RES))
@@ -273,7 +275,7 @@ def update_numbers(fb, data):
             center_whole=True,
         )
 
-    if not data.get("show_marketplace_breakdown") and LAYOUT.cfg_bool(cfg, res_key("orders", "show", RES)):
+    if show_totals and LAYOUT.cfg_bool(cfg, res_key("orders", "show", RES)):
         orders_font, orders_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("orders", "font", RES)))
         orders_decimal_font, orders_decimal_scale = resolve_font(
             LAYOUT.cfg_str(cfg, res_key("orders", "decimal_font", RES))

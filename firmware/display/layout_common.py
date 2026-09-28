@@ -443,6 +443,10 @@ DEFAULTS = {
     # из этой ширины под сам текст (нужна только для сокращения "K"/"M",
     # шрифт mp_row.*_font НЕ подгоняется под неё — размер ручной).
     "mp_row.column_margin": "10",
+    # 1 — на экране детализации ДОПОЛНИТЕЛЬНО рисуются общие выручка и
+    # заказы (revenue.*/orders.* .400x300) — разнесите их по y выше колонок.
+    # 0 — только колонки, как раньше.
+    "mp_row.show_totals": "0",
     "mp_row.area_x": "5",
     "mp_row.area_width": "390",
     # Подпись — высоко над числами; выручка сразу под ней, вплотную.
@@ -554,10 +558,8 @@ fbs_label.text.400x300 = {fbs_label.text.400x300}
 # label_y/revenue_y/orders_y — ОБЩАЯ на все столбики высота каждой строки
 # (у столбиков отличается только x). column_margin — отступ под текст с
 # обеих сторон столбика вместе (бюджет = ширина_столбика - column_margin);
-# при 1-2 видимых маркетплейсах столбик шире, и выручка растёт крупнее
-# настроенного revenue_font, используя освободившееся место — все
-# видимые столбики сразу одним общим размером (не каждый по своей
-# ширине — иначе визуально разные числа получались бы разного роста).
+# размеры шрифтов mp_row.*_font ручные — под ширину столбика не подгоняются.
+# show_totals = 1 — сверху дополнительно рисуются общие выручка и заказы.
 mp_row.name = {mp_row.name}
 mp_row.label_font = {mp_row.label_font}
 mp_row.revenue_font = {mp_row.revenue_font}
@@ -565,6 +567,7 @@ mp_row.revenue_decimal_font = {mp_row.revenue_decimal_font}
 mp_row.orders_font = {mp_row.orders_font}
 mp_row.orders_decimal_font = {mp_row.orders_decimal_font}
 mp_row.column_margin = {mp_row.column_margin}
+mp_row.show_totals = {mp_row.show_totals}
 mp_row.area_x = {mp_row.area_x}
 mp_row.area_width = {mp_row.area_width}
 mp_row.label_y = {mp_row.label_y}
