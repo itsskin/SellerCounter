@@ -93,6 +93,7 @@ if __name__ == "__main__":
     # (те же байты на выходе), так что заодно держит каталог в одном месте
     # синхронным со всеми тремя семействами разом.
     import generate_orbitron_font as orbitron
+    import generate_orbitronbold_font as orbitronbold
     import generate_pixelmix_font as pixelmix
     import generate_verdana_font as verdana
 
@@ -101,6 +102,10 @@ if __name__ == "__main__":
         orbitron.NAME_PREFIX: lib.render_family(
             orbitron.FONT_PATH, orbitron.OUT_DIR, orbitron.NAME_PREFIX, orbitron.SIZES, orbitron.CHARSET,
             orbitron.SPACING,
+        ),
+        orbitronbold.NAME_PREFIX: lib.render_family(
+            orbitronbold.FONT_PATH, orbitronbold.OUT_DIR, orbitronbold.NAME_PREFIX, orbitronbold.SIZES,
+            orbitronbold.CHARSET, orbitronbold.SPACING,
         ),
         verdana.NAME_PREFIX: lib.render_family(
             verdana.FONT_PATH, verdana.OUT_DIR, verdana.NAME_PREFIX, verdana.SIZES, verdana.CHARSET, verdana.SPACING

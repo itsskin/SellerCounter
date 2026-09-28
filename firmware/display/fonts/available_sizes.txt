@@ -17,6 +17,13 @@ orbitron:
   orbitron_96       70px
   orbitron_128      92px
 
+orbitronbold:
+  имя файла          реальная высота цифр на экране
+  orbitronbold_14       10px
+  orbitronbold_25       18px
+  orbitronbold_45       32px
+  orbitronbold_70       50px
+
 verdana:
   имя файла          реальная высота цифр на экране
   verdana_15       17px

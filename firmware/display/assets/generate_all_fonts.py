@@ -1,4 +1,4 @@
-"""Перегенерирует ВСЕ семейства шрифтов (Orbitron, Verdana, Pixelmix) и общий
+"""Перегенерирует ВСЕ семейства шрифтов (Orbitron, Orbitron Bold, Verdana, Pixelmix) и общий
 каталог display/fonts/available_sizes.txt одним запуском. Предпочтительный
 способ обновить шрифты — generate_orbitron_font.py/generate_verdana_font.py/
 generate_pixelmix_font.py по отдельности каталог не трогают (см. их
@@ -15,12 +15,17 @@ font.py, наоборот, сам пересобирает ПОЛНЫЙ ката
 
 import font_render_lib as lib
 import generate_orbitron_font as orbitron
+import generate_orbitronbold_font as orbitronbold
 import generate_pixelmix_font as pixelmix
 import generate_verdana_font as verdana
 
 families = {}
 families[orbitron.NAME_PREFIX] = lib.render_family(
     orbitron.FONT_PATH, orbitron.OUT_DIR, orbitron.NAME_PREFIX, orbitron.SIZES, orbitron.CHARSET, orbitron.SPACING
+)
+families[orbitronbold.NAME_PREFIX] = lib.render_family(
+    orbitronbold.FONT_PATH, orbitronbold.OUT_DIR, orbitronbold.NAME_PREFIX, orbitronbold.SIZES, orbitronbold.CHARSET,
+    orbitronbold.SPACING,
 )
 families[verdana.NAME_PREFIX] = lib.render_family(
     verdana.FONT_PATH, verdana.OUT_DIR, verdana.NAME_PREFIX, verdana.SIZES, verdana.CHARSET, verdana.SPACING
