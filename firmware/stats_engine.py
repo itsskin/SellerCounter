@@ -517,8 +517,14 @@ class StatsEngine:
         ]
         fbs_total = sum(n for _, n in fbs_by_marketplace)
         data = {
-            "orders": orders_override if orders_override else self.latest["orders"],
-            "revenue": revenue_override if revenue_override else self.latest["revenue"],
+            "orders": orders_override if orders_override else (
+                sum(e.get("orders", 0) for e in per_marketplace.values())
+                if self._mp_test_override else self.latest["orders"]
+            ),
+            "revenue": revenue_override if revenue_override else (
+                sum(e.get("revenue", 0) for e in per_marketplace.values())
+                if self._mp_test_override else self.latest["revenue"]
+            ),
             "ip": self.get_ip() or "",
             "updated_at": _current_time_hhmm(tz),
             "updated_date": _current_date_ddmmyyyy(tz),
