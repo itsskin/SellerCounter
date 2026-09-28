@@ -176,7 +176,11 @@ class StatsEngine:
         if not force and self._last_poll_epoch is not None:
             elapsed_sec = now_epoch - self._last_poll_epoch
             min_gap_sec = self._min_poll_gap_sec()
-            if elapsed_sec < min_gap_sec:
+            # Отрицательный elapsed — часы ещё не синхронизированы (нет
+            # интернета/NTP, время начинается с 2000 года, а последний
+            # опрос записан по реальному времени): не считаем это
+            # "недавним опросом", иначе опрос и перерисовка не наступят никогда.
+            if 0 <= elapsed_sec < min_gap_sec:
                 print(
                     "[stats %s] пропускаю: последний опрос был %.0f с назад (мин. пауза %d с)"
                     % (ts, elapsed_sec, min_gap_sec)
