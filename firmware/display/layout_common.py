@@ -472,10 +472,12 @@ DEFAULTS = {
     "mp_row.label_y": "20",
     "mp_row.revenue_y": "58",
     "mp_row.orders_y": "225",
-    # Число FBS под заказами — свой y, не общий с fbs_label.y.400x300
+    # Число FBS под заказами — свои y и шрифт, не общие с fbs_label.*.400x300
     # (Итоги): раскладки этих двух экранов разные, общий y сажал число
-    # слишком высоко, к подписи "шт" у заказов.
+    # слишком высоко, к подписи "шт" у заказов. pixelmix_7 — под размер
+    # подписей "Р"/"шт"/"FBS" на самом фоне (мелкий пиксельный шрифт).
     "mp_row.fbs_y": "265",
+    "mp_row.fbs_font": "pixelmix_7",
 }
 
 LAYOUT_TXT_TEMPLATE = """\
@@ -617,6 +619,7 @@ mp_row.label_y = {mp_row.label_y}
 mp_row.revenue_y = {mp_row.revenue_y}
 mp_row.orders_y = {mp_row.orders_y}
 mp_row.fbs_y = {mp_row.fbs_y}
+mp_row.fbs_font = {mp_row.fbs_font}
 """
 
 LAYOUT = LayoutTxtConfig(LAYOUT_TXT_PATH, DEFAULTS, LAYOUT_TXT_TEMPLATE, "layout")

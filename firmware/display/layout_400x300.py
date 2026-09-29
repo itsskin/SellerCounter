@@ -246,13 +246,14 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         centers.append(col_x)
 
         # FBS этой площадки — просто число под заказами, без подписи и
-        # "шт" (подпись "FBS" уже есть на фоне). Шрифт — тот же, что у
-        # напоминания "Собрать FBS" на Итогах (fbs_label.font.400x300), но
-        # y СВОЙ (mp_row.fbs_y) — общий с Итогами y раньше сажал число
-        # слишком высоко, вплотную к подписи "шт" у заказов (HW-
-        # подтверждено), потому что раскладки этих двух экранов не совпадают.
+        # "шт" (подпись "FBS" уже есть на фоне). Шрифт и y СВОИ
+        # (mp_row.fbs_font/fbs_y), не общие с напоминанием "Собрать FBS" на
+        # Итогах (fbs_label.font/y.400x300) — раскладки этих двух экранов
+        # разные (HW-подтверждено: общий y сажал число слишком высоко,
+        # вплотную к "шт" у заказов). По умолчанию pixelmix_7 — под размер
+        # подписей "Р"/"шт"/"FBS" на самом фоне (mp_row.fbs_font).
         if data.get("show_fbs_label") and LAYOUT.cfg_bool(cfg, res_key("fbs_label", "show", RES)):
-            fbs_font, fbs_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("fbs_label", "font", RES)))
+            fbs_font, fbs_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.fbs_font"))
             custom_font.draw_text_centered(
                 fb, fbs_font, str(entry.get("fbs_orders", 0)), col_x,
                 LAYOUT.cfg_int(cfg, "mp_row.fbs_y"), scale=fbs_scale,
