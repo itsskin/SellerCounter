@@ -667,37 +667,6 @@ document.getElementById("set-full-refresh-every").addEventListener("change", asy
 
 document.getElementById("preview-refresh").addEventListener("click", refreshPreview);
 
-document.getElementById("override-apply").addEventListener("click", async () => {
-  const orders = Number(document.getElementById("override-orders").value) || 0;
-  const revenue = Number(document.getElementById("override-revenue").value) || 0;
-  const msg = document.getElementById("override-msg");
-
-  msg.textContent = "Рисую на экране (это медленно, ~20с — реальное обновление e-paper)...";
-  msg.classList.remove("error");
-  try {
-    // Сырой fetch, не api() — при ошибке (не 2xx) нужен текст из тела
-    // ответа ({ok:false, error}), а api() на не-2xx просто бросает без
-    // разбора тела.
-    const res = await fetch("/api/display/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orders, revenue }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      msg.textContent = "Готово";
-      refreshPreview();
-    } else {
-      msg.textContent = "Ошибка: " + (data.error || "");
-      msg.classList.add("error");
-    }
-  } catch (err) {
-    msg.textContent = "Ошибка: " + err.message;
-    msg.classList.add("error");
-  }
-  setTimeout(() => (msg.textContent = ""), 4000);
-});
-
 document.getElementById("bg-upload").addEventListener("click", async () => {
   const fileInput = document.getElementById("bg-file");
   const msg = document.getElementById("bg-msg");
