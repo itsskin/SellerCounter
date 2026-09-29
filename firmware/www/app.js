@@ -586,6 +586,10 @@ async function loadState(forceFormRefresh) {
   if (state.display_width && state.display_height) {
     document.getElementById("bg-size").textContent = state.display_width + "x" + state.display_height;
   }
+  // Экран «Маркеты» рисуется только на 400x300 — на 200x200 переключатель
+  // просто нечего было бы переключать.
+  document.getElementById("marketplace-breakdown-toggle").hidden =
+    !(state.display_width === 400 && state.display_height === 300);
 
   if (!formsReady || forceFormRefresh) {
     renderSettings(state);

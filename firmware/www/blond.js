@@ -471,6 +471,11 @@ async function loadState(forceFormRefresh) {
   document.getElementById("page-updated").textContent =
     "Страница обновляется сама · последний раз в " + fmtClock(new Date());
 
+  // Экран «Маркеты» рисуется только на 400x300 — на 200x200 переключатель
+  // просто нечего было бы переключать.
+  document.getElementById("marketplace-breakdown-toggle").hidden =
+    !(state.display_width === 400 && state.display_height === 300);
+
   if (!formsReady || forceFormRefresh) {
     renderSettings(state);
     renderMarketplaces(state);

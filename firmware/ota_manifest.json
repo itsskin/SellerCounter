@@ -35,7 +35,7 @@
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
   "display/layout_200x200.py": "7d1593086979e07c21086003bd56a21d86fe192ea65ba23371598cf65da85b76",
   "display/layout_400x300.py": "2d7eb1d940adaa921f4ed3cb083eb877065f8c9afe9b8f4df76c4cd6602422f6",
-  "display/layout_common.py": "99652ede2811ab9bd9f1a28c8a057da3e5a21b26f581521e3e9e2aa42fdb058a",
+  "display/layout_common.py": "2caf96fd1d82db9f828f947554a484c92a49cc3d896f6e1f98adceda68e721be",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
   "lib/microdot/__init__.py": "600f59c25bc576bb6659e3ad4697a82c3c7a225f0063cc6024f8fc439c4a0a7c",
@@ -55,11 +55,11 @@
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
   "web_server.py": "a978f3c8506325827b0c810ae990376b4ba1903053fbc664f5f1cff466bad47e",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
-  "www/app.js": "27ca18323a40b1535c0a7a464f69bddee844ba8ec012d52317688d030ec9ca75",
-  "www/blond.html": "7bfcf7cba709b931f1304017a52b592c7a5033242ea6c08c4be8eb4ef4b04b25",
-  "www/blond.js": "7dd94e07088f5752babe4725ea2af26a5e86aab8bb1421ae85d9c61f76d4476d",
-  "www/index.html": "4e0c22f8a4ec80ec47bfc2422bd99715bca8bbd386ecf0dae74edf28d9413af1",
+  "www/app.js": "dfffb30116df6fd52c883d1e6b7f44416eab4eeaf6825f0e076a67733193add8",
+  "www/blond.html": "b1fcccf8aeed60e652d75e76a6c66c4f60e6088313030c35adfdb5eb149ce5ac",
+  "www/blond.js": "917612d2664e5b7bd05e8928de85c255d26c900dd366cfd1923e6c7396a8d397",
+  "www/index.html": "32649bcc1d9d6c3f2fbacf22064d223fc0f49ee6a9ff5e3471793f18a4294f80",
   "www/style.css": "ef6ce01a9248c3ded791162fa29b12759a7abf72c9b4ede752daf6af743a15b1"
  },
- "version": 82
+ "version": 83
 }

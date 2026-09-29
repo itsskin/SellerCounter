@@ -206,7 +206,7 @@ class LayoutTxtConfig:
         return values
 
     def _append_missing(self, raw, missing_keys):
-        lines = ["", "# Автодобавлено (новая версия прошивки добавила эти поля):"]
+        lines = [""]
         for key in missing_keys:
             val = self.defaults[key]
             raw[key] = val
