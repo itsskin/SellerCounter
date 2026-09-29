@@ -889,6 +889,39 @@ document.getElementById("set-marketplace-breakdown").addEventListener("change", 
   setTimeout(() => (msg.textContent = ""), 3000);
 });
 
+document.getElementById("mp-breakdown-test-clear").addEventListener("click", async (ev) => {
+  const button = ev.target;
+  const msg = document.getElementById("mp-breakdown-test-msg");
+  button.disabled = true;
+  msg.classList.remove("error");
+  try {
+    // {} явно (не "ничего не переданно") — снимает "липкий" оверрайд на
+    // плате целиком, даже если он завис от поля, которое на этой
+    // странице сейчас выглядит пустым (см. stats_engine.py _redraw).
+    await api("/api/display/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ per_marketplace: {} }),
+    });
+    container_clear_test_inputs();
+    msg.textContent = "Тестовые значения очищены, экран показывает реальные данные";
+    refreshPreview();
+    loadState(false);
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  button.disabled = false;
+  setTimeout(() => (msg.textContent = ""), 4000);
+});
+
+function container_clear_test_inputs() {
+  document.querySelectorAll(".mp-test-revenue, .mp-test-orders, .mp-test-fbs").forEach((input) => {
+    input.value = "";
+  });
+  mpTestOverrideFromState = {};
+}
+
 document.getElementById("mp-breakdown-test-apply").addEventListener("click", async (ev) => {
   const button = ev.target;
   const msg = document.getElementById("mp-breakdown-test-msg");
