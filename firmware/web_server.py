@@ -84,6 +84,20 @@ async def app_js(request):
     return Response.send_file("/www/app.js", content_type="application/javascript")
 
 
+@app.route("/blond")
+async def blond(request):
+    """Упрощённый интерфейс для повседневного использования (та же плата,
+    те же /api/* эндпоинты, что и основной "/" — оба работают параллельно
+    без конфликтов) — без технических разделов "Фон экрана"/"Настройки"
+    (экран/раскладка/интервал опроса) и без тестовых полей маркетплейсов."""
+    return Response.send_file("/www/blond.html", content_type="text/html")
+
+
+@app.route("/blond.js")
+async def blond_js(request):
+    return Response.send_file("/www/blond.js", content_type="application/javascript")
+
+
 @app.route("/api/state")
 async def api_state(request):
     cfg = _state["cfg"]

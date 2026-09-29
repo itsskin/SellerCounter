@@ -46,28 +46,6 @@
     <button id="preview-refresh" type="button">Обновить превью</button>
   </section>
 
-  <section id="background-section" class="card">
-    <h2>Фон экрана</h2>
-    <p class="hint">
-      PNG ровно под размер активного экрана (сейчас <span id="bg-size">?</span>). Картинка не
-      редактируется — просто пакуется в чёрно-белый растр по порогу яркости, так что готовь её
-      заранее чёрно-белой. Применяется сразу, без перезагрузки платы.
-    </p>
-    <div class="bg-row" data-target="">
-      <label>«Итоги» (обычный)
-        <input type="file" class="bg-file" accept="image/png">
-      </label>
-      <button type="button" class="bg-upload">Загрузить</button>
-    </div>
-    <div class="bg-row" data-target="breakdown">
-      <label>«Маркеты» (только 400x300)
-        <input type="file" class="bg-file" accept="image/png">
-      </label>
-      <button type="button" class="bg-upload">Загрузить</button>
-    </div>
-    <p id="bg-msg" class="msg"></p>
-  </section>
-
   <section id="marketplaces-section" class="card">
     <h2>Маркетплейсы</h2>
     <label class="checkbox">
@@ -83,20 +61,6 @@
     </p>
     <p id="marketplace-breakdown-msg" class="msg"></p>
     <div id="marketplaces-list"></div>
-    <p class="hint">
-      Поля "Тест: выручка"/"Тест: заказы" у каждого маркетплейса выше — чтобы посмотреть экран
-      «Маркеты» с придуманными числами, не дожидаясь реальных продаж. Применяются на плате сразу
-      при вводе. Пусто у площадки — на экране её настоящие данные. Реальные данные
-      (заказы/выручка) эти поля не трогают.
-    </p>
-    <button type="button" id="mp-breakdown-test-clear">Очистить все тестовые значения</button>
-    <p id="mp-breakdown-test-msg" class="msg"></p>
-    <p class="hint">
-      "Очистить все" — на случай, если где-то в поле осталось забытое тестовое число (например
-      страницу закрыли раньше, чем оно сохранилось) и экран показывает его вместо реальных
-      данных: обнуляет тестовые значения на самой плате гарантированно, не полагаясь на то, что
-      все поля пустые визуально.
-    </p>
     <label class="checkbox">
       <input type="checkbox" id="set-fbs-reminder">
       Показывать на экране "Собрать FBS"
@@ -194,86 +158,6 @@
     <p id="notifications-msg" class="msg"></p>
   </section>
 
-  <section id="settings-section" class="card">
-    <h2>Настройки</h2>
-    <form id="settings-form">
-      <label>Интервал опроса (сек)
-        <input type="number" name="poll_interval_sec" id="set-poll" min="15">
-      </label>
-      <label>Часовой пояс (UTC+)
-        <input type="number" name="timezone_offset_hours" id="set-tz" step="0.5">
-      </label>
-      <label class="checkbox">
-        <input type="checkbox" name="show_yesterday" id="set-yesterday">
-        Показывать данные за вчера
-      </label>
-      <button type="submit">Сохранить</button>
-    </form>
-    <p id="settings-msg" class="msg"></p>
-
-    <h3>Экран</h3>
-    <p class="hint">
-      Смена экрана требует перезагрузки платы — драйвер и распиновка выбираются один раз при
-      старте. Пины у обоих экранов совпадают (см. docs/HARDWARE.md), физически переключать можно
-      без перепайки.
-    </p>
-    <label>Какой экран подключён
-      <select id="set-display-driver">
-        <option value="epd1in54">1.54" маленький (200x200)</option>
-        <option value="epd4in2">4.2" большой (400x300)</option>
-      </select>
-    </label>
-    <button type="button" id="display-driver-save">Сохранить и перезагрузить</button>
-    <p id="display-driver-msg" class="msg"></p>
-
-    <label>Раз в сколько обновлений делать честный full refresh
-      <input type="number" id="set-full-refresh-every" min="1">
-    </label>
-    <p class="hint">
-      Экран всегда полностью перещёлкивает пиксели, но "быстрый" режим (обычное обновление) со
-      временем оставляет лёгкие призраки предыдущих кадров. Раз в столько обновлений — и всегда
-      первым делом после включения платы — вместо быстрого делается честный (медленнее, но чистит
-      эти остатки). Работает на обоих экранах (200x200 и 400x300). Применяется сразу, без
-      перезагрузки платы.
-    </p>
-    <p id="full-refresh-every-msg" class="msg"></p>
-
-    <h3>Макет (для разработки)</h3>
-    <p class="hint">
-      Принудительно нарисовать другой макет поверх физически подключённого экрана — например
-      посмотреть на макет 200x200, не переключая экраны физически (он займёт верхний левый угол
-      большого экрана, остальное место останется пустым). Сам физический экран/драйвер не
-      меняется, перезагрузка не нужна — применяется при следующей перерисовке (кнопка "Обновить
-      сейчас" в разделе статистики выше или следующий обычный опрос).
-    </p>
-    <label>Какой макет рисовать
-      <select id="set-layout-override">
-        <option value="">Авто (по физическому экрану)</option>
-        <option value="200x200">Всегда 200x200</option>
-        <option value="400x300">Всегда 400x300</option>
-      </select>
-    </label>
-    <p id="layout-override-msg" class="msg"></p>
-
-    <h3>Расположение текста (layout.txt)</h3>
-    <p class="hint">
-      Один файл на ОБА экрана сразу (200x200 и 400x300) — у каждого элемента (выручка, заказы,
-      дата, IP, напоминание "Собрать FBS") своё значение x/y/шрифта под каждое разрешение и свой
-      флаг видимости ("show" — 0 или 1), не зависящий от выбора макета выше. "Применить" сохраняет
-      файл на плату и сразу перерисовывает активный сейчас экран текущими данными, без нового
-      опроса маркетплейсов — перезагрузка не нужна. Опечатка в отдельном поле не ломает экран: для
-      этого конкретного поля просто вернётся значение по умолчанию.
-    </p>
-    <textarea id="layout-text" rows="20" spellcheck="false" placeholder="Загрузка…"></textarea>
-    <div class="override-row">
-      <button type="button" id="layout-text-reload">Обновить из платы</button>
-      <button type="button" id="layout-text-apply">Применить</button>
-    </div>
-    <p id="layout-text-msg" class="msg"></p>
-    <p class="hint">Шрифты, реально доступные на этой плате сейчас (значение поля <code>*.font.*</code> выше):</p>
-    <p id="layout-fonts-list" class="hint">—</p>
-  </section>
-
   <section id="wifi-section" class="card">
     <h2>Wi-Fi</h2>
     <p class="hint">Плата подключится к этой сети и будет опрашивать маркетплейсы через неё.</p>
@@ -303,6 +187,6 @@
   </section>
 </main>
 
-<script src="/app.js"></script>
+<script src="/blond.js"></script>
 </body>
 </html>
