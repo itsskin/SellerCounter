@@ -91,25 +91,13 @@
       <input type="checkbox" id="set-boot-sound">
       Звук при включении
     </label>
-    <label class="checkbox">
-      <input type="checkbox" id="set-watchdog-sound">
-      Оповещение о зависании (watchdog)
-    </label>
     <div id="notifications-list"></div>
     <label>
       <span>Громкость: <span id="volume-value">100</span>%</span>
       <input type="range" id="set-volume" min="0" max="100" step="5">
     </label>
-    <p class="hint">
-      Шаг 5%. 100% на ползунке — это 80% реальной громкости зуммера (запас, чтобы не звучало на
-      пределе и без искажений).
-    </p>
 
     <h3>Уведомления</h3>
-    <p class="hint">
-      Своя мелодия для конкретного маркетплейса — необязательно, "по умолчанию" значит играть
-      общий выбор выше.
-    </p>
     <div id="mp-sounds-list"></div>
     <button type="button" id="mp-sounds-save">Сохранить</button>
 
