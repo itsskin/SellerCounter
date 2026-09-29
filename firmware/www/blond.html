@@ -97,18 +97,6 @@
       <input type="checkbox" id="set-watchdog-sound">
       Оповещение о зависании (watchdog)
     </label>
-    <p class="hint">
-      Если плата сама зависла и перезапустилась по watchdog — отдельный, легко узнаваемый на
-      слух сигнал (чистый тон, 3 секунды), чтобы сразу понять, что это именно самостоятельный
-      сбой, а не обычная перезагрузка. Не зависит от переключателя "Звук при включении платы"
-      выше.
-    </p>
-    <p class="hint">
-      Файлы лежат в <code>/notifications/</code> на плате. <code>.mid</code> играется как мелодия,
-      <code>.wav</code> — как грубый PWM-звук (сырые 8-битные моно-сэмплы). <code>.mp3</code> плата
-      декодировать не умеет — сконвертируй один раз на компьютере:
-      <code>ffmpeg -i file.mp3 -ar 8000 -ac 1 -acodec pcm_u8 file.wav</code>
-    </p>
     <div id="notifications-list"></div>
     <label>
       <span>Громкость: <span id="volume-value">100</span>%</span>
