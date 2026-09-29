@@ -250,8 +250,8 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         # (mp_row.fbs_font/fbs_y), не общие с напоминанием "Собрать FBS" на
         # Итогах (fbs_label.font/y.400x300) — раскладки этих двух экранов
         # разные (HW-подтверждено: общий y сажал число слишком высоко,
-        # вплотную к "шт" у заказов). По умолчанию pixelmix_7 — под размер
-        # подписей "Р"/"шт"/"FBS" на самом фоне (mp_row.fbs_font).
+        # вплотную к "шт" у заказов). По умолчанию тот же рост цифр, что и
+        # у выручки/заказов в столбике (mp_row.fbs_font).
         if data.get("show_fbs_label") and LAYOUT.cfg_bool(cfg, res_key("fbs_label", "show", RES)):
             fbs_font, fbs_scale = resolve_font(LAYOUT.cfg_str(cfg, "mp_row.fbs_font"))
             custom_font.draw_text_centered(
