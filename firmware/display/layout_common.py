@@ -472,6 +472,10 @@ DEFAULTS = {
     "mp_row.label_y": "20",
     "mp_row.revenue_y": "58",
     "mp_row.orders_y": "225",
+    # Число FBS под заказами — свой y, не общий с fbs_label.y.400x300
+    # (Итоги): раскладки этих двух экранов разные, общий y сажал число
+    # слишком высоко, к подписи "шт" у заказов.
+    "mp_row.fbs_y": "265",
 }
 
 LAYOUT_TXT_TEMPLATE = """\
@@ -612,6 +616,7 @@ mp_row.divider_y = {mp_row.divider_y}
 mp_row.label_y = {mp_row.label_y}
 mp_row.revenue_y = {mp_row.revenue_y}
 mp_row.orders_y = {mp_row.orders_y}
+mp_row.fbs_y = {mp_row.fbs_y}
 """
 
 LAYOUT = LayoutTxtConfig(LAYOUT_TXT_PATH, DEFAULTS, LAYOUT_TXT_TEMPLATE, "layout")
