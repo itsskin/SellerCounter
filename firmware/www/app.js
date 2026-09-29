@@ -894,28 +894,6 @@ function container_clear_test_inputs() {
   mpTestOverrideFromState = {};
 }
 
-document.getElementById("mp-breakdown-test-apply").addEventListener("click", async (ev) => {
-  const button = ev.target;
-  const msg = document.getElementById("mp-breakdown-test-msg");
-  const perMarketplace = collectMarketplaceTestValues();
-  button.disabled = true;
-  msg.classList.remove("error");
-  try {
-    await api("/api/display/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ per_marketplace: perMarketplace }),
-    });
-    msg.textContent = "Показано на экране";
-    refreshPreview();
-  } catch (err) {
-    msg.textContent = "Ошибка: " + err.message;
-    msg.classList.add("error");
-  }
-  button.disabled = false;
-  setTimeout(() => (msg.textContent = ""), 3000);
-});
-
 document.getElementById("set-fbs-reminder").addEventListener("change", async (ev) => {
   const msg = document.getElementById("fbs-reminder-msg");
   try {
