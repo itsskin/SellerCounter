@@ -103,7 +103,7 @@ function renderSettings(state) {
 
 let shopVisibleFromState = {};
 
-function shopCardHtml(available, shop) {
+function shopCardHtml(available, shop, showVisibilityToggle) {
   const fields = available.required_fields
     .map((field) => {
       const type = field === "api_key" ? "password" : "text";
@@ -115,12 +115,20 @@ function shopCardHtml(available, shop) {
     })
     .join("");
 
-  return `
-    <div class="mp-card" data-key="${shop.key}">
-      <label class="checkbox">
+  // Галочка видимости у КОНКРЕТНОГО магазина имеет смысл, только если их
+  // на площадке больше одного (выбираем, какие суммировать в колонку) —
+  // при единственном магазине она дублирует галочку у площадки целиком
+  // (marketplaceTypeHtml), см. запрос пользователя.
+  const visibilityToggle = showVisibilityToggle
+    ? `<label class="checkbox">
         <input type="checkbox" class="shop-breakdown-visible" data-shop-key="${shop.key}" ${shopVisibleFromState[shop.key] !== false ? "checked" : ""}>
         Показывать на экране «Маркеты»
-      </label>
+      </label>`
+    : "";
+
+  return `
+    <div class="mp-card" data-key="${shop.key}">
+      ${visibilityToggle}
       <form data-key="${shop.key}">
         <div class="mp-card-head">
           <span class="status ${shop.configured ? "ok" : ""}">${shop.configured ? "активен" : "нет ключей"}</span>
@@ -134,7 +142,7 @@ function shopCardHtml(available, shop) {
 }
 
 function marketplaceTypeHtml(available, shops, breakdownVisible, orderInfo) {
-  const cards = shops.map((shop) => shopCardHtml(available, shop)).join("");
+  const cards = shops.map((shop) => shopCardHtml(available, shop, shops.length > 1)).join("");
   return `
     <div class="mp-type" data-mp-id="${available.id}">
       <div class="mp-type-head">
