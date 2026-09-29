@@ -2,8 +2,8 @@
  "files": {
   "boot.py": "c125b2cd03296b74ae2f5eabffe2f33274c3b0aa1fc4f313bdf4839d5eac53d6",
   "breadcrumb.py": "9f0f73d1fd0dfebf62a4dc14ae5fbb11c33d831aebb278b8dc9a9a271d084f41",
-  "buzzer.py": "7989fe2f6dde1ce3a48e56bde321a41541a2abdc9c9ef6f67be2a5aad5177a6e",
-  "config.py": "e08c090de0ec0fd214fbc791567f31db081dfa7158ca1e17106072c9f35d40aa",
+  "buzzer.py": "bac572cd23ebc11287d4c9e7508456a0714ec2a1897a163821ca2d316a59991f",
+  "config.py": "733a2b1c2ae259e3c655f431d03576d71f863732fd1f307153ec86a322018002",
   "display/base.py": "d8d9f68ccb2b1f6dc42e5621852ba0927593329a87700aed9bd908ff540c5848",
   "display/column.png": "668eea8362fc9a3b867e5e53c5fe2417489b9893489237f75db7a0a46f346328",
   "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
@@ -43,7 +43,7 @@
   "lib/sc_http/__init__.py": "526dd7dadb16afbab43fad92aec71d4e18be0b66afb2e03b2edac6106627a742",
   "lib/umidiparser/__init__.py": "9cd841108db4f550d552afb0424661a0246817ad88fda82ed35903ac9f5e71a9",
   "lib/umidiparser/umidiparser.py": "82ac1b5ac975eb4ed82500d29b1b03c644855575bd3bfb1373a17139ec4d4dea",
-  "main.py": "7481501a260abc76b9feae1ebbdcd1cca7e4540e1a192e107e2a09db0a28a38e",
+  "main.py": "53e4bec56a381cb12c4c9b9bc54e59c89e1d8e73ec7e047c4ff829a278a500aa",
   "marketplaces/base.py": "30ec23cde4b9c49ec134b3b923785b74f344608aef850036d0be734bec5c67c8",
   "marketplaces/ozon.py": "01bce5d85d601b82b2856ae3e1738b5249a31781e77eee7275e22439194b7722",
   "marketplaces/registry.py": "4100084c0f5434752710d7e4701d60848e1efe4dac664440d3fd12408ef9f4f7",
@@ -53,11 +53,11 @@
   "stats_engine.py": "bdd2bfaf07039b08990d50684ae83a51e843a38c4b8fc84109650d1a6d579211",
   "utils/http.py": "de8f3b5a2bc492757b5fc041020e369a3fb850556d54b24dc770263f6bf4b218",
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
-  "web_server.py": "51c76f251837369c6c76961eccb0904baf58ce112729d63fed59da17020fe21b",
+  "web_server.py": "c5d0c0c2dba8392f1a0668bc9e023ada3a029d835f5f37808e2850804a926c17",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
-  "www/app.js": "8fd79e6c7a7f734c1d36a43bb97b0ab68aace52c58a64e600bd453b7a282fe69",
-  "www/index.html": "ed28b0912112da7077df29969f40f2d294d9587dae9adcedd8b4062301d6f705",
-  "www/style.css": "f97efebb0863aae07eaae06fb570a8f2e2c77f26995990b6276fbde34a312aa5"
+  "www/app.js": "dfbb76cdc9a6d4fe03de227b1657fd88264688053ae72649717923e1487c2014",
+  "www/index.html": "92a92732be473ac8370849238c529484a69ece8337e384930d324228c53e6207",
+  "www/style.css": "ef6ce01a9248c3ded791162fa29b12759a7abf72c9b4ede752daf6af743a15b1"
  },
- "version": 74
+ "version": 75
 }

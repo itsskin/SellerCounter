@@ -103,7 +103,6 @@ function renderSettings(state) {
   const volume = (state.buzzer && state.buzzer.volume) ?? 100;
   document.getElementById("set-volume").value = volume;
   document.getElementById("volume-value").textContent = volume;
-  document.getElementById("set-volume-curve").value = (state.buzzer && state.buzzer.volume_curve) || "linear";
 
   const night = (state.buzzer && state.buzzer.night_mode) || {};
   document.getElementById("set-night-enabled").checked = !!night.enabled;
@@ -731,21 +730,6 @@ volumeSlider.addEventListener("change", async () => {
       body: JSON.stringify({ buzzer: { volume: Number(volumeSlider.value) } }),
     });
     msg.textContent = "Громкость сохранена: " + volumeSlider.value + "%";
-  } catch (err) {
-    msg.textContent = "Ошибка: " + err.message;
-  }
-  setTimeout(() => (msg.textContent = ""), 3000);
-});
-
-document.getElementById("set-volume-curve").addEventListener("change", async (ev) => {
-  const msg = document.getElementById("notifications-msg");
-  try {
-    await api("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ buzzer: { volume_curve: ev.target.value } }),
-    });
-    msg.textContent = "Кривая громкости сохранена";
   } catch (err) {
     msg.textContent = "Ошибка: " + err.message;
   }

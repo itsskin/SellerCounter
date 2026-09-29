@@ -264,7 +264,6 @@ async def api_settings(request):
             # применяем изменения сразу, без перезагрузки платы.
             buzzer.volume = cfg["buzzer"].get("volume", buzzer.volume)
             buzzer.enabled = cfg["buzzer"].get("enabled", buzzer.enabled)
-            buzzer.volume_curve = cfg["buzzer"].get("volume_curve", buzzer.volume_curve)
     config_module.save(cfg)
     engine = _state["engine"]
     if engine is not None and "show_marketplace_breakdown" in (body.get("display") or {}):

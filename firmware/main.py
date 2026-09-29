@@ -237,7 +237,6 @@ def main():
         cfg["buzzer"]["pin"],
         cfg["buzzer"].get("enabled", True),
         cfg["buzzer"].get("volume", 100),
-        cfg["buzzer"].get("volume_curve", "linear"),
     )
 
     # Аппаратный watchdog — см. _feed_watchdog() выше про то, зачем он
