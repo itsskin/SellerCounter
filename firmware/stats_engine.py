@@ -5,6 +5,8 @@ try:
 except ImportError:
     import asyncio
 
+import ujson as json
+
 import breadcrumb
 from display import layout
 from marketplaces.base import MarketplaceError
@@ -39,6 +41,34 @@ def _write_last_poll_epoch(epoch):
     try:
         with open(LAST_POLL_PATH, "w") as f:
             f.write(str(int(epoch)))
+    except OSError:
+        pass
+
+
+# Последние РЕАЛЬНО полученные данные опроса (self.latest/self.per_marketplace)
+# — тоже на флеше, не только в памяти. Без этого при каждой перезагрузке
+# (OTA, ручной сброс, watchdog) плата на несколько секунд/минут (пока не
+# наступит следующий разрешённый опрос — см. LAST_POLL_PATH выше, троттлинг
+# специально переживает перезагрузку) рисовала пустой/белый экран вместо
+# уже известных цифр — HW-подтверждено (превью белое, хотя данные с прошлого
+# опроса были). Пишем только после НАСТОЯЩЕГО успешного цикла опроса (см.
+# конец poll_once), не после тестовых/оверрайдных перерисовок.
+STATS_CACHE_PATH = "/last_stats.json"
+
+
+def _read_last_stats():
+    try:
+        with open(STATS_CACHE_PATH) as f:
+            data = json.load(f)
+        return data.get("latest"), data.get("per_marketplace")
+    except (OSError, ValueError):
+        return None, None
+
+
+def _write_last_stats(latest, per_marketplace):
+    try:
+        with open(STATS_CACHE_PATH, "w") as f:
+            json.dump({"latest": latest, "per_marketplace": per_marketplace}, f)
     except OSError:
         pass
 
@@ -109,14 +139,19 @@ class StatsEngine:
         # (Ozon, WB, Yandex опрашиваются одним общим циклом poll_once, тут
         # нет разделения по конкретному магазину).
         self._last_poll_epoch = _read_last_poll_epoch()
-        self.latest = {"orders": 0, "revenue": 0.0, "fbs_orders": 0}
+        # Аналогично — последние РЕАЛЬНО полученные цифры (см.
+        # STATS_CACHE_PATH выше), чтобы при старте сразу было что рисовать,
+        # не дожидаясь настоящего опроса (см. run()). Файла ещё нет (первое
+        # включение платы вообще) — просто нули, как и раньше.
+        cached_latest, cached_per_marketplace = _read_last_stats()
+        self.latest = cached_latest or {"orders": 0, "revenue": 0.0, "fbs_orders": 0}
         self.last_errors = {}
         # Разбивка последнего опроса по каждому маркетплейсу отдельно —
         # {id: {"name", "orders", "revenue", "error", "updated_at"}}.
         # Нужна, чтобы в веб-интерфейсе было видно, какой конкретно API
         # насчитал лишнее/не то, а не только суммарную цифру (см. web_server
         # /api/state, www/app.js renderMarketplaceStats).
-        self.per_marketplace = {}
+        self.per_marketplace = cached_per_marketplace or {}
         # Что реально отрисовано на экране сейчас — чтобы не гонять
         # e-paper (десятки секунд + видимое моргание на каждое обновление)
         # ради одних и тех же чисел. Экран перерисовывается только когда
@@ -138,6 +173,15 @@ class StatsEngine:
         self._mp_test_override = dict(cfg["display"].get("mp_test_override") or {})
 
     async def run(self):
+        if self.next_poll_in_sec() > 0:
+            # Первый настоящий опрос отложен персистентным троттлингом (см.
+            # LAST_POLL_PATH — переживает перезагрузку). Не оставляем экран
+            # пустым эти секунды/минуты — сразу рисуем последними известными
+            # данными (self.latest/self.per_marketplace, восстановлены с
+            # флеша в __init__, см. STATS_CACHE_PATH). Если троттлинг не
+            # мешает, первый же poll_once() сам перерисует экран настоящими
+            # данными — лишней перерисовки тут не будет.
+            await self._redraw()
         while True:
             try:
                 await self.poll_once()
@@ -420,6 +464,9 @@ class StatsEngine:
         # один несобранный FBS-заказ, и пропадать, когда их нет.
         total_fbs_orders = sum(entry.get("fbs_orders", 0) for entry in per_marketplace.values())
         self.latest = {"orders": total_orders, "revenue": total_revenue, "fbs_orders": total_fbs_orders}
+        # На флеш — чтобы после следующей перезагрузки (см. __init__/run())
+        # сразу было что показать, не дожидаясь нового настоящего опроса.
+        _write_last_stats(self.latest, per_marketplace)
 
         # total_fbs_orders — ОБЯЗАТЕЛЬНО в этом сравнении, не только orders/
         # revenue: заказ уже учтён в сумме/количестве в момент оформления,
