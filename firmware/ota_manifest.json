@@ -55,9 +55,9 @@
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
   "web_server.py": "51c76f251837369c6c76961eccb0904baf58ce112729d63fed59da17020fe21b",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
-  "www/app.js": "48da70b015c691ef9b4f09b1a9792d60198d04a270e40ae3b0c600dea182b7c3",
-  "www/index.html": "8ec346f93a0bd988de96899ad115ae68faf8059930afa7f6593d331c976f1f9f",
-  "www/style.css": "717514fe8bbde254943aa3eac75414d0e8460e302630a4e3f3bf7fdfdee087f0"
+  "www/app.js": "36524c050fb2750af092cff24dea0bcae20e53a57fa4a465acc98d105cd5a556",
+  "www/index.html": "0b57d33f86326155c130ff1a685db2cd9da64c718e6363ce9c01c775de461f01",
+  "www/style.css": "f97efebb0863aae07eaae06fb570a8f2e2c77f26995990b6276fbde34a312aa5"
  },
- "version": 65
+ "version": 66
 }

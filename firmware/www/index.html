@@ -54,14 +54,18 @@
       редактируется — просто пакуется в чёрно-белый растр по порогу яркости, так что готовь её
       заранее чёрно-белой. Применяется сразу, без перезагрузки платы.
     </p>
-    <label>Для какого экрана
-      <select id="bg-target">
-        <option value="">«Итоги» (обычный)</option>
-        <option value="breakdown">«Маркеты» (только 400x300)</option>
-      </select>
-    </label>
-    <input type="file" id="bg-file" accept="image/png">
-    <button id="bg-upload" type="button">Загрузить как новый фон</button>
+    <div class="bg-row" data-target="">
+      <label>«Итоги» (обычный)
+        <input type="file" class="bg-file" accept="image/png">
+      </label>
+      <button type="button" class="bg-upload">Загрузить</button>
+    </div>
+    <div class="bg-row" data-target="breakdown">
+      <label>«Маркеты» (только 400x300)
+        <input type="file" class="bg-file" accept="image/png">
+      </label>
+      <button type="button" class="bg-upload">Загрузить</button>
+    </div>
     <p id="bg-msg" class="msg"></p>
   </section>
 

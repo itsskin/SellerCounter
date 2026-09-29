@@ -667,40 +667,43 @@ document.getElementById("set-full-refresh-every").addEventListener("change", asy
 
 document.getElementById("preview-refresh").addEventListener("click", refreshPreview);
 
-document.getElementById("bg-upload").addEventListener("click", async () => {
-  const fileInput = document.getElementById("bg-file");
-  const msg = document.getElementById("bg-msg");
-  const file = fileInput.files[0];
-  if (!file) {
-    msg.textContent = "Сначала выбери файл";
-    msg.classList.add("error");
-    return;
-  }
+document.querySelectorAll(".bg-row .bg-upload").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const row = button.closest(".bg-row");
+    const fileInput = row.querySelector(".bg-file");
+    const msg = document.getElementById("bg-msg");
+    const file = fileInput.files[0];
+    if (!file) {
+      msg.textContent = "Сначала выбери файл";
+      msg.classList.add("error");
+      return;
+    }
 
-  msg.textContent = "Загружаю и конвертирую...";
-  msg.classList.remove("error");
-  try {
-    // Тело запроса — сырые байты файла (не FormData/multipart) — так
-    // проще на плате, см. web_server.py /api/background.
-    const target = document.getElementById("bg-target").value;
-    const res = await fetch("/api/background" + (target ? "?target=" + target : ""), {
-      method: "POST",
-      headers: { "Content-Type": "application/octet-stream" },
-      body: file,
-    });
-    const data = await res.json();
-    if (data.ok) {
-      msg.textContent = "Фон обновлён";
-      fileInput.value = "";
-      refreshPreview();
-    } else {
-      msg.textContent = "Ошибка: " + (data.error || res.status);
+    msg.textContent = "Загружаю и конвертирую...";
+    msg.classList.remove("error");
+    try {
+      // Тело запроса — сырые байты файла (не FormData/multipart) — так
+      // проще на плате, см. web_server.py /api/background.
+      const target = row.dataset.target;
+      const res = await fetch("/api/background" + (target ? "?target=" + target : ""), {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: file,
+      });
+      const data = await res.json();
+      if (data.ok) {
+        msg.textContent = "Фон обновлён";
+        fileInput.value = "";
+        refreshPreview();
+      } else {
+        msg.textContent = "Ошибка: " + (data.error || res.status);
+        msg.classList.add("error");
+      }
+    } catch (err) {
+      msg.textContent = "Ошибка: " + err.message;
       msg.classList.add("error");
     }
-  } catch (err) {
-    msg.textContent = "Ошибка: " + err.message;
-    msg.classList.add("error");
-  }
+  });
 });
 
 document.getElementById("stats-refresh").addEventListener("click", async () => {

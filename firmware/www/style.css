@@ -314,6 +314,33 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: 12px;
 }
 
+.bg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.bg-row label {
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+}
+
+.bg-row .bg-file {
+  width: 100%;
+}
+
+.bg-row .bg-upload {
+  width: auto;
+  margin-top: 0;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
 .notif-row {
   display: flex;
   align-items: center;
