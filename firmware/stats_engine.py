@@ -558,7 +558,16 @@ class StatsEngine:
         # маркетплейсы, скрытые галочкой "Отображать на экране детализации".
         in_breakdown = self.cfg["display"].get("show_marketplace_breakdown", False)
         breakdown_visible = self.cfg["display"].get("marketplace_breakdown_visible", {})
-        totals_from_columns = in_breakdown or bool(self._mp_test_override)
+        # Тестовое поле FBS само по себе НЕ должно трогать общие
+        # выручку/заказы на Итогах (HW-подтверждено: заполнили только
+        # "Тест: FBS" у wb — итог стал 0 0 вместо реальных цифр) — только
+        # revenue/orders override действительно подменяет число, которое
+        # видит пользователь.
+        mp_test_has_totals = any(
+            override.get("revenue") is not None or override.get("orders") is not None
+            for override in self._mp_test_override.values()
+        )
+        totals_from_columns = in_breakdown or mp_test_has_totals
         totals_entries = [
             (mp_id, e) for mp_id, e in per_marketplace.items()
             if not in_breakdown or breakdown_visible.get(mp_id, True)
