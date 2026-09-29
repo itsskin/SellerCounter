@@ -312,15 +312,7 @@ def _draw_orders(fb, cfg, value, key):
     orders_decimal_font, orders_decimal_scale = resolve_font(
         LAYOUT.cfg_str(cfg, key("decimal_font"))
     )
-    suffix = LAYOUT.cfg_text(cfg, key("suffix"))
-    suffix_font = suffix_scale = None
     orders_max_width = LAYOUT.cfg_int(cfg, key("max_width"))
-    if suffix:
-        suffix_font, suffix_scale = resolve_font(LAYOUT.cfg_str(cfg, key("suffix_font")))
-        suffix_text = " " + suffix
-        orders_max_width = max(
-            1, orders_max_width - custom_font.text_width(suffix_font, suffix_text, suffix_scale)
-        )
 
     orders_text = custom_font.format_compact(
         orders_font,
@@ -339,9 +331,6 @@ def _draw_orders(fb, cfg, value, key):
             orders_font, orders_scale = shrink_font_to_fit(
                 LAYOUT.cfg_str(cfg, key("font")), orders_big, orders_max_width
             )
-    if suffix:
-        orders_trailing.append((" " + suffix, suffix_font, suffix_scale))
-
     orders_x = LAYOUT.cfg_int(cfg, key("x"))
     orders_y = LAYOUT.cfg_int(cfg, key("y"))
     custom_font.draw_text_with_trailing(

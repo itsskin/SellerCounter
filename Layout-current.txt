@@ -2,14 +2,14 @@
 # разрешения (200x200 и 400x300), значения у каждого поля указаны для
 # обоих сразу. Правь и сохраняй — подхватится на следующей перерисовке,
 # перезапускать плату не нужно. Опечатка в отдельном поле не ломает экран
-# — просто для этого поля вернётся значение по умолчанию.
+# — просто для этого поля вернётся значение по умолчанию. Комментарий
+# после "#" в конце строки можно дописывать свой — при чтении отбрасывается.
 #
 # <элемент>.name — просто название для человека, ни на что не влияет.
 # <элемент>.show.<разрешение> — рисовать ли элемент вообще на этом экране
 #   ("0" или "1").
-# x / y — центр текста в пикселях (0,0 — левый верхнии угол экрана).
-# font — <семейство>_<размер> из display/fonts/, без ".py" (сейчас есть
-#   orbitron_* и verdana_*; полный список размеров — см.
+# x / y — центр текста в пикселях (0,0 — левый верхний угол экрана).
+# font — <семейство>_<размер> из display/fonts/, без ".py" (список — см.
 #   display/fonts/available_sizes.txt). Размера с точным числом нет —
 #   возьмётся ближайший меньший из того же семейства и увеличится до
 #   нужного (апскейл, чуть "кубиками", но разборчиво).
@@ -17,121 +17,108 @@
 #   сокращается ("12345" -> "12.3K", "1234567" -> "1.2M").
 # decimal_font — часть после точки у сокращённого числа рисуется этим,
 #   обычно более мелким шрифтом (как копейки на ценнике).
-# orders.suffix — подпись после числа заказов (например "шт"). Пусто —
-#   не рисуется. suffix_font обязательно verdana_* (Orbitron кириллицу не
-#   умеет вообще).
-# ip.font — IP-адрес состоит только из цифр и точек, так что тут годится и
-#   orbitron_*, и verdana_*.
-# fbs_label — см. комментарий у fbs_label.show выше по смыслу поля.
 
-revenue.name = Выручка
-revenue.show.200x200 = 1
-revenue.x.200x200 = 100
-revenue.y.200x200 = 68
-revenue.font.200x200 = orbitron_52
-revenue.max_width.200x200 = 176
-revenue.decimal_font.200x200 = orbitron_36
-revenue.show.400x300 = 1
-revenue.x.400x300 = 200
-revenue.y.400x300 = 88
-revenue.font.400x300 = orbitron_128
-revenue.max_width.400x300 = 370
-revenue.decimal_font.400x300 = orbitronbold_70
+# ЭКРАН «ИТОГИ»: выручка — самое крупное число, над разделительной линией.
+revenue.name = Выручка  # название для человека, на экран не влияет
+revenue.show.200x200 = 1  # рисовать на 200x200 (0/1)
+revenue.x.200x200 = 100  # центр по X, 200x200
+revenue.y.200x200 = 73  # центр по Y, 200x200
+revenue.font.200x200 = orbitron_52  # шрифт/размер, 200x200
+revenue.max_width.200x200 = 176  # ширина до сокращения в "K"/"M", 200x200
+revenue.decimal_font.200x200 = orbitron_36  # шрифт хвоста ".3K", 200x200
+revenue.show.400x300 = 1  # рисовать на 400x300 (0/1)
+revenue.x.400x300 = 200  # центр по X, 400x300
+revenue.y.400x300 = 88  # центр по Y, 400x300
+revenue.font.400x300 = orbitron_128  # шрифт/размер, 400x300
+revenue.max_width.400x300 = 370  # ширина до сокращения в "K"/"M", 400x300
+revenue.decimal_font.400x300 = orbitronbold_70  # шрифт хвоста ".2K", 400x300
 
-orders.name = Заказы
-orders.show.200x200 = 1
-orders.x.200x200 = 200
-orders.y.200x200 = 75
-orders.font.200x200 = orbitron_42
-orders.max_width.200x200 = 176
-orders.decimal_font.200x200 = orbitron_24
-orders.suffix.200x200 = шт
-orders.suffix_font.200x200 = verdana_15
-orders.show.400x300 = 1
-orders.x.400x300 = 200
-orders.y.400x300 = 211
-orders.font.400x300 = orbitronbold_45
-orders.max_width.400x300 = 300
-orders.decimal_font.400x300 = orbitronbold_45
-orders.suffix.400x300 = шт
-orders.suffix_font.400x300 = orbitron_30
+# ЭКРАН «ИТОГИ»: заказы — под разделительной линией, мельче выручки.
+orders.name = Заказы  # название для человека, на экран не влияет
+orders.show.200x200 = 1  # рисовать на 200x200 (0/1)
+orders.x.200x200 = 100  # центр по X, 200x200
+orders.y.200x200 = 126  # центр по Y, 200x200
+orders.font.200x200 = orbitron_42  # шрифт/размер, 200x200
+orders.max_width.200x200 = 176  # ширина до сокращения в "K"/"M", 200x200
+orders.decimal_font.200x200 = orbitron_24  # шрифт хвоста сокращения, 200x200
+orders.show.400x300 = 1  # рисовать на 400x300 (0/1)
+orders.x.400x300 = 200  # центр по X, 400x300
+orders.y.400x300 = 211  # центр по Y, 400x300
+orders.font.400x300 = orbitronbold_70  # шрифт/размер, 400x300
+orders.max_width.400x300 = 300  # ширина до сокращения в "K"/"M", 400x300
+orders.decimal_font.400x300 = orbitronbold_45  # шрифт хвоста сокращения, 400x300
 
-clock.name = Дата
-clock.show.200x200 = 1
-clock.x.200x200 = 30
-clock.y.200x200 = 6
-clock.font.200x200 = pixelmix_4
-clock.show.400x300 = 1
-clock.x.400x300 = 87
-clock.y.400x300 = 3
-clock.font.400x300 = pixelmix_8
+# Дата — по умолчанию видна только на 200x200 (на 400x300 её место занято IP).
+clock.name = Дата  # название для человека, на экран не влияет
+clock.show.200x200 = 1  # рисовать на 200x200 (0/1)
+clock.x.200x200 = 30  # центр по X, 200x200
+clock.y.200x200 = 6  # центр по Y, 200x200
+clock.font.200x200 = pixelmix_7  # шрифт/размер, 200x200
+clock.show.400x300 = 0  # рисовать на 400x300 (0/1)
+clock.x.400x300 = 87  # центр по X, 400x300
+clock.y.400x300 = 3  # центр по Y, 400x300
+clock.font.400x300 = pixelmix_8  # шрифт/размер, 400x300
 
-ip.name = IP-адрес
-ip.show.200x200 = 1
-ip.x.200x200 = 100
-ip.y.200x200 = 185
-ip.font.200x200 = pixelmix_7
-ip.show.400x300 = 1
-ip.x.400x300 = 314
-ip.y.400x300 = 3
-ip.font.400x300 = pixelmix_8
+# IP-адрес платы — только цифры и точки, подходит и orbitron_*, и verdana_*.
+ip.name = IP-адрес  # название для человека, на экран не влияет
+ip.show.200x200 = 0  # рисовать на 200x200 (0/1)
+ip.x.200x200 = 100  # центр по X, 200x200
+ip.y.200x200 = 190  # центр по Y, 200x200
+ip.font.200x200 = pixelmix_7  # шрифт/размер, 200x200
+ip.show.400x300 = 1  # рисовать на 400x300 (0/1)
+ip.x.400x300 = 314  # центр по X, 400x300
+ip.y.400x300 = 3  # центр по Y, 400x300
+ip.font.400x300 = pixelmix_8  # шрифт/размер, 400x300
 
-fbs_label.name = Напоминание "Собрать FBS"
-fbs_label.show.200x200 = 1
-fbs_label.x.200x200 = 100
-fbs_label.y.200x200 = 165
-fbs_label.font.200x200 = verdana_15
-fbs_label.text.200x200 = FBS
-fbs_label.show.400x300 = 1
-fbs_label.x.400x300 = 200
-fbs_label.y.400x300 = 245
-fbs_label.font.400x300 = verdana_15
-fbs_label.text.400x300 = FBS
+# Напоминание "Собрать FBS" — появляется само, когда есть несобранный заказ
+# И включён чекбокс в вебе; show.* тут — третий, самый жёсткий выключатель.
+fbs_label.name = Напоминание "Собрать FBS"  # название для человека, на экран не влияет
+fbs_label.show.200x200 = 1  # рисовать на 200x200 (0/1)
+fbs_label.x.200x200 = 100  # центр по X, 200x200
+fbs_label.y.200x200 = 165  # центр по Y, 200x200
+fbs_label.font.200x200 = verdana_15  # шрифт (нужна кириллица и "|"), 200x200
+fbs_label.text.200x200 = FBS  # заголовок строки, дальше дописывается "Ozon 1 | ..."
+fbs_label.show.400x300 = 1  # рисовать на 400x300 (0/1)
+fbs_label.x.400x300 = 200  # центр по X, 400x300
+fbs_label.y.400x300 = 245  # центр по Y, 400x300
+fbs_label.font.400x300 = verdana_15  # шрифт (нужна кириллица и "|"), 400x300
+fbs_label.text.400x300 = FBS  # заголовок строки, дальше дописывается "Ozon 1 | ..."
 
-# Автодобавлено (новая версия прошивки добавила эти поля):
-mp_row.orders_font = orbitronbold_26
-mp_row.area_x = 5
-mp_row.area_width = 390
-mp_row.revenue_font = orbitronbold_26
-mp_row.revenue_decimal_font = orbitron_16
-mp_row.orders_decimal_font = orbitron_16
+# ЭКРАН «МАРКЕТЫ» (только 400x300, включается чекбоксом в вебе, не тут) —
+# колонка на каждый видимый маркетплейс: подпись сверху, выручка, заказы,
+# число FBS. Поля ниже без суффикса разрешения — на 200x200 экрана нет.
+mp_row.name = Экран «Маркеты»: колонки  # название для человека, на экран не влияет
+mp_row.label_font = default_10  # шрифт подписи "Oz"/"Wb"/"Ya"
+mp_row.revenue_font = orbitronbold_26  # шрифт выручки в колонке
+mp_row.revenue_decimal_font = orbitron_16  # шрифт хвоста сокращения выручки
+mp_row.orders_font = orbitronbold_26  # шрифт заказов в колонке
+mp_row.orders_decimal_font = orbitron_16  # шрифт хвоста сокращения заказов
+mp_row.column_margin = 30  # отступ под текст с обеих сторон колонки вместе
 
-#Шрифт для Oz, Wb, Ya
-mp_row.label_font = default_10
+# Общие выручка/заказы сверху экрана «Маркеты» — свои поля, отдельно от
+# revenue.*/orders.* обычного экрана (другой фон, другое положение).
+mp_total_revenue.name = Экран «Маркеты»: общая выручка  # название для человека, на экран не влияет
+mp_total_revenue.show = 1  # рисовать (0/1)
+mp_total_revenue.x = 200  # центр по X
+mp_total_revenue.y = 63  # центр по Y
+mp_total_revenue.font = orbitronbold_70  # шрифт/размер
+mp_total_revenue.max_width = 220  # ширина до сокращения в "K"/"M"
+mp_total_revenue.decimal_font = orbitronbold_45  # шрифт хвоста сокращения
 
-#вертикальное положение Oz, Wb, Ya
-mp_row.label_y = 285
+mp_total_orders.name = Экран «Маркеты»: общие заказы  # название для человека, на экран не влияет
+mp_total_orders.show = 1  # рисовать (0/1)
+mp_total_orders.x = 200  # центр по X
+mp_total_orders.y = 130  # центр по Y
+mp_total_orders.font = orbitronbold_45  # шрифт/размер
+mp_total_orders.max_width = 220  # ширина до сокращения в "K"/"M"
+mp_total_orders.decimal_font = orbitronbold_45  # шрифт хвоста сокращения
 
-#вертикальное положение Выручки
-mp_row.revenue_y = 202
-
-#вертикальное положение Заказов
-mp_row.orders_y = 228
-mp_row.name = Экран «Маркеты»: колонки
-
-# Отступы от краев (новая версия прошивки добавила эти поля):
-mp_row.column_margin = 30
-
-# Автодобавлено (новая версия прошивки добавила эти поля):
-
-# Автодобавлено (новая версия прошивки добавила эти поля):
-
-# Экран «Маркеты»: общие цифры сверху, отступ крайних колонок, точечные разделители
-mp_total_orders.name = Экран «Маркеты»: общие заказы
-mp_total_orders.show = 1
-mp_total_orders.font = orbitronbold_45
-mp_total_orders.x = 200
-mp_total_orders.y = 130
-mp_total_orders.decimal_font = orbitronbold_45
-mp_total_orders.suffix =
-mp_total_orders.max_width = 220
-mp_total_orders.suffix_font = verdana_28
-mp_total_revenue.name = Экран «Маркеты»: общая выручка
-mp_total_revenue.x = 200
-mp_total_revenue.y = 63
-mp_total_revenue.show = 1
-mp_total_revenue.decimal_font = orbitronbold_45
-mp_total_revenue.font = orbitronbold_70
-mp_total_revenue.max_width = 220
-mp_row.edge_margin = 10
-mp_row.divider_y = 187
+mp_row.area_x = 5  # левый край области под колонки
+mp_row.area_width = 390  # ширина области под колонки (делится поровну между видимыми)
+mp_row.edge_margin = 10  # доп. сдвиг первой/последней колонки от краёв экрана, px
+mp_row.divider_y = 187  # верхний Y точечных разделителей между колонками (display/column.png)
+mp_row.label_y = 285  # Y подписи "Oz"/"Wb"/"Ya" в колонке
+mp_row.revenue_y = 202  # Y выручки в колонке
+mp_row.orders_y = 228  # Y заказов в колонке
+mp_row.fbs_y = 258  # Y числа FBS в колонке
+mp_row.fbs_font = orbitronbold_26  # шрифт числа FBS в колонке

@@ -33,9 +33,9 @@
   "display/fonts/verdana_28.py": "78527e93d327267bbd3a1053120b5a2b09a397060cf3bf34bd0a6fa6a3efb441",
   "display/framebuf_sim.py": "f3c6e694d95a2d596f5d28964b60d984e8bff78f0dc1e354c46174cb483810c5",
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
-  "display/layout_200x200.py": "7d1593086979e07c21086003bd56a21d86fe192ea65ba23371598cf65da85b76",
-  "display/layout_400x300.py": "2d7eb1d940adaa921f4ed3cb083eb877065f8c9afe9b8f4df76c4cd6602422f6",
-  "display/layout_common.py": "2caf96fd1d82db9f828f947554a484c92a49cc3d896f6e1f98adceda68e721be",
+  "display/layout_200x200.py": "7254423dbc63db754ec4cfdfff01339971e4f1bb86abcbf14717e5e754d5e626",
+  "display/layout_400x300.py": "3e775c439ae3bf48a6561d3e8b0c523534858bdc85b8937985769a71d45df2fb",
+  "display/layout_common.py": "a81b0b99f5682b57a776f649dbb90e0f268d8d5b548891b89447cd3e29ef46fa",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
   "lib/microdot/__init__.py": "600f59c25bc576bb6659e3ad4697a82c3c7a225f0063cc6024f8fc439c4a0a7c",
@@ -61,5 +61,5 @@
   "www/index.html": "32649bcc1d9d6c3f2fbacf22064d223fc0f49ee6a9ff5e3471793f18a4294f80",
   "www/style.css": "ef6ce01a9248c3ded791162fa29b12759a7abf72c9b4ede752daf6af743a15b1"
  },
- "version": 83
+ "version": 84
 }

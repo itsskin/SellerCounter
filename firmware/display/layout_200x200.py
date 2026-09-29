@@ -166,22 +166,7 @@ def update_numbers(fb, data):
             LAYOUT.cfg_str(cfg, res_key("orders", "decimal_font", RES))
         )
 
-        # Суффикс резолвим и меряем ДО format_compact и вычитаем его ширину из
-        # бюджета — иначе на очень больших количествах заказов (в жизни
-        # маловероятно, но мало ли) "шт" рисовалась бы за пределами экрана:
-        # format_compact без этого гарантирует, что влезет только само число,
-        # без места под то, что дорисуется следом.
-        suffix = LAYOUT.cfg_text(cfg, res_key("orders", "suffix", RES))
-        suffix_font = suffix_scale = None
         orders_max_width = LAYOUT.cfg_int(cfg, res_key("orders", "max_width", RES))
-        if suffix:
-            # У Orbitron нет кириллицы вообще, поэтому suffix_font обязательно
-            # verdana_*, а не orbitron_* (см. DEFAULTS/шаблон).
-            suffix_font, suffix_scale = resolve_font(LAYOUT.cfg_str(cfg, res_key("orders", "suffix_font", RES)))
-            suffix_text = " " + suffix
-            orders_max_width = max(
-                1, orders_max_width - custom_font.text_width(suffix_font, suffix_text, suffix_scale)
-            )
 
         orders_text = custom_font.format_compact(
             orders_font,

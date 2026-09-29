@@ -348,13 +348,6 @@ DEFAULTS = {
     "orders.max_width.400x300": "320",
     "orders.decimal_font.200x200": "orbitron_24",
     "orders.decimal_font.400x300": "orbitron_52",
-    # Подпись после числа заказов (например "шт") — маленькими буквами,
-    # отдельным шрифтом. Orbitron кириллицу не умеет вообще, поэтому тут
-    # обязательно verdana_*, а не orbitron_*. Пусто — подпись не рисуется.
-    "orders.suffix.200x200": "",
-    "orders.suffix.400x300": "шт",
-    "orders.suffix_font.200x200": "verdana_15",
-    "orders.suffix_font.400x300": "verdana_28",
 
     "clock.name": "Дата",
     # На 400x300 по умолчанию выключено — там своё место занято IP (см.
@@ -460,8 +453,6 @@ DEFAULTS = {
     "mp_total_orders.font": "orbitron_48",
     "mp_total_orders.max_width": "220",
     "mp_total_orders.decimal_font": "orbitron_36",
-    "mp_total_orders.suffix": "шт",
-    "mp_total_orders.suffix_font": "verdana_28",
     "mp_row.area_x": "5",
     "mp_row.area_width": "390",
     # Отступ крайних столбиков от краёв (px): первый вправо, последний влево.
@@ -486,14 +477,14 @@ LAYOUT_TXT_TEMPLATE = """\
 # разрешения (200x200 и 400x300), значения у каждого поля указаны для
 # обоих сразу. Правь и сохраняй — подхватится на следующей перерисовке,
 # перезапускать плату не нужно. Опечатка в отдельном поле не ломает экран
-# — просто для этого поля вернётся значение по умолчанию.
+# — просто для этого поля вернётся значение по умолчанию. Комментарий
+# после "#" в конце строки можно дописывать свой — при чтении отбрасывается.
 #
 # <элемент>.name — просто название для человека, ни на что не влияет.
 # <элемент>.show.<разрешение> — рисовать ли элемент вообще на этом экране
 #   ("0" или "1").
 # x / y — центр текста в пикселях (0,0 — левый верхний угол экрана).
-# font — <семейство>_<размер> из display/fonts/, без ".py" (сейчас есть
-#   orbitron_* и verdana_*; полный список размеров — см.
+# font — <семейство>_<размер> из display/fonts/, без ".py" (список — см.
 #   display/fonts/available_sizes.txt). Размера с точным числом нет —
 #   возьмётся ближайший меньший из того же семейства и увеличится до
 #   нужного (апскейл, чуть "кубиками", но разборчиво).
@@ -501,126 +492,111 @@ LAYOUT_TXT_TEMPLATE = """\
 #   сокращается ("12345" -> "12.3K", "1234567" -> "1.2M").
 # decimal_font — часть после точки у сокращённого числа рисуется этим,
 #   обычно более мелким шрифтом (как копейки на ценнике).
-# orders.suffix — подпись после числа заказов (например "шт"). Пусто —
-#   не рисуется. suffix_font обязательно verdana_* (Orbitron кириллицу не
-#   умеет вообще).
-# ip.font — IP-адрес состоит только из цифр и точек, так что тут годится и
-#   orbitron_*, и verdana_*.
-# fbs_label — см. комментарий у fbs_label.show выше по смыслу поля.
 
-revenue.name = {revenue.name}
-revenue.show.200x200 = {revenue.show.200x200}
-revenue.x.200x200 = {revenue.x.200x200}
-revenue.y.200x200 = {revenue.y.200x200}
-revenue.font.200x200 = {revenue.font.200x200}
-revenue.max_width.200x200 = {revenue.max_width.200x200}
-revenue.decimal_font.200x200 = {revenue.decimal_font.200x200}
-revenue.show.400x300 = {revenue.show.400x300}
-revenue.x.400x300 = {revenue.x.400x300}
-revenue.y.400x300 = {revenue.y.400x300}
-revenue.font.400x300 = {revenue.font.400x300}
-revenue.max_width.400x300 = {revenue.max_width.400x300}
-revenue.decimal_font.400x300 = {revenue.decimal_font.400x300}
+# ЭКРАН «ИТОГИ»: выручка — самое крупное число, над разделительной линией.
+revenue.name = {revenue.name}  # название для человека, на экран не влияет
+revenue.show.200x200 = {revenue.show.200x200}  # рисовать на 200x200 (0/1)
+revenue.x.200x200 = {revenue.x.200x200}  # центр по X, 200x200
+revenue.y.200x200 = {revenue.y.200x200}  # центр по Y, 200x200
+revenue.font.200x200 = {revenue.font.200x200}  # шрифт/размер, 200x200
+revenue.max_width.200x200 = {revenue.max_width.200x200}  # ширина до сокращения в "K"/"M", 200x200
+revenue.decimal_font.200x200 = {revenue.decimal_font.200x200}  # шрифт хвоста ".3K", 200x200
+revenue.show.400x300 = {revenue.show.400x300}  # рисовать на 400x300 (0/1)
+revenue.x.400x300 = {revenue.x.400x300}  # центр по X, 400x300
+revenue.y.400x300 = {revenue.y.400x300}  # центр по Y, 400x300
+revenue.font.400x300 = {revenue.font.400x300}  # шрифт/размер, 400x300
+revenue.max_width.400x300 = {revenue.max_width.400x300}  # ширина до сокращения в "K"/"M", 400x300
+revenue.decimal_font.400x300 = {revenue.decimal_font.400x300}  # шрифт хвоста ".2K", 400x300
 
-orders.name = {orders.name}
-orders.show.200x200 = {orders.show.200x200}
-orders.x.200x200 = {orders.x.200x200}
-orders.y.200x200 = {orders.y.200x200}
-orders.font.200x200 = {orders.font.200x200}
-orders.max_width.200x200 = {orders.max_width.200x200}
-orders.decimal_font.200x200 = {orders.decimal_font.200x200}
-orders.suffix.200x200 = {orders.suffix.200x200}
-orders.suffix_font.200x200 = {orders.suffix_font.200x200}
-orders.show.400x300 = {orders.show.400x300}
-orders.x.400x300 = {orders.x.400x300}
-orders.y.400x300 = {orders.y.400x300}
-orders.font.400x300 = {orders.font.400x300}
-orders.max_width.400x300 = {orders.max_width.400x300}
-orders.decimal_font.400x300 = {orders.decimal_font.400x300}
-orders.suffix.400x300 = {orders.suffix.400x300}
-orders.suffix_font.400x300 = {orders.suffix_font.400x300}
+# ЭКРАН «ИТОГИ»: заказы — под разделительной линией, мельче выручки.
+orders.name = {orders.name}  # название для человека, на экран не влияет
+orders.show.200x200 = {orders.show.200x200}  # рисовать на 200x200 (0/1)
+orders.x.200x200 = {orders.x.200x200}  # центр по X, 200x200
+orders.y.200x200 = {orders.y.200x200}  # центр по Y, 200x200
+orders.font.200x200 = {orders.font.200x200}  # шрифт/размер, 200x200
+orders.max_width.200x200 = {orders.max_width.200x200}  # ширина до сокращения в "K"/"M", 200x200
+orders.decimal_font.200x200 = {orders.decimal_font.200x200}  # шрифт хвоста сокращения, 200x200
+orders.show.400x300 = {orders.show.400x300}  # рисовать на 400x300 (0/1)
+orders.x.400x300 = {orders.x.400x300}  # центр по X, 400x300
+orders.y.400x300 = {orders.y.400x300}  # центр по Y, 400x300
+orders.font.400x300 = {orders.font.400x300}  # шрифт/размер, 400x300
+orders.max_width.400x300 = {orders.max_width.400x300}  # ширина до сокращения в "K"/"M", 400x300
+orders.decimal_font.400x300 = {orders.decimal_font.400x300}  # шрифт хвоста сокращения, 400x300
 
-clock.name = {clock.name}
-clock.show.200x200 = {clock.show.200x200}
-clock.x.200x200 = {clock.x.200x200}
-clock.y.200x200 = {clock.y.200x200}
-clock.font.200x200 = {clock.font.200x200}
-clock.show.400x300 = {clock.show.400x300}
-clock.x.400x300 = {clock.x.400x300}
-clock.y.400x300 = {clock.y.400x300}
-clock.font.400x300 = {clock.font.400x300}
+# Дата — по умолчанию видна только на 200x200 (на 400x300 её место занято IP).
+clock.name = {clock.name}  # название для человека, на экран не влияет
+clock.show.200x200 = {clock.show.200x200}  # рисовать на 200x200 (0/1)
+clock.x.200x200 = {clock.x.200x200}  # центр по X, 200x200
+clock.y.200x200 = {clock.y.200x200}  # центр по Y, 200x200
+clock.font.200x200 = {clock.font.200x200}  # шрифт/размер, 200x200
+clock.show.400x300 = {clock.show.400x300}  # рисовать на 400x300 (0/1)
+clock.x.400x300 = {clock.x.400x300}  # центр по X, 400x300
+clock.y.400x300 = {clock.y.400x300}  # центр по Y, 400x300
+clock.font.400x300 = {clock.font.400x300}  # шрифт/размер, 400x300
 
-ip.name = {ip.name}
-ip.show.200x200 = {ip.show.200x200}
-ip.x.200x200 = {ip.x.200x200}
-ip.y.200x200 = {ip.y.200x200}
-ip.font.200x200 = {ip.font.200x200}
-ip.show.400x300 = {ip.show.400x300}
-ip.x.400x300 = {ip.x.400x300}
-ip.y.400x300 = {ip.y.400x300}
-ip.font.400x300 = {ip.font.400x300}
+# IP-адрес платы — только цифры и точки, подходит и orbitron_*, и verdana_*.
+ip.name = {ip.name}  # название для человека, на экран не влияет
+ip.show.200x200 = {ip.show.200x200}  # рисовать на 200x200 (0/1)
+ip.x.200x200 = {ip.x.200x200}  # центр по X, 200x200
+ip.y.200x200 = {ip.y.200x200}  # центр по Y, 200x200
+ip.font.200x200 = {ip.font.200x200}  # шрифт/размер, 200x200
+ip.show.400x300 = {ip.show.400x300}  # рисовать на 400x300 (0/1)
+ip.x.400x300 = {ip.x.400x300}  # центр по X, 400x300
+ip.y.400x300 = {ip.y.400x300}  # центр по Y, 400x300
+ip.font.400x300 = {ip.font.400x300}  # шрифт/размер, 400x300
 
-fbs_label.name = {fbs_label.name}
-fbs_label.show.200x200 = {fbs_label.show.200x200}
-fbs_label.x.200x200 = {fbs_label.x.200x200}
-fbs_label.y.200x200 = {fbs_label.y.200x200}
-fbs_label.font.200x200 = {fbs_label.font.200x200}
-fbs_label.text.200x200 = {fbs_label.text.200x200}
-fbs_label.show.400x300 = {fbs_label.show.400x300}
-fbs_label.x.400x300 = {fbs_label.x.400x300}
-fbs_label.y.400x300 = {fbs_label.y.400x300}
-fbs_label.font.400x300 = {fbs_label.font.400x300}
-fbs_label.text.400x300 = {fbs_label.text.400x300}
+# Напоминание "Собрать FBS" — появляется само, когда есть несобранный заказ
+# И включён чекбокс в вебе; show.* тут — третий, самый жёсткий выключатель.
+fbs_label.name = {fbs_label.name}  # название для человека, на экран не влияет
+fbs_label.show.200x200 = {fbs_label.show.200x200}  # рисовать на 200x200 (0/1)
+fbs_label.x.200x200 = {fbs_label.x.200x200}  # центр по X, 200x200
+fbs_label.y.200x200 = {fbs_label.y.200x200}  # центр по Y, 200x200
+fbs_label.font.200x200 = {fbs_label.font.200x200}  # шрифт (нужна кириллица и "|"), 200x200
+fbs_label.text.200x200 = {fbs_label.text.200x200}  # заголовок строки, дальше дописывается "Ozon 1 | ..."
+fbs_label.show.400x300 = {fbs_label.show.400x300}  # рисовать на 400x300 (0/1)
+fbs_label.x.400x300 = {fbs_label.x.400x300}  # центр по X, 400x300
+fbs_label.y.400x300 = {fbs_label.y.400x300}  # центр по Y, 400x300
+fbs_label.font.400x300 = {fbs_label.font.400x300}  # шрифт (нужна кириллица и "|"), 400x300
+fbs_label.text.400x300 = {fbs_label.text.400x300}  # заголовок строки, дальше дописывается "Ozon 1 | ..."
 
-# "Детализация по маркетплейсам" — включается чекбоксом в веб-интерфейсе
-# (раздел "Маркетплейсы"), не тут (там же — порядок столбиков, стрелками
-# вверх/вниз, и тестовые поля для ручного превью без реальных заказов).
-# Поля ниже — только 400x300, БЕЗ суффикса разрешения. Маркетплейсы —
-# столбиками рядом (1-3 штуки, по числу подключённых и видимых — см.
-# галочки "Отображать на экране детализации" у каждого): делят area_width
-# поровну и центрируются в area_x..area_x+area_width. Внутри КАЖДОГО
-# столбика — сверху вниз подпись ("Oz"/"Wb"/"Ya"), выручка (крупно,
-# округляется до целых K/M — revenue_font), заказы (мельче — orders_font);
-# label_y/revenue_y/orders_y — ОБЩАЯ на все столбики высота каждой строки
-# (у столбиков отличается только x). column_margin — отступ под текст с
-# обеих сторон столбика вместе (бюджет = ширина_столбика - column_margin);
-# размеры шрифтов mp_row.*_font ручные — под ширину столбика не подгоняются.
-mp_row.name = {mp_row.name}
-mp_row.label_font = {mp_row.label_font}
-mp_row.revenue_font = {mp_row.revenue_font}
-mp_row.revenue_decimal_font = {mp_row.revenue_decimal_font}
-mp_row.orders_font = {mp_row.orders_font}
-mp_row.orders_decimal_font = {mp_row.orders_decimal_font}
-mp_row.column_margin = {mp_row.column_margin}
+# ЭКРАН «МАРКЕТЫ» (только 400x300, включается чекбоксом в вебе, не тут) —
+# колонка на каждый видимый маркетплейс: подпись сверху, выручка, заказы,
+# число FBS. Поля ниже без суффикса разрешения — на 200x200 экрана нет.
+mp_row.name = {mp_row.name}  # название для человека, на экран не влияет
+mp_row.label_font = {mp_row.label_font}  # шрифт подписи "Oz"/"Wb"/"Ya"
+mp_row.revenue_font = {mp_row.revenue_font}  # шрифт выручки в колонке
+mp_row.revenue_decimal_font = {mp_row.revenue_decimal_font}  # шрифт хвоста сокращения выручки
+mp_row.orders_font = {mp_row.orders_font}  # шрифт заказов в колонке
+mp_row.orders_decimal_font = {mp_row.orders_decimal_font}  # шрифт хвоста сокращения заказов
+mp_row.column_margin = {mp_row.column_margin}  # отступ под текст с обеих сторон колонки вместе
 
-mp_total_revenue.name = {mp_total_revenue.name}
-mp_total_revenue.show = {mp_total_revenue.show}
-mp_total_revenue.x = {mp_total_revenue.x}
-mp_total_revenue.y = {mp_total_revenue.y}
-mp_total_revenue.font = {mp_total_revenue.font}
-mp_total_revenue.max_width = {mp_total_revenue.max_width}
-mp_total_revenue.decimal_font = {mp_total_revenue.decimal_font}
+# Общие выручка/заказы сверху экрана «Маркеты» — свои поля, отдельно от
+# revenue.*/orders.* обычного экрана (другой фон, другое положение).
+mp_total_revenue.name = {mp_total_revenue.name}  # название для человека, на экран не влияет
+mp_total_revenue.show = {mp_total_revenue.show}  # рисовать (0/1)
+mp_total_revenue.x = {mp_total_revenue.x}  # центр по X
+mp_total_revenue.y = {mp_total_revenue.y}  # центр по Y
+mp_total_revenue.font = {mp_total_revenue.font}  # шрифт/размер
+mp_total_revenue.max_width = {mp_total_revenue.max_width}  # ширина до сокращения в "K"/"M"
+mp_total_revenue.decimal_font = {mp_total_revenue.decimal_font}  # шрифт хвоста сокращения
 
-mp_total_orders.name = {mp_total_orders.name}
-mp_total_orders.show = {mp_total_orders.show}
-mp_total_orders.x = {mp_total_orders.x}
-mp_total_orders.y = {mp_total_orders.y}
-mp_total_orders.font = {mp_total_orders.font}
-mp_total_orders.max_width = {mp_total_orders.max_width}
-mp_total_orders.decimal_font = {mp_total_orders.decimal_font}
-mp_total_orders.suffix = {mp_total_orders.suffix}
-mp_total_orders.suffix_font = {mp_total_orders.suffix_font}
-mp_row.area_x = {mp_row.area_x}
-mp_row.area_width = {mp_row.area_width}
-# Отступ крайних столбиков от краёв, px (первый вправо, последний влево)
-mp_row.edge_margin = {mp_row.edge_margin}
-# Верхний y точечных разделителей между столбиками (картинка display/column.png)
-mp_row.divider_y = {mp_row.divider_y}
-mp_row.label_y = {mp_row.label_y}
-mp_row.revenue_y = {mp_row.revenue_y}
-mp_row.orders_y = {mp_row.orders_y}
-mp_row.fbs_y = {mp_row.fbs_y}
-mp_row.fbs_font = {mp_row.fbs_font}
+mp_total_orders.name = {mp_total_orders.name}  # название для человека, на экран не влияет
+mp_total_orders.show = {mp_total_orders.show}  # рисовать (0/1)
+mp_total_orders.x = {mp_total_orders.x}  # центр по X
+mp_total_orders.y = {mp_total_orders.y}  # центр по Y
+mp_total_orders.font = {mp_total_orders.font}  # шрифт/размер
+mp_total_orders.max_width = {mp_total_orders.max_width}  # ширина до сокращения в "K"/"M"
+mp_total_orders.decimal_font = {mp_total_orders.decimal_font}  # шрифт хвоста сокращения
+
+mp_row.area_x = {mp_row.area_x}  # левый край области под колонки
+mp_row.area_width = {mp_row.area_width}  # ширина области под колонки (делится поровну между видимыми)
+mp_row.edge_margin = {mp_row.edge_margin}  # доп. сдвиг первой/последней колонки от краёв экрана, px
+mp_row.divider_y = {mp_row.divider_y}  # верхний Y точечных разделителей между колонками (display/column.png)
+mp_row.label_y = {mp_row.label_y}  # Y подписи "Oz"/"Wb"/"Ya" в колонке
+mp_row.revenue_y = {mp_row.revenue_y}  # Y выручки в колонке
+mp_row.orders_y = {mp_row.orders_y}  # Y заказов в колонке
+mp_row.fbs_y = {mp_row.fbs_y}  # Y числа FBS в колонке
+mp_row.fbs_font = {mp_row.fbs_font}  # шрифт числа FBS в колонке
 """
 
 LAYOUT = LayoutTxtConfig(LAYOUT_TXT_PATH, DEFAULTS, LAYOUT_TXT_TEMPLATE, "layout")
