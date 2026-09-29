@@ -123,6 +123,14 @@
       ночной режим) при выключенном звуке просто ничего не делают, но остаются как есть.
     </p>
     <label class="checkbox">
+      <input type="checkbox" id="set-beep">
+      Уведомлять при новом заказе
+    </label>
+    <p class="hint">
+      Звук (и перерисовка экрана) при росте заказов у любого маркетплейса. Ночной режим ниже
+      может заглушать именно этот звук, оставляя остальные (загрузка, watchdog, кнопка "Тест").
+    </p>
+    <label class="checkbox">
       <input type="checkbox" id="set-boot-sound">
       Звук при включении платы
     </label>
@@ -209,10 +217,6 @@
       </label>
       <label>Часовой пояс (UTC+)
         <input type="number" name="timezone_offset_hours" id="set-tz" step="0.5">
-      </label>
-      <label class="checkbox">
-        <input type="checkbox" name="beep_on_sale" id="set-beep">
-        Пищать при новой продаже
       </label>
       <label class="checkbox">
         <input type="checkbox" name="show_yesterday" id="set-yesterday">

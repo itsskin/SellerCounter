@@ -616,9 +616,6 @@ document.getElementById("settings-form").addEventListener("submit", async (ev) =
       poll_interval_sec: Number(fd.get("poll_interval_sec")),
       timezone_offset_hours: Number(fd.get("timezone_offset_hours")),
       debug_day_offset: fd.get("show_yesterday") === "on" ? -1 : 0,
-      display: {
-        beep_on_sale: fd.get("beep_on_sale") === "on",
-      },
     }),
   });
   document.getElementById("settings-msg").textContent = "Сохранено";
@@ -794,6 +791,23 @@ document.getElementById("set-buzzer-disabled").addEventListener("change", async 
       body: JSON.stringify({ buzzer: { enabled: !ev.target.checked } }),
     });
     msg.textContent = ev.target.checked ? "Звук выключен" : "Звук включён";
+    msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("set-beep").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("notifications-msg");
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { beep_on_sale: ev.target.checked } }),
+    });
+    msg.textContent = "Сохранено";
     msg.classList.remove("error");
   } catch (err) {
     msg.textContent = "Ошибка: " + err.message;
