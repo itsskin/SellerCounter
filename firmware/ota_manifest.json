@@ -56,8 +56,8 @@
   "web_server.py": "51c76f251837369c6c76961eccb0904baf58ce112729d63fed59da17020fe21b",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
   "www/app.js": "55b9c470d0b6d6a84da0c3fb8bd5fc0fdc5bb8fe45f5c3430822e094c1461a7b",
-  "www/index.html": "3e9acd53d7ba37296e29d6b631e0bf9fb7eb233d098c186cde7ec5d114709a59",
+  "www/index.html": "a1be18ba3a3b2ddd4b24b55542c1f30faa58b8fa9e7db37298e647ce145a9cda",
   "www/style.css": "f97efebb0863aae07eaae06fb570a8f2e2c77f26995990b6276fbde34a312aa5"
  },
- "version": 72
+ "version": 73
 }
