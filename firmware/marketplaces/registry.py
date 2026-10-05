@@ -23,6 +23,17 @@ def available_marketplaces():
     ]
 
 
+def has_configured_marketplace(cfg):
+    """True, если хотя бы у одного магазина заполнены все нужные поля
+    (ID/ключ) — то же условие, по которому build_enabled_clients() вообще
+    берёт магазин в опрос, но без создания клиентов."""
+    for entry in cfg["marketplaces"]:
+        cls = get_client_class(entry["id"])
+        if cls is not None and cls.is_configured(entry):
+            return True
+    return False
+
+
 def build_enabled_clients(cfg):
     """Маркетплейс опрашивается, если для него заполнены все нужные поля
     (ID/ключ) — отдельного тумблера "включён" нет: заполнил ключи, значит

@@ -172,7 +172,7 @@ async def _run_provisioning_async(cfg, display, buzzer, wdt):
     # блокировать доступность страницы провижининга, см. пояснение в
     # display/epd1in54.py._wait_busy и main()._run_normal ниже.
     await asyncio.gather(
-        _safe_render(display, {"orders": 0, "revenue": 0, "ip": wifi_manager.AP_IP}),
+        _safe_render(display, {"orders": 0, "revenue": 0, "ip": wifi_manager.AP_IP, "show_start_screen": True}),
         run_server(cfg, mode="provisioning", display=display, buzzer=buzzer),
         _feed_watchdog(wdt),
     )

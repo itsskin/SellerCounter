@@ -10,7 +10,7 @@ import ujson as json
 import breadcrumb
 from display import layout
 from marketplaces.base import MarketplaceError
-from marketplaces.registry import available_marketplaces, build_enabled_clients
+from marketplaces.registry import available_marketplaces, build_enabled_clients, has_configured_marketplace
 from utils.time_sync import today_local_bounds
 
 # Пауза между запросами к РАЗНЫМ магазинам ОДНОЙ площадки (см. poll_once) —
@@ -477,7 +477,11 @@ class StatsEngine:
         # подтверждено пользователем (отгрузил на Yandex, а "Собрать FBS"
         # так и осталось на экране, пока не случился следующий редрав по
         # другой причине).
-        current = (total_orders, total_revenue, total_fbs_orders)
+        # has_configured_marketplace — тоже в сравнении: пока ни один API не
+        # заполнен, на экране заставка (см. show_start_screen в _redraw), и
+        # когда ключи появятся, экран должен сменить её на обычный, даже если
+        # реальные цифры так и остались нулевыми (нет заказов сегодня).
+        current = (total_orders, total_revenue, total_fbs_orders, has_configured_marketplace(self.cfg))
         if current != self._displayed:
             await self._redraw()
             self._displayed = current
@@ -650,6 +654,9 @@ class StatsEngine:
             # display/layout_400x300.py) — per_marketplace передаётся как
             # есть (per-площадка выручка/заказы/short_label), сам layout
             # решает, кого из них рисовать (marketplace_breakdown_visible).
+            # Ни один маркетплейс не настроен — вместо нулей рисуем заставку
+            # (display/start_screen_400x300.bin, если есть для этого экрана).
+            "show_start_screen": not has_configured_marketplace(self.cfg),
             "show_marketplace_breakdown": self.cfg["display"].get("show_marketplace_breakdown", False),
             "per_marketplace": per_marketplace,
             "marketplace_breakdown_visible": self.cfg["display"].get("marketplace_breakdown_visible", {}),

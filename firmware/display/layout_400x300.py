@@ -77,6 +77,26 @@ def static_frame(fb):
     _load_background(fb)
 
 
+# Заставка, пока не настроен ни один маркетплейс (готовый 1bpp из
+# Start_Screen.png в корне проекта — конвертируется на компьютере, чтобы
+# плата не декодировала PNG сама). Лежит НЕ в display/assets/ — тот каталог
+# исключён из OTA, а заставка должна ехать вместе с прошивкой.
+START_SCREEN_PATH = "/display/start_screen_400x300.bin"
+
+
+def _load_start_screen(fb):
+    """True, если заставка нарисована; False — файла нет, тогда рисуется
+    обычный экран."""
+    try:
+        with open(START_SCREEN_PATH, "rb") as f:
+            data = bytearray(f.read())
+    except OSError:
+        return False
+    fb.fill(0)
+    fb.blit(framebuf.FrameBuffer(data, WIDTH, HEIGHT, framebuf.MONO_HLSB), 0, 0)
+    return True
+
+
 def check_new_background():
     """Ищет .png в assets/, конвертирует первый подходящий (ровно 400x300)
     в bg_400x300.bin и удаляет исходник — тот же приём, что и в
@@ -342,6 +362,8 @@ def update_numbers(fb, data):
     # Фон перезагружаем на каждой перерисовке (не только один раз при
     # старте) — та же причина, что у layout_200x200: текст не должен
     # оставлять "призраков" от старого значения.
+    if data.get("show_start_screen") and _load_start_screen(fb):
+        return
     _load_background(fb, breakdown=bool(data.get("show_marketplace_breakdown")))
     cfg = LAYOUT.get()
 
