@@ -215,3 +215,67 @@ async def apply(manifest, base_url, progress=None):
         os.rename(tmp, dest)
 
     _set_current_version(manifest["version"])
+
+
+# ─── Установка из файла (на случай, когда GitHub недоступен) ──────────────
+# Браузер читает файл обновления (его собирает tools/make_update_bundle.py)
+# и шлёт файлы по одному: begin -> stage × N -> commit. Каждый файл сверяется
+# с sha256 из манифеста файла-обновления, настоящие файлы подменяются только
+# в commit, когда всё уже лежит рядом проверенным — как в apply().
+
+# Данные пользователя и служебные файлы — перезаписывать нельзя ни при каких
+# обстоятельствах, даже если они окажутся в чужом файле обновления.
+_PROTECTED_PREFIXES = ("display/assets/", "notifications/")
+_PROTECTED_NAMES = ("config.json", "config.json.tmp", "ota_version.txt",
+                    "last_stats.json", "last_poll_at.txt")
+
+_staged = []  # [(tmp, dest), ...]
+
+
+def _check_rel_path(rel_path):
+    if (not rel_path or rel_path.startswith("/") or ".." in rel_path
+            or "\\" in rel_path or rel_path.endswith(".ota_new")):
+        raise OtaError("недопустимый путь: %s" % rel_path)
+    if rel_path.startswith(_PROTECTED_PREFIXES) or rel_path in _PROTECTED_NAMES:
+        raise OtaError("этот файл обновлением не заменяется: %s" % rel_path)
+
+
+def abort_staging():
+    for tmp, _dest in _staged:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+    del _staged[:]
+
+
+def begin_staging():
+    abort_staging()
+
+
+def stage_file(rel_path, data, expected_hash):
+    """Кладёт data рядом с настоящим файлом как *.ota_new после проверки
+    sha256. Возвращает True, если файл записан, False — если на плате уже
+    лежит такой же и писать нечего."""
+    _check_rel_path(rel_path)
+    actual = binascii.hexlify(hashlib.sha256(data).digest()).decode()
+    if actual != expected_hash:
+        raise OtaError("%s: хэш не совпал (передача повредила файл)" % rel_path)
+    dest = "/" + rel_path
+    if _local_hash(dest) == expected_hash:
+        return False
+    _ensure_dirs(dest)
+    tmp = dest + ".ota_new"
+    with open(tmp, "wb") as f:
+        f.write(data)
+    _staged.append((tmp, dest))
+    return True
+
+
+def commit_staging(version):
+    for tmp, dest in _staged:
+        os.rename(tmp, dest)
+    count = len(_staged)
+    del _staged[:]
+    _set_current_version(version)
+    return count

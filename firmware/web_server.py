@@ -198,6 +198,55 @@ async def api_ota_apply(request):
     return {"ok": True, "new_version": result["available_version"]}
 
 
+@app.route("/api/ota/upload/begin", methods=["POST"])
+async def api_ota_upload_begin(request):
+    """Установка обновления из файла (когда GitHub недоступен): браузер
+    разбирает файл и шлёт его содержимое по одному файлу — begin, stage × N,
+    commit. Подробности — в конце ota.py."""
+    ota.begin_staging()
+    return {"ok": True}
+
+
+@app.route("/api/ota/upload/stage", methods=["POST"])
+async def api_ota_upload_stage(request):
+    rel_path = request.args.get("path", "")
+    expected = request.args.get("sha256", "")
+    if not request.body or len(expected) != 64:
+        return {"ok": False, "error": "пустое тело или нет sha256"}, 400
+    try:
+        written = ota.stage_file(rel_path, request.body, expected)
+    except ota.OtaError as exc:
+        ota.abort_staging()
+        return {"ok": False, "error": str(exc)}, 400
+    except OSError as exc:
+        ota.abort_staging()
+        return {"ok": False, "error": "не смог записать %s: %s" % (rel_path, exc)}, 500
+    return {"ok": True, "written": written}
+
+
+@app.route("/api/ota/upload/commit", methods=["POST"])
+async def api_ota_upload_commit(request):
+    try:
+        version = int(request.args.get("version", ""))
+    except ValueError:
+        ota.abort_staging()
+        return {"ok": False, "error": "нет версии"}, 400
+    breadcrumb.mark("applying OTA bundle from file, version %d" % version)
+    try:
+        count = ota.commit_staging(version)
+    except OSError as exc:
+        return {"ok": False, "error": "не смог применить: %s" % exc}, 500
+    breadcrumb.mark("OTA bundle applied — rebooting")
+    asyncio.create_task(_reset_soon())
+    return {"ok": True, "new_version": version, "files_changed": count}
+
+
+@app.route("/api/ota/upload/abort", methods=["POST"])
+async def api_ota_upload_abort(request):
+    ota.abort_staging()
+    return {"ok": True}
+
+
 @app.route("/api/marketplaces/<marketplace_id>/add", methods=["POST"])
 async def api_marketplace_add(request, marketplace_id):
     """Добавляет ещё один (пустой, ещё не настроенный) магазин на площадку

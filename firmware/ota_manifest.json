@@ -50,17 +50,17 @@
   "marketplaces/registry.py": "ba228e3c6ec02c801738dfbd7dd562370962878cb5f8bc900dc8a640a1bde76f",
   "marketplaces/wb.py": "a4672722870b83a0cffe494b425f9212806cefe8fc3146beb42dc60b4f686715",
   "marketplaces/yandex.py": "a6fbea48eefef7cedde1ac655d999c69e1587f68175c4ce57328959e112e0081",
-  "ota.py": "3f413a5c2137cbe9cdc348dfbec884a4d5ee52226ad0a38c6ef04804a6f2f2ae",
+  "ota.py": "b0a224e9cf63664cb416b6e7942afc1f82a7d43ad4715fbb4821a39a6e65e86e",
   "stats_engine.py": "3b0e3afd4fd248ec90946930f688b4ea364196b91fd225b9cec666db8d244239",
   "utils/http.py": "de8f3b5a2bc492757b5fc041020e369a3fb850556d54b24dc770263f6bf4b218",
   "utils/time_sync.py": "a9af22dfe892ceae188cf56536dd9dc70043709266b29feab16e3906c8594afd",
-  "web_server.py": "a978f3c8506325827b0c810ae990376b4ba1903053fbc664f5f1cff466bad47e",
+  "web_server.py": "0647809a5d73c3596d1fe681c6f16d8906f3d4c55e12cdb858874e2cb38b5aca",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
-  "www/app.js": "dfffb30116df6fd52c883d1e6b7f44416eab4eeaf6825f0e076a67733193add8",
+  "www/app.js": "701205d20b659b10c09df0e4038213f017b71910be6e006046f5deee5d722215",
   "www/blond.html": "99ed378b7b1856fe125d66a5cb2fbb67548bc5dc1c13d865947e8ec86405922b",
   "www/blond.js": "917612d2664e5b7bd05e8928de85c255d26c900dd366cfd1923e6c7396a8d397",
-  "www/index.html": "fdca9c93f738fa8008117057c34eb09cf4708e87a95c2c9eb85f4041abc4ee65",
+  "www/index.html": "b46d35a967e1a63735fa14242461ef683e02e20babc1f9c7e1ff51831d8ad174",
   "www/style.css": "0c63aa032dafd5905466b9404fdea37be5c6e7dab58d63d58e6d189a457723f8"
  },
- "version": 90
+ "version": 91
 }

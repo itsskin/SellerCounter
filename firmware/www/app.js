@@ -1090,6 +1090,88 @@ document.getElementById("ota-apply").addEventListener("click", async (ev) => {
   }
 });
 
+// Установка обновления из файла (.scupd, собирается tools/make_update_bundle.py):
+// файл разбираем здесь, на плату шлём по одному файлу с проверкой sha256 на её стороне.
+let otaBundle = null;
+const installedVersion = () => parseInt(document.getElementById("ota-current-version").textContent, 10) || 0;
+
+function parseUpdateBundle(buf) {
+  const bytes = new Uint8Array(buf);
+  const magic = new TextDecoder().decode(bytes.subarray(0, 7));
+  if (magic !== "SCUPD1\n") throw new Error("это не файл обновления UBIX (.scupd)");
+  const headLen = new DataView(buf).getUint32(7, false);
+  const head = JSON.parse(new TextDecoder().decode(bytes.subarray(11, 11 + headLen)));
+  let offset = 11 + headLen;
+  const files = head.files.map((f) => {
+    const entry = { path: f.path, sha256: f.sha256, data: bytes.subarray(offset, offset + f.size) };
+    if (entry.data.length !== f.size) throw new Error("файл обновления обрезан");
+    offset += f.size;
+    return entry;
+  });
+  return { version: head.version, files };
+}
+
+document.getElementById("ota-file").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("ota-file-msg");
+  const button = document.getElementById("ota-file-apply");
+  otaBundle = null;
+  button.disabled = true;
+  msg.classList.remove("error");
+  msg.textContent = "";
+  const file = ev.target.files[0];
+  if (!file) return;
+  try {
+    otaBundle = parseUpdateBundle(await file.arrayBuffer());
+    msg.textContent = "В файле версия " + otaBundle.version + ", файлов: " + otaBundle.files.length +
+      ". Сейчас на плате: " + installedVersion();
+    button.disabled = false;
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+});
+
+document.getElementById("ota-file-apply").addEventListener("click", async (ev) => {
+  const button = ev.target;
+  const msg = document.getElementById("ota-file-msg");
+  if (!otaBundle) return;
+  if (otaBundle.version <= installedVersion() &&
+      !confirm("Версия в файле (" + otaBundle.version + ") не новее установленной (" +
+               installedVersion() + "). Всё равно установить?")) {
+    return;
+  }
+  button.disabled = true;
+  msg.classList.remove("error");
+  const post = async (url, body) => {
+    const res = await fetch(url, { method: "POST", body });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || res.status);
+    return data;
+  };
+  try {
+    await post("/api/ota/upload/begin");
+    const total = otaBundle.files.length;
+    for (let i = 0; i < total; i++) {
+      const f = otaBundle.files[i];
+      msg.textContent = "Загружаю " + (i + 1) + " из " + total + ": " + f.path + " (не выключай плату)";
+      await post("/api/ota/upload/stage?path=" + encodeURIComponent(f.path) + "&sha256=" + f.sha256, f.data);
+    }
+    msg.textContent = "Применяю...";
+    await post("/api/ota/upload/commit?version=" + otaBundle.version);
+    msg.textContent = "Обновлено до версии " + otaBundle.version + " — плата перезагружается...";
+    setTimeout(() => location.reload(), 8000);
+  } catch (err) {
+    fetch("/api/ota/upload/abort", { method: "POST" }).catch(() => {});
+    if (err instanceof TypeError) {
+      msg.textContent = "Соединение прервано — если плата перезагрузилась, обнови страницу через полминуты.";
+    } else {
+      msg.textContent = "Ошибка: " + err.message + " (плата осталась на прежней версии)";
+      msg.classList.add("error");
+    }
+    button.disabled = false;
+  }
+});
+
 loadState(true);
 loadNotifications();
 loadLayoutText();
