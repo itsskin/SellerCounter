@@ -375,3 +375,41 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 8px 12px;
   white-space: nowrap;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Быстрые переходы к разделам (blond.html) — панель остаётся наверху при
+   прокрутке; боковые отступы выровнены по колонке main (max-width 600px). */
+.quick-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  padding: 10px max(16px, calc((100% - 600px) / 2 + 16px));
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.quick-nav a {
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.quick-nav a:active {
+  opacity: 0.8;
+}
+
+.card {
+  scroll-margin-top: 70px;
+}

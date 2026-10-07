@@ -57,10 +57,10 @@
   "web_server.py": "a978f3c8506325827b0c810ae990376b4ba1903053fbc664f5f1cff466bad47e",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
   "www/app.js": "dfffb30116df6fd52c883d1e6b7f44416eab4eeaf6825f0e076a67733193add8",
-  "www/blond.html": "b1fcccf8aeed60e652d75e76a6c66c4f60e6088313030c35adfdb5eb149ce5ac",
+  "www/blond.html": "0b4e82c2491d5846f4dcf0f5125b713b2630a2919f9ec601b3ea84b6703ae78f",
   "www/blond.js": "917612d2664e5b7bd05e8928de85c255d26c900dd366cfd1923e6c7396a8d397",
   "www/index.html": "32649bcc1d9d6c3f2fbacf22064d223fc0f49ee6a9ff5e3471793f18a4294f80",
-  "www/style.css": "ef6ce01a9248c3ded791162fa29b12759a7abf72c9b4ede752daf6af743a15b1"
+  "www/style.css": "7b9dce5d27d0dce394e32eb080d44775a4a76222e565ff78cca2e8d900ec3cb6"
  },
- "version": 85
+ "version": 86
 }
