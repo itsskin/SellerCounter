@@ -71,6 +71,15 @@ def _public_marketplace(entry):
 
 @app.route("/")
 async def index(request):
+    """Основной интерфейс — упрощённый (www/blond.html)."""
+    return Response.send_file("/www/blond.html", content_type="text/html")
+
+
+@app.route("/advanced")
+async def advanced(request):
+    """Полные настройки (www/index.html): всё, что есть в основном, плюс
+    "Фон экрана", "Настройки" (экран/раскладка/интервал опроса), тестовые
+    поля маркетплейсов и установка обновления из файла."""
     return Response.send_file("/www/index.html", content_type="text/html")
 
 
@@ -86,10 +95,7 @@ async def app_js(request):
 
 @app.route("/blond")
 async def blond(request):
-    """Упрощённый интерфейс для повседневного использования (та же плата,
-    те же /api/* эндпоинты, что и основной "/" — оба работают параллельно
-    без конфликтов) — без технических разделов "Фон экрана"/"Настройки"
-    (экран/раскладка/интервал опроса) и без тестовых полей маркетплейсов."""
+    """Старый адрес упрощённого интерфейса — оставлен для закладок."""
     return Response.send_file("/www/blond.html", content_type="text/html")
 
 
