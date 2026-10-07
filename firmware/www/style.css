@@ -1,14 +1,14 @@
 :root {
-  /* Стиль e-ink: «бумага» и чёрные чернила, как на экране устройства.
+  /* Стиль e-ink: белая «бумага» и чёрные чернила, как на экране устройства.
      Сети может не быть (точка доступа), поэтому веб-шрифтов нет — системный моно. */
-  --bg: #d9d8d0;
-  --card: #eceae2;
-  --field: #f7f6f1;
+  --bg: #fff;
+  --card: #fff;
+  --field: #fff;
   --border: #111;
   --text: #111;
-  --muted: #55554f;
+  --muted: #555;
   --accent: #111;
-  --on-accent: #eceae2;
+  --on-accent: #fff;
   --good: #111;
   --bad: #111;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
