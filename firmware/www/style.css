@@ -1,13 +1,18 @@
 :root {
-  --bg: #0f1115;
-  --card: #171a21;
-  --border: #262b35;
-  --text: #e8eaed;
-  --muted: #8a93a6;
-  --accent: #4f8cff;
-  --good: #35c46a;
-  --bad: #ff5c5c;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Стиль e-ink: «бумага» и чёрные чернила, как на экране устройства.
+     Сети может не быть (точка доступа), поэтому веб-шрифтов нет — системный моно. */
+  --bg: #d9d8d0;
+  --card: #eceae2;
+  --field: #f7f6f1;
+  --border: #111;
+  --text: #111;
+  --muted: #55554f;
+  --accent: #111;
+  --on-accent: #eceae2;
+  --good: #111;
+  --bad: #111;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  accent-color: #111;
 }
 
 * { box-sizing: border-box; }
@@ -24,21 +29,22 @@ header {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
 }
 
-header h1 { font-size: 20px; margin: 0; }
+header h1 { font-size: 22px; margin: 0; letter-spacing: 0.12em; text-transform: uppercase; }
 
 .badge {
   font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--border);
+  padding: 3px 10px;
+  border: 2px solid var(--border);
+  background: var(--card);
   color: var(--muted);
 }
 
-.badge.ok { background: rgba(53, 196, 106, 0.15); color: var(--good); }
-.badge.bad { background: rgba(255, 92, 92, 0.15); color: var(--bad); }
+/* Цвета нет — статус читается инверсией, как на e-ink. */
+.badge.ok { background: var(--text); color: var(--on-accent); }
+.badge.bad { border-style: dashed; color: var(--text); font-weight: 700; }
 
 main {
   max-width: 600px;
@@ -51,17 +57,19 @@ main {
 
 .card {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   padding: 16px;
 }
 
 .card h2 {
-  margin: 0 0 8px;
-  font-size: 15px;
-  color: var(--muted);
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.1em;
 }
 
 .card h3 {
@@ -94,12 +102,13 @@ input[type="number"],
 input[type="time"],
 select,
 textarea {
-  background: #0f1115;
+  background: var(--field);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px;
   color: var(--text);
   font-size: 14px;
+  font-family: inherit;
 }
 
 textarea {
@@ -121,32 +130,35 @@ button {
   display: block;
   width: 100%;
   background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 8px;
+  color: var(--on-accent);
+  border: 2px solid var(--accent);
+  border-radius: 0;
   padding: 10px 14px;
   font-size: 14px;
+  font-family: inherit;
   cursor: pointer;
   margin-top: 4px;
 }
 
-button:active { opacity: 0.8; }
+/* e-ink: при нажатии цвета меняются местами, а не бледнеют. */
+button:active { background: var(--card); color: var(--text); }
 
 .msg { font-size: 13px; color: var(--good); min-height: 16px; overflow-wrap: anywhere; }
-.msg.error { color: var(--bad); }
+.msg.error { color: var(--text); font-weight: 700; }
+.msg.error:not(:empty)::before { content: "✕ "; }
 
 .stats-row { display: flex; gap: 16px; }
 
 .stat { flex: 1; text-align: center; }
 
-.stat-value { font-size: 32px; font-weight: 700; }
+.stat-value { font-size: 34px; font-weight: 700; letter-spacing: 0.02em; }
 
 .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
 
 #preview-img {
   width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 2px solid var(--border);
+  border-radius: 0;
   background: #fff;
   image-rendering: pixelated;
 }
@@ -198,6 +210,7 @@ input[type="number"]::-webkit-outer-spin-button {
   font-weight: 500;
   font-size: 11px;
   text-transform: uppercase;
+  border-bottom: 2px solid var(--border);
 }
 
 .mp-stats-table th:not(:first-child),
@@ -210,7 +223,8 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .mp-stats-error-note {
-  color: var(--bad);
+  color: var(--text);
+  font-weight: 700;
   font-size: 11px;
   /* Длинный текст ошибки (URL, JSON от API маркетплейса) без пробелов
      иначе может растянуть таблицу шире карточки — сам текст теперь и так
@@ -241,13 +255,13 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 6px 10px;
   font-size: 12px;
   background: transparent;
-  border: 1px solid var(--accent);
-  color: var(--accent);
+  border: 1px solid var(--text);
+  color: var(--text);
 }
 
 .mp-card {
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 0;
   padding: 12px;
   margin-bottom: 10px;
 }
@@ -265,7 +279,8 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .mp-card .status.ok {
-  color: var(--good);
+  color: var(--text);
+  font-weight: 700;
 }
 
 .mp-card .mp-remove-shop {
@@ -274,8 +289,8 @@ input[type="number"]::-webkit-outer-spin-button {
   padding: 6px 10px;
   font-size: 12px;
   background: transparent;
-  border: 1px solid var(--bad);
-  color: var(--bad);
+  border: 1px dashed var(--text);
+  color: var(--text);
 }
 
 .mp-breakdown-row {
@@ -307,9 +322,9 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .hint code {
-  background: #0f1115;
+  background: var(--field);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 0;
   padding: 1px 4px;
   font-size: 12px;
 }
@@ -319,7 +334,7 @@ input[type="number"]::-webkit-outer-spin-button {
   align-items: flex-end;
   gap: 10px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 0;
   padding: 10px 12px;
   margin-bottom: 8px;
 }
@@ -346,7 +361,7 @@ input[type="number"]::-webkit-outer-spin-button {
   align-items: flex-end;
   gap: 10px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 0;
   padding: 10px 12px;
   margin-bottom: 8px;
 }
@@ -390,15 +405,16 @@ html {
   gap: 8px;
   padding: 10px max(16px, calc((100% - 600px) / 2 + 16px));
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 3px solid var(--border);
 }
 
 .quick-nav a {
   flex: 1;
   padding: 10px 6px;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--accent);
-  color: white;
+  color: var(--on-accent);
+  border: 2px solid var(--accent);
   font-size: 12px;
   font-weight: 700;
   text-align: center;
@@ -407,7 +423,8 @@ html {
 }
 
 .quick-nav a:active {
-  opacity: 0.8;
+  background: var(--card);
+  color: var(--text);
 }
 
 .card {
