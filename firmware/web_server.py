@@ -93,12 +93,6 @@ async def app_js(request):
     return Response.send_file("/www/app.js", content_type="application/javascript")
 
 
-@app.route("/blond")
-async def blond(request):
-    """Старый адрес упрощённого интерфейса — оставлен для закладок."""
-    return Response.send_file("/www/blond.html", content_type="text/html")
-
-
 @app.route("/blond.js")
 async def blond_js(request):
     return Response.send_file("/www/blond.js", content_type="application/javascript")
