@@ -8,7 +8,7 @@ DEFAULT_CONFIG = {
     # реальные SSID/пароль даже временно — этот файл теперь публичный
     # (см. репозиторий на GitHub, OTA), любой дефолт здесь уедет в интернет.
     "wifi": {"ssid": "", "password": ""},
-    "ap": {"ssid": "UBIX Setup", "password": "12345678"},
+    "ap": {"ssid": "UBIX monik setup", "password": "12345678"},
     # 300 (5 минут), не 60 — на площадке теперь может быть НЕСКОЛЬКО
     # магазинов (см. "marketplaces" ниже), а значит несколько запросов за
     # один цикл опроса; более редкий цикл снижает риск словить rate limit
@@ -200,7 +200,7 @@ def load():
         cfg = _deep_merge(DEFAULT_CONFIG, data)
     # Миграция: прежнее имя точки доступа по умолчанию -> новое. Имя, которое
     # пользователь задал сам, не трогаем.
-    if cfg["ap"].get("ssid") == "SellerCounter-Setup":
+    if cfg["ap"].get("ssid") in ("SellerCounter-Setup", "UBIX Setup"):
         cfg["ap"]["ssid"] = DEFAULT_CONFIG["ap"]["ssid"]
     return _ensure_marketplace_keys(cfg)
 

@@ -150,7 +150,7 @@ class MarketplaceClient:
 ```json
 {
   "wifi": {"ssid": "...", "password": "..."},
-  "ap": {"ssid": "UBIX Setup", "password": "12345678"},
+  "ap": {"ssid": "UBIX monik setup", "password": "12345678"},
   "poll_interval_sec": 60,
   "timezone_offset_hours": 3,
   "marketplaces": [

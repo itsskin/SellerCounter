@@ -3,7 +3,7 @@
   "boot.py": "c125b2cd03296b74ae2f5eabffe2f33274c3b0aa1fc4f313bdf4839d5eac53d6",
   "breadcrumb.py": "9f0f73d1fd0dfebf62a4dc14ae5fbb11c33d831aebb278b8dc9a9a271d084f41",
   "buzzer.py": "bac572cd23ebc11287d4c9e7508456a0714ec2a1897a163821ca2d316a59991f",
-  "config.py": "1caa56122338fe61c51a01b7a2536935efbedca686eb5efe41da7312a517eb42",
+  "config.py": "7f74b2b1ff257009f7d9083461585ffaa417ebdfad0bb527a2c06fd53ef6c5e4",
   "display/base.py": "d8d9f68ccb2b1f6dc42e5621852ba0927593329a87700aed9bd908ff540c5848",
   "display/column.png": "668eea8362fc9a3b867e5e53c5fe2417489b9893489237f75db7a0a46f346328",
   "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
@@ -44,7 +44,7 @@
   "lib/sc_http/__init__.py": "526dd7dadb16afbab43fad92aec71d4e18be0b66afb2e03b2edac6106627a742",
   "lib/umidiparser/__init__.py": "9cd841108db4f550d552afb0424661a0246817ad88fda82ed35903ac9f5e71a9",
   "lib/umidiparser/umidiparser.py": "82ac1b5ac975eb4ed82500d29b1b03c644855575bd3bfb1373a17139ec4d4dea",
-  "main.py": "1e6d7d24a397e978d682df105b99778014e822a97b63a25eecc98e1fb9af1a8f",
+  "main.py": "2479a3d9c95d1398bf210377b65cb9b586e2d23e943925962be6afac9a795d9b",
   "marketplaces/base.py": "30ec23cde4b9c49ec134b3b923785b74f344608aef850036d0be734bec5c67c8",
   "marketplaces/ozon.py": "01bce5d85d601b82b2856ae3e1738b5249a31781e77eee7275e22439194b7722",
   "marketplaces/registry.py": "ba228e3c6ec02c801738dfbd7dd562370962878cb5f8bc900dc8a640a1bde76f",
@@ -62,5 +62,5 @@
   "www/index.html": "fdca9c93f738fa8008117057c34eb09cf4708e87a95c2c9eb85f4041abc4ee65",
   "www/style.css": "0c63aa032dafd5905466b9404fdea37be5c6e7dab58d63d58e6d189a457723f8"
  },
- "version": 89
+ "version": 90
 }
