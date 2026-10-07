@@ -71,8 +71,8 @@ def _public_marketplace(entry):
 
 @app.route("/")
 async def index(request):
-    """Основной интерфейс — упрощённый (www/blond.html)."""
-    return Response.send_file("/www/blond.html", content_type="text/html")
+    """Основной интерфейс — упрощённый (www/main.html)."""
+    return Response.send_file("/www/main.html", content_type="text/html")
 
 
 @app.route("/advanced")
@@ -93,9 +93,9 @@ async def app_js(request):
     return Response.send_file("/www/app.js", content_type="application/javascript")
 
 
-@app.route("/blond.js")
-async def blond_js(request):
-    return Response.send_file("/www/blond.js", content_type="application/javascript")
+@app.route("/main.js")
+async def main_js(request):
+    return Response.send_file("/www/main.js", content_type="application/javascript")
 
 
 @app.route("/api/state")
