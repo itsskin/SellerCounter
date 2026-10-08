@@ -18,6 +18,14 @@ class DisplayDriver:
     width = 400
     height = 300
 
+    # Частичное обновление (см. epd1in54.py/epd4in2.py): меняются только
+    # изменившиеся пиксели, без мигания всего экрана. У симулятора смысла не
+    # имеет, но атрибут общий, чтобы main.py/web_server.py не проверяли тип.
+    partial_update = False
+
+    def set_partial(self, enabled):
+        self.partial_update = bool(enabled)
+
     def __init__(self, width=None, height=None):
         # width/height можно переопределить на инстансе (используется
         # SimDisplay, чтобы симулировать превью под разные физические

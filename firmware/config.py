@@ -65,6 +65,7 @@ DEFAULT_CONFIG = {
         # Применяется сразу, без перезагрузки платы (см. web_server.py
         # /api/settings — живой объект display уже создан при старте).
         "full_refresh_every": 50,
+        "partial_update": False,
         "beep_on_sale": True,
         "show_fbs_reminder": False,
         # Пусто — макет выбирается автоматически по РЕАЛЬНОМУ разрешению

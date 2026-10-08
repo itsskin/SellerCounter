@@ -319,6 +319,8 @@ async def api_settings(request):
             # driver/screen выше, которые меняют физическую SPI/пин-
             # конфигурацию и требуют настоящего рестарта).
             display.full_refresh_every = cfg["display"].get("full_refresh_every", 50)
+        if display is not None and "partial_update" in body["display"]:
+            display.set_partial(cfg["display"].get("partial_update", False))
     if "buzzer" in body:
         cfg["buzzer"].update(body["buzzer"])
         buzzer = _state["buzzer"]

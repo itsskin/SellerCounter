@@ -80,6 +80,32 @@ CMD_WRITE_REDRAM = 0x26
 CMD_DISP_CTRL2 = 0x22
 CMD_MASTER_ACTIVATE = 0x20
 CMD_DEEP_SLEEP = 0x10
+CMD_LUT = 0x32
+CMD_LUT_END_OPT = 0x3F
+CMD_GATE_VOLTAGE = 0x03
+CMD_SOURCE_VOLTAGE = 0x04
+CMD_VCOM = 0x2C
+CMD_DISPLAY_OPTION = 0x37
+
+# Таблица импульсов (LUT) для частичного обновления: пиксели, у которых
+# цвет не меняется (чёрный->чёрный, белый->белый), не получают импульса,
+# меняющиеся — короткий (0x0A тактов). Взята из соседнего проекта eInkClock
+# (epd.py, _LUT_FAST; HW-проверена там на SSD1680 — тот же набор команд и
+# та же длина LUT 153+6 байт, что у SSD1681 этой панели), а исходно — из
+# Waveshare 2.9" V2 (MIT). На этой панели не проверена.
+_LUT_PARTIAL = bytes([
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x80, 0x80, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x40, 0x40, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0A, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
+    0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+] + [0x0] * 63 + [
+    0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x0, 0x0, 0x0,
+    0x22, 0x17, 0x41, 0xB0, 0x32, 0x36,
+])
 
 _CMD_NAMES = {
     CMD_SW_RESET: "SW_RESET",
@@ -137,7 +163,18 @@ class Epd1in54Display(DisplayDriver):
         # См. full_refresh_every выше и show() — стартует с 0, так что
         # первый show() после включения платы тоже честный (не "fast full").
         self._update_count = 0
+        # Частичное обновление (см. set_partial/_show_partial): _base_valid —
+        # на экране и в "старой" RAM (0x26) лежит один и тот же кадр после
+        # полного обновления, от него можно отталкиваться.
+        self._base_valid = False
         self._log("init: pins ok")
+
+    def set_partial(self, enabled):
+        self.partial_update = bool(enabled)
+        # Включение/выключение на лету: следующее обновление — честный
+        # полный refresh, он же заново кладёт опорный кадр.
+        self._base_valid = False
+        self._update_count = 0
 
     def _log(self, msg):
         if self.debug:
@@ -229,6 +266,14 @@ class Epd1in54Display(DisplayDriver):
 
     async def show(self):
         self._log("=== show() start (buffer=%d байт) ===" % len(self.buffer))
+        inverted = bytes(b ^ 0xFF for b in self.buffer)
+        self._update_count += 1
+        full = self._update_count == 1 or self._update_count % self.full_refresh_every == 0
+        if self.partial_update and not full and self._base_valid:
+            await self._show_partial(inverted)
+            self._log("=== show() done (partial) ===")
+            return
+
         if not self._hw_ready:
             await self._hw_init()
 
@@ -236,7 +281,6 @@ class Epd1in54Display(DisplayDriver):
         # HW-подтверждено: у этой панели бит=1 в BW RAM физически "белый",
         # а не "чёрный" — переворачиваем перед отправкой, чтобы совпадало
         # с конвенцией DisplayDriver (color=1 -> чернила/чёрный).
-        inverted = bytes(b ^ 0xFF for b in self.buffer)
         self._cmd(CMD_WRITE_BWRAM, inverted)
 
         # Трёхцветная панель (B/W/R) — у RED RAM свой указатель адреса,
@@ -262,11 +306,63 @@ class Epd1in54Display(DisplayDriver):
         # обновлений (и первым делом после включения — self._update_count
         # стартует с 0 в __init__) пропускаем температурный трюк и
         # используем настоящий медленный LUT (0x22=0xF7), который их убирает.
-        self._update_count += 1
-        full = self._update_count == 1 or self._update_count % self.full_refresh_every == 0
-        if not full:
+        if self.partial_update:
+            # при включённом частичном обновлении обычные кадры идут через
+            # него, а полные — только честные (без температурного трюка)
+            fast = False
+        else:
+            fast = not full
+        if fast:
             self._cmd(CMD_TEMP_WRITE, bytes([0x64]))
-        self._cmd(CMD_DISP_CTRL2, bytes([0xF7 if full else 0xD7]))
+        self._cmd(CMD_DISP_CTRL2, bytes([0xD7 if fast else 0xF7]))
         self._cmd(CMD_MASTER_ACTIVATE)
         await self._wait_busy()
+        if self.partial_update:
+            # Опорный кадр для следующих частичных обновлений: "старая" RAM
+            # (0x26) = то, что теперь на экране. Пишем ПОСЛЕ refresh — иначе
+            # полный refresh увидел бы чёрно-белую картинку как красный слой.
+            self._reset_ram_address()
+            self._cmd(CMD_WRITE_REDRAM, inverted)
+            self._base_valid = True
         self._log("=== show() done ===" + (" (full refresh)" if full else ""))
+
+    async def _show_partial(self, inverted):
+        """Частичное обновление по схеме соседнего проекта eInkClock
+        (epd.py: begin_fast/show_fast): короткий RST, загрузка LUT, режим
+        display-mode-2 с ping-pong RAM (0x37) — контроллер сам сравнивает
+        новый кадр (0x24) со старым (0x26) и трогает только отличия."""
+        self._rst(0)
+        time.sleep_ms(2)
+        self._rst(1)
+        time.sleep_ms(2)
+        await self._wait_busy()
+        # сброс по RST вернул регистры к значениям по умолчанию — кладём наши
+        self._cmd(
+            CMD_DRIVER_CONTROL,
+            bytes([(self.height - 1) & 0xFF, (self.height - 1) >> 8, 0x00]),
+        )
+        self._cmd(CMD_DATA_MODE, bytes([0x03]))
+        self._cmd(CMD_SET_RAMXPOS, bytes([0x00, self.height // 8 - 1]))
+        self._cmd(
+            CMD_SET_RAMYPOS,
+            bytes([0x00, 0x00, (self.height - 1) & 0xFF, (self.height - 1) >> 8]),
+        )
+        lut = _LUT_PARTIAL
+        self._cmd(CMD_LUT, lut[:153])
+        await self._wait_busy()
+        self._cmd(CMD_LUT_END_OPT, bytes([lut[153]]))
+        self._cmd(CMD_GATE_VOLTAGE, bytes([lut[154]]))
+        self._cmd(CMD_SOURCE_VOLTAGE, bytes([lut[155], lut[156], lut[157]]))
+        self._cmd(CMD_VCOM, bytes([lut[158]]))
+        self._cmd(CMD_DISPLAY_OPTION, bytes([0, 0, 0, 0, 0, 0x40, 0, 0, 0, 0]))
+        self._cmd(CMD_WRITE_BORDER, bytes([0x80]))
+        self._cmd(CMD_DISP_CTRL2, bytes([0xC0]))
+        self._cmd(CMD_MASTER_ACTIVATE)
+        await self._wait_busy()
+        self._reset_ram_address()
+        self._cmd(CMD_WRITE_BWRAM, inverted)
+        self._cmd(CMD_DISP_CTRL2, bytes([0x0F]))
+        self._cmd(CMD_MASTER_ACTIVATE)
+        await self._wait_busy()
+        # Следующее ПОЛНОЕ обновление должно начаться с полной инициализации.
+        self._hw_ready = False

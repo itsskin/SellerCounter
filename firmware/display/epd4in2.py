@@ -60,18 +60,20 @@ CMD_DISPLAY_UPDATE_CTRL1 = 0x21
 CMD_DISPLAY_UPDATE_CTRL2 = 0x22
 CMD_MASTER_ACTIVATE = 0x20
 CMD_DEEP_SLEEP = 0x10
+CMD_WRITE_RAM_RED = 0x26  # у SSD1683 это "старый" кадр для частичного обновления
 
 
 class Epd4in2Display(DisplayDriver):
     width = 400
     height = 300
 
-    # Partial refresh (Display Update Control 2 = 0xFC) пробовали — HW-
-    # подтверждено именно на этой панели, что она физически не до конца
-    # "перещёлкивает" пиксели даже с частым full-циклом (раз в 3 кадра):
-    # призраки предыдущих кадров остаются видны сразу. Full refresh тут и
-    # так быстрый (~3.3с, HW-замерено) и не мигает, так что partial не даёт
-    # выигрыша, который стоил бы такой цены — оставлен только full.
+    # Partial refresh (Display Update Control 2 = 0xFC) в первой попытке
+    # пробовали — HW-подтверждено на этой панели, что призраки предыдущих
+    # кадров оставались видны сразу. Тогда в "старую" RAM (0x26) ничего не
+    # писали, а контроллер сравнивает новый кадр именно с ней. Теперь
+    # частичное обновление (partial_update, выключено по умолчанию) после
+    # каждого обновления кладёт показанный кадр в обе RAM (0x24 и 0x26) — как
+    # GxEPD2 (writeImageAgain). На железе после этой правки не проверено.
 
     # Каждое N-ное обновление — честный full refresh (см. show()), не
     # "fast full" — чистит накопившиеся от температурного трюка призраки.
@@ -102,6 +104,16 @@ class Epd4in2Display(DisplayDriver):
         # (и сразу при первом show() после включения — счётчик стартует с
         # 0, см. show()) — честный full refresh без трюка (0x22=0xF7),
         # который чистит эти остатки.
+        self._update_count = 0
+        # См. set_partial/_show_partial: опорный кадр лежит в обеих RAM.
+        self._base_valid = False
+        self._partial_dirty = False
+
+    def set_partial(self, enabled):
+        self.partial_update = bool(enabled)
+        # Включение/выключение на лету: следующее обновление — честный
+        # полный refresh, он же заново кладёт опорный кадр.
+        self._base_valid = False
         self._update_count = 0
 
     def _reset(self):
@@ -158,7 +170,16 @@ class Epd4in2Display(DisplayDriver):
         self._cmd(CMD_SET_RAM_Y_COUNTER, bytes([y0 & 0xFF, y0 >> 8]))
 
     async def show(self):
-        if not self._hw_ready:
+        self._update_count += 1
+        full = self._update_count == 1 or self._update_count % self.full_refresh_every == 0
+        if self.partial_update and not full and self._base_valid:
+            await self._show_partial()
+            return
+
+        if not self._hw_ready or self._partial_dirty:
+            # после частичного обновления — полная инициализация (сброс
+            # регистров, граница 0x3C и режим 0x21 возвращаются к полным)
+            self._partial_dirty = False
             await self._hw_init()
 
         self._set_window(0, 0, self.width - 1, self.height - 1)
@@ -189,13 +210,41 @@ class Epd4in2Display(DisplayDriver):
         # стартует с 0 в __init__, так что первый show() тоже честный)
         # пропускаем температурный трюк и используем настоящий медленный
         # LUT (0x22=0xF7) — он их убирает.
-        self._update_count += 1
-        full = self._update_count == 1 or self._update_count % self.full_refresh_every == 0
-        if not full:
+        # при включённом частичном обновлении обычные кадры идут через
+        # него, а полные — только честные (без температурного трюка)
+        fast = not full and not self.partial_update
+        if fast:
             self._cmd(CMD_TEMP_WRITE, bytes([0x6E]))
-        self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xF7 if full else 0xD7]))
+        self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xD7 if fast else 0xF7]))
         self._cmd(CMD_MASTER_ACTIVATE)
         await self._wait_busy()
+        if self.partial_update:
+            self._write_base(inverted)
+            self._base_valid = True
+
+    def _write_base(self, inverted):
+        """Показанный кадр — в обе RAM (новый 0x24 и старый 0x26): следующее
+        частичное обновление сравнивает с ним."""
+        self._set_window(0, 0, self.width - 1, self.height - 1)
+        self._cmd(CMD_WRITE_RAM_BW, inverted)
+        self._set_window(0, 0, self.width - 1, self.height - 1)
+        self._cmd(CMD_WRITE_RAM_RED, inverted)
+
+    async def _show_partial(self):
+        """Частичное обновление встроенным LUT (0x22 = 0xFC): контроллер
+        сравнивает 0x24 (новый кадр) с 0x26 (старый) и перещёлкивает только
+        изменившиеся пиксели. Последовательность — по GxEPD2 (SSD1683,
+        _Init_Part/_Update_Part): 0x21 = 0x00 0x00, граница 0x3C = 0x80."""
+        inverted = bytes(b ^ 0xFF for b in self.buffer)
+        self._cmd(CMD_BORDER_WAVEFORM, bytes([0x80]))
+        self._cmd(CMD_DISPLAY_UPDATE_CTRL1, bytes([0x00, 0x00]))
+        self._set_window(0, 0, self.width - 1, self.height - 1)
+        self._cmd(CMD_WRITE_RAM_BW, inverted)
+        self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xFC]))
+        self._cmd(CMD_MASTER_ACTIVATE)
+        await self._wait_busy()
+        self._write_base(inverted)
+        self._partial_dirty = True
 
     def sleep(self):
         self._cmd(CMD_DEEP_SLEEP, bytes([0x01]))

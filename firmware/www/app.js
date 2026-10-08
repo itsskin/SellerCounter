@@ -115,6 +115,8 @@ function renderSettings(state) {
   document.getElementById("set-full-refresh-every").value =
     (state.display && state.display.full_refresh_every) || 50;
 
+  document.getElementById("set-partial-update").checked = !!(state.display && state.display.partial_update);
+
   document.getElementById("set-layout-override").value =
     (state.display && state.display.layout_override) || "";
 
@@ -665,6 +667,23 @@ document.getElementById("set-full-refresh-every").addEventListener("change", asy
       body: JSON.stringify({ display: { full_refresh_every: value } }),
     });
     msg.textContent = "Сохранено";
+    msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("set-partial-update").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("partial-update-msg");
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { partial_update: ev.target.checked } }),
+    });
+    msg.textContent = "Сохранено (следующее обновление экрана — полное)";
     msg.classList.remove("error");
   } catch (err) {
     msg.textContent = "Ошибка: " + err.message;
