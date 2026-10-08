@@ -63,7 +63,7 @@ def _get_display(cfg):
     # только дефолт класса (см. config.py, web_server.py /api/settings —
     # там же живое обновление без перезагрузки платы).
     display.full_refresh_every = cfg["display"].get("full_refresh_every", 50)
-    display.set_partial(cfg["display"].get("partial_update", False))
+    display.set_partial(cfg["display"].get("partial_update", True))
     return display
 
 
