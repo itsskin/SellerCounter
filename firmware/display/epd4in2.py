@@ -170,11 +170,18 @@ class Epd4in2Display(DisplayDriver):
         self._cmd(CMD_SET_RAM_Y_COUNTER, bytes([y0 & 0xFF, y0 >> 8]))
 
     async def show(self):
+        t0 = time.ticks_ms()
+        await self._show()
+        self.last_show_ms = time.ticks_diff(time.ticks_ms(), t0)
+
+    async def _show(self):
         self._update_count += 1
         full = self._update_count == 1 or self._update_count % self.full_refresh_every == 0
         if self.partial_update and not full and self._base_valid:
+            self.last_show_kind = "partial"
             await self._show_partial()
             return
+        self.last_show_kind = "full" if full else "fast"
 
         if not self._hw_ready or self._partial_dirty:
             # после частичного обновления — полная инициализация (сброс
@@ -188,7 +195,7 @@ class Epd4in2Display(DisplayDriver):
         # инверсию (как и на epd1in54.py, где она понадобилась по
         # даташиту SSD1681; SSD1683 — близкий протокол, но не факт что
         # идентичная полярность бита).
-        inverted = bytes(b ^ 0xFF for b in self.buffer)
+        inverted = self._inverted_buffer()
         self._cmd(CMD_WRITE_RAM_BW, inverted)
         self._cmd(CMD_DISPLAY_UPDATE_CTRL1, bytes([0x40, 0x00]))
 
@@ -235,9 +242,12 @@ class Epd4in2Display(DisplayDriver):
         сравнивает 0x24 (новый кадр) с 0x26 (старый) и перещёлкивает только
         изменившиеся пиксели. Последовательность — по GxEPD2 (SSD1683,
         _Init_Part/_Update_Part): 0x21 = 0x00 0x00, граница 0x3C = 0x80."""
-        inverted = bytes(b ^ 0xFF for b in self.buffer)
-        self._cmd(CMD_BORDER_WAVEFORM, bytes([0x80]))
-        self._cmd(CMD_DISPLAY_UPDATE_CTRL1, bytes([0x00, 0x00]))
+        inverted = self._inverted_buffer()
+        if not self._partial_dirty:
+            # режим частичного обновления включаем один раз; повторные
+            # частичные обновления эти настройки не повторяют
+            self._cmd(CMD_BORDER_WAVEFORM, bytes([0x80]))
+            self._cmd(CMD_DISPLAY_UPDATE_CTRL1, bytes([0x00, 0x00]))
         self._set_window(0, 0, self.width - 1, self.height - 1)
         self._cmd(CMD_WRITE_RAM_BW, inverted)
         self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xFC]))

@@ -167,6 +167,9 @@ class Epd1in54Display(DisplayDriver):
         # на экране и в "старой" RAM (0x26) лежит один и тот же кадр после
         # полного обновления, от него можно отталкиваться.
         self._base_valid = False
+        # Регистры уже настроены под частичное обновление (LUT и т.д.) —
+        # повторные частичные обновления не повторяют настройку.
+        self._partial_ready = False
         self._log("init: pins ok")
 
     def set_partial(self, enabled):
@@ -235,6 +238,7 @@ class Epd1in54Display(DisplayDriver):
 
     async def _hw_init(self):
         self._log("=== _hw_init() start ===")
+        self._partial_ready = False
         self._reset()
         await self._wait_busy()
         self._cmd(CMD_SW_RESET)
@@ -265,14 +269,21 @@ class Epd1in54Display(DisplayDriver):
         self._cmd(CMD_SET_RAMYCOUNT, bytes([0x00, 0x00]))
 
     async def show(self):
+        t0 = time.ticks_ms()
+        await self._show()
+        self.last_show_ms = time.ticks_diff(time.ticks_ms(), t0)
+
+    async def _show(self):
         self._log("=== show() start (buffer=%d байт) ===" % len(self.buffer))
-        inverted = bytes(b ^ 0xFF for b in self.buffer)
+        inverted = self._inverted_buffer()
         self._update_count += 1
         full = self._update_count == 1 or self._update_count % self.full_refresh_every == 0
         if self.partial_update and not full and self._base_valid:
+            self.last_show_kind = "partial"
             await self._show_partial(inverted)
             self._log("=== show() done (partial) ===")
             return
+        self.last_show_kind = "full" if full else "fast"
 
         if not self._hw_ready:
             await self._hw_init()
@@ -328,40 +339,47 @@ class Epd1in54Display(DisplayDriver):
 
     async def _show_partial(self, inverted):
         """Частичное обновление по схеме соседнего проекта eInkClock
-        (epd.py: begin_fast/show_fast): короткий RST, загрузка LUT, режим
-        display-mode-2 с ping-pong RAM (0x37) — контроллер сам сравнивает
-        новый кадр (0x24) со старым (0x26) и трогает только отличия."""
-        self._rst(0)
-        time.sleep_ms(2)
-        self._rst(1)
-        time.sleep_ms(2)
-        await self._wait_busy()
-        # сброс по RST вернул регистры к значениям по умолчанию — кладём наши
-        self._cmd(
-            CMD_DRIVER_CONTROL,
-            bytes([(self.height - 1) & 0xFF, (self.height - 1) >> 8, 0x00]),
-        )
-        self._cmd(CMD_DATA_MODE, bytes([0x03]))
-        self._cmd(CMD_SET_RAMXPOS, bytes([0x00, self.height // 8 - 1]))
-        self._cmd(
-            CMD_SET_RAMYPOS,
-            bytes([0x00, 0x00, (self.height - 1) & 0xFF, (self.height - 1) >> 8]),
-        )
-        lut = _LUT_PARTIAL
-        self._cmd(CMD_LUT, lut[:153])
-        await self._wait_busy()
-        self._cmd(CMD_LUT_END_OPT, bytes([lut[153]]))
-        self._cmd(CMD_GATE_VOLTAGE, bytes([lut[154]]))
-        self._cmd(CMD_SOURCE_VOLTAGE, bytes([lut[155], lut[156], lut[157]]))
-        self._cmd(CMD_VCOM, bytes([lut[158]]))
-        self._cmd(CMD_DISPLAY_OPTION, bytes([0, 0, 0, 0, 0, 0x40, 0, 0, 0, 0]))
-        self._cmd(CMD_WRITE_BORDER, bytes([0x80]))
-        self._cmd(CMD_DISP_CTRL2, bytes([0xC0]))
-        self._cmd(CMD_MASTER_ACTIVATE)
-        await self._wait_busy()
+        (epd.py: begin_fast/show_fast): загрузка LUT, режим display-mode-2 с
+        ping-pong RAM (0x37) — контроллер сам сравнивает новый кадр (0x24) со
+        старым (0x26) и трогает только отличия.
+
+        Настройка (короткий RST, регистры, LUT) делается один раз после
+        каждого полного обновления; повторные частичные — только запись кадра
+        и запуск (0x22=0xCF: питание + режим 2 + обновление + выключение, как
+        в Waveshare 1.54 V2 TurnOnDisplayPart)."""
+        if not self._partial_ready:
+            self._rst(0)
+            time.sleep_ms(2)
+            self._rst(1)
+            time.sleep_ms(2)
+            await self._wait_busy()
+            # сброс по RST вернул регистры к значениям по умолчанию — кладём наши
+            self._cmd(
+                CMD_DRIVER_CONTROL,
+                bytes([(self.height - 1) & 0xFF, (self.height - 1) >> 8, 0x00]),
+            )
+            self._cmd(CMD_DATA_MODE, bytes([0x03]))
+            self._cmd(CMD_SET_RAMXPOS, bytes([0x00, self.height // 8 - 1]))
+            self._cmd(
+                CMD_SET_RAMYPOS,
+                bytes([0x00, 0x00, (self.height - 1) & 0xFF, (self.height - 1) >> 8]),
+            )
+            lut = _LUT_PARTIAL
+            self._cmd(CMD_LUT, lut[:153])
+            await self._wait_busy()
+            self._cmd(CMD_LUT_END_OPT, bytes([lut[153]]))
+            self._cmd(CMD_GATE_VOLTAGE, bytes([lut[154]]))
+            self._cmd(CMD_SOURCE_VOLTAGE, bytes([lut[155], lut[156], lut[157]]))
+            self._cmd(CMD_VCOM, bytes([lut[158]]))
+            self._cmd(CMD_DISPLAY_OPTION, bytes([0, 0, 0, 0, 0, 0x40, 0, 0, 0, 0]))
+            self._cmd(CMD_WRITE_BORDER, bytes([0x80]))
+            self._cmd(CMD_DISP_CTRL2, bytes([0xC0]))
+            self._cmd(CMD_MASTER_ACTIVATE)
+            await self._wait_busy()
+            self._partial_ready = True
         self._reset_ram_address()
         self._cmd(CMD_WRITE_BWRAM, inverted)
-        self._cmd(CMD_DISP_CTRL2, bytes([0x0F]))
+        self._cmd(CMD_DISP_CTRL2, bytes([0xCF]))
         self._cmd(CMD_MASTER_ACTIVATE)
         await self._wait_busy()
         # Следующее ПОЛНОЕ обновление должно начаться с полной инициализации.

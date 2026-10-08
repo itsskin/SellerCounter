@@ -117,6 +117,11 @@ function renderSettings(state) {
 
   document.getElementById("set-partial-update").checked = !!(state.display && state.display.partial_update);
 
+  const showInfo = state.display_show || {};
+  const kinds = { partial: "частичное", fast: "быстрое полное", full: "честное полное" };
+  document.getElementById("show-timing").textContent = "Последнее обновление экрана: " +
+    (showInfo.ms != null ? (showInfo.ms / 1000).toFixed(2) + " с (" + (kinds[showInfo.kind] || "?") + ")" : "—");
+
   document.getElementById("set-layout-override").value =
     (state.display && state.display.layout_override) || "";
 

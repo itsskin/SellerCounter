@@ -124,6 +124,10 @@ async def api_state(request):
         data["next_poll_in_sec"] = engine.next_poll_in_sec()
     display = _state["display"]
     if display is not None:
+        data["display_show"] = {
+            "ms": getattr(display, "last_show_ms", None),
+            "kind": getattr(display, "last_show_kind", None),
+        }
         # Реальное разрешение подключённого экрана (не cfg["display"]["screen"]
         # — то поле только для driver="sim", для настоящего железа не значит
         # ничего) — веб-интерфейсу нужно знать его для формы загрузки фона

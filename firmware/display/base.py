@@ -26,6 +26,20 @@ class DisplayDriver:
     def set_partial(self, enabled):
         self.partial_update = bool(enabled)
 
+    # Длительность и вид последнего show() — для веб-интерфейса (/api/state),
+    # чтобы можно было сверить скорость обновления без секундомера.
+    last_show_ms = None
+    last_show_kind = None
+
+    def _inverted_buffer(self):
+        """Буфер с инвертированными битами (то, что ждёт RAM панели). Через
+        большое целое число — в C, раз в ~100 быстрее, чем побайтовый цикл на
+        MicroPython (для 400x300 это были бы сотни мс на каждый кадр)."""
+        buf = self.buffer
+        n = len(buf)
+        v = int.from_bytes(buf, "big") ^ ((1 << (8 * n)) - 1)
+        return v.to_bytes(n, "big")
+
     def __init__(self, width=None, height=None):
         # width/height можно переопределить на инстансе (используется
         # SimDisplay, чтобы симулировать превью под разные физические
