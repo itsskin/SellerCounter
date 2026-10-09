@@ -176,7 +176,7 @@ class Epd4in2Display(DisplayDriver):
 
     async def _show(self):
         self._update_count += 1
-        full = self._update_count == 1 or self._update_count % self.full_refresh_every == 0
+        full = self._full_due()
         if self.partial_update and not full and self._base_valid:
             self.last_show_kind = "partial"
             await self._show_partial()
@@ -225,6 +225,8 @@ class Epd4in2Display(DisplayDriver):
         self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xD7 if fast else 0xF7]))
         self._cmd(CMD_MASTER_ACTIVATE)
         await self._wait_busy()
+        if not fast:
+            self._mark_full()
         if self.partial_update:
             self._write_base(inverted)
             self._base_valid = True

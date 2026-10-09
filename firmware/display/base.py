@@ -1,3 +1,4 @@
+import time
 import framebuf
 
 
@@ -23,8 +24,48 @@ class DisplayDriver:
     # имеет, но атрибут общий, чтобы main.py/web_server.py не проверяли тип.
     partial_update = False  # реальное значение берётся из config.py (по умолчанию True)
 
+    # При включённом частичном обновлении честный полный refresh (чистит
+    # призраки) делается раз в сутки — первым обновлением после этого часа
+    # по местному времени (full_refresh_hour; None — отключить), а также
+    # первым кадром после включения платы. tz_offset_hours выставляет
+    # main.py/stats_engine.py из настроек часового пояса.
+    full_refresh_hour = 4
+    tz_offset_hours = 3
+    _last_full_key = None
+    _update_count = 0
+    full_refresh_every = 50
+
     def set_partial(self, enabled):
         self.partial_update = bool(enabled)
+
+    def _cycle_key(self):
+        """Номер "суток" со сдвигом на full_refresh_hour: меняется ровно в
+        этот час. None, пока часы не синхронизированы по NTP."""
+        if self.full_refresh_hour is None:
+            return None
+        shifted = time.time() + int(self.tz_offset_hours * 3600) - int(self.full_refresh_hour) * 3600
+        t = time.gmtime(shifted)
+        if t[0] < 2024:
+            return None
+        return (t[0], t[1], t[2])
+
+    def daily_full_due(self):
+        if not self.partial_update:
+            return False
+        key = self._cycle_key()
+        return key is not None and key != self._last_full_key
+
+    def _mark_full(self):
+        self._last_full_key = self._cycle_key()
+
+    def _full_due(self):
+        """Нужен ли честный полный refresh на этом обновлении (счётчик
+        _update_count уже увеличен)."""
+        if self._update_count == 1:
+            return True
+        if self.partial_update:
+            return self.daily_full_due()
+        return self._update_count % self.full_refresh_every == 0
 
     # Длительность и вид последнего show() — для веб-интерфейса (/api/state),
     # чтобы можно было сверить скорость обновления без секундомера.

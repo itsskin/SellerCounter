@@ -187,7 +187,21 @@ class StatsEngine:
                 await self.poll_once()
             except Exception as exc:
                 print("stats_engine: unexpected error:", exc)
+            await self._daily_full_refresh_if_due()
             await asyncio.sleep(self.cfg.get("poll_interval_sec", 60))
+
+    async def _daily_full_refresh_if_due(self):
+        """Раз в сутки (после full_refresh_hour, см. display/base.py) перерисовывает
+        экран, даже если данные не менялись, — драйвер сам сделает при этом
+        честный полный refresh. Иначе он случился бы только при следующем
+        изменении цифр, а оно может не наступить до утра."""
+        display = self.display
+        if not hasattr(display, "daily_full_due"):
+            return
+        display.tz_offset_hours = self.cfg.get("timezone_offset_hours", 3)
+        if display.daily_full_due():
+            print("stats_engine: суточный полный refresh экрана")
+            await self._redraw()
 
     def _min_poll_gap_sec(self):
         # Фоновый цикл (run()) не должен опрашивать API маркетплейсов чаще,
@@ -686,6 +700,7 @@ class StatsEngine:
                 self.cfg["display"].get("layout_override"),
             )
             layout_mod.update_numbers(self.display.fb, data)
+            self.display.tz_offset_hours = tz
             # display.show() у e-paper — async и внутри отдаёт управление
             # event loop на время busy-wait (~20с), так что веб-сервер не
             # блокируется на всё это время (см. display/epd1in54.py).

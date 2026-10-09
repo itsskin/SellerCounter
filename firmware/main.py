@@ -64,6 +64,8 @@ def _get_display(cfg):
     # там же живое обновление без перезагрузки платы).
     display.full_refresh_every = cfg["display"].get("full_refresh_every", 50)
     display.set_partial(cfg["display"].get("partial_update", True))
+    display.full_refresh_hour = cfg["display"].get("full_refresh_hour", 4)
+    display.tz_offset_hours = cfg.get("timezone_offset_hours", 3)
     return display
 
 

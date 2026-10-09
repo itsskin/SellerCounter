@@ -66,6 +66,9 @@ DEFAULT_CONFIG = {
         # /api/settings — живой объект display уже создан при старте).
         "full_refresh_every": 50,
         "partial_update": True,
+        # час (местное время), в который при частичном обновлении делается
+        # честный полный refresh; null — не делать
+        "full_refresh_hour": 4,
         "beep_on_sale": True,
         "show_fbs_reminder": False,
         # Пусто — макет выбирается автоматически по РЕАЛЬНОМУ разрешению
