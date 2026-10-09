@@ -22,7 +22,7 @@
 
 from marketplaces.base import MarketplaceClient, MarketplaceError
 from utils.http import request_json
-from utils.time_sync import today_local_bounds
+from utils.time_sync import today_local_bounds, today_unix_bounds
 
 API_URL = "https://statistics-api.wildberries.ru/api/v1/supplier/orders"
 
@@ -45,6 +45,17 @@ API_URL = "https://statistics-api.wildberries.ru/api/v1/supplier/orders"
 # относится и к WB.
 NEW_ORDERS_URL = "https://marketplace-api.wildberries.ru/api/v3/orders/new"
 
+# FBS-заказы продавца за период (Marketplace API, в реальном времени) и их
+# статусы. /supplier/orders (Statistics API) отдаёт данные с задержкой —
+# свежий FBS-заказ может появиться там спустя десятки минут, и пока он
+# "новый" (и горит "Собрать FBS"), в счётчике заказов его ещё нет. Поэтому к
+# статистике добавляем FBS-заказы за сегодня, которых там пока нет (сверка по
+# rid = srid из статистики).
+FBS_ORDERS_URL = "https://marketplace-api.wildberries.ru/api/v3/orders"
+FBS_STATUS_URL = "https://marketplace-api.wildberries.ru/api/v3/orders/status"
+_CANCELLED_SUPPLIER = ("cancel",)
+_CANCELLED_WB = ("canceled", "canceled_by_client", "declined_by_client")
+
 
 class WBClient(MarketplaceClient):
     id = "wb"
@@ -63,7 +74,11 @@ class WBClient(MarketplaceClient):
 
         count = 0
         revenue = 0.0
+        seen = set()  # srid заказов, уже учтённых статистикой (в т.ч. отменённых)
         for order in orders:
+            srid = order.get("srid")
+            if srid:
+                seen.add(srid)
             if order.get("isCancel"):
                 continue
             order_date = order.get("date", "")
@@ -72,7 +87,17 @@ class WBClient(MarketplaceClient):
             count += 1
             revenue += float(order.get("priceWithDisc", 0))
 
-        result = {"orders": count, "revenue": revenue}
+        result = {}
+        partial = []
+        try:
+            extra_count, extra_revenue = self._fetch_fbs_not_in_stats(headers, seen)
+            count += extra_count
+            revenue += extra_revenue
+        except MarketplaceError as exc:
+            partial.append("FBS-заказы: %s" % exc)
+
+        result["orders"] = count
+        result["revenue"] = revenue
         try:
             pending = self._fetch_pending_count(headers)
         except MarketplaceError as exc:
@@ -83,9 +108,55 @@ class WBClient(MarketplaceClient):
             # реально собрали/отменили, если ошибка API совпала именно с
             # этим моментом. Честный 0 — меньшее из двух зол.
             pending = 0
-            result["partial_error"] = "несобранные заказы: %s" % exc
+            partial.append("несобранные заказы: %s" % exc)
         result["fbs_orders"] = pending
+        if partial:
+            result["partial_error"] = "; ".join(partial)
         return result
+
+    def _fetch_fbs_not_in_stats(self, headers, seen_srids):
+        """FBS-заказы за сегодня из Marketplace API, которых ещё нет в
+        статистике (seen_srids), без отменённых. Возвращает (кол-во, сумма)."""
+        since, to = today_unix_bounds(
+            self.settings.get("timezone_offset_hours", 3),
+            self.settings.get("day_offset", 0),
+        )
+        fresh = []  # (id, цена в рублях)
+        next_value = 0
+        for _ in range(5):  # до 5000 заказов за день — с большим запасом
+            url = "%s?limit=1000&next=%d&dateFrom=%d&dateTo=%d" % (FBS_ORDERS_URL, next_value, since, to)
+            data = request_json("GET", url, headers=headers)
+            batch = data.get("orders", [])
+            for order in batch:
+                rid = order.get("rid")
+                if rid and rid in seen_srids:
+                    continue
+                # price — в копейках (валюта продавца)
+                fresh.append((order.get("id"), float(order.get("price", 0)) / 100))
+            next_value = data.get("next", 0)
+            if len(batch) < 1000 or not next_value:
+                break
+        if not fresh:
+            return 0, 0.0
+
+        cancelled = set()
+        ids = [order_id for order_id, _ in fresh if order_id is not None]
+        for i in range(0, len(ids), 500):
+            status = request_json(
+                "POST", FBS_STATUS_URL, headers=headers, json_body={"orders": ids[i:i + 500]}
+            )
+            for item in status.get("orders", []):
+                if item.get("supplierStatus") in _CANCELLED_SUPPLIER or item.get("wbStatus") in _CANCELLED_WB:
+                    cancelled.add(item.get("id"))
+
+        count = 0
+        revenue = 0.0
+        for order_id, price in fresh:
+            if order_id in cancelled:
+                continue
+            count += 1
+            revenue += price
+        return count, revenue
 
     def _fetch_pending_count(self, headers):
         data = request_json("GET", NEW_ORDERS_URL, headers=headers)

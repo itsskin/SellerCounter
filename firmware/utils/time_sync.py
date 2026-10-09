@@ -54,6 +54,20 @@ def today_utc_bounds_z(timezone_offset_hours, day_offset=0):
     return _iso_z(since_utc), _iso_z(to_utc)
 
 
+def today_unix_bounds(timezone_offset_hours, day_offset=0):
+    """(since, to) — начало и конец "сегодня" в местном часовом поясе как
+    настоящие Unix-секунды (с 1970). У MicroPython на ESP32 time.time()
+    отсчитывается с 2000 года, поэтому добавляем разницу эпох — так API с
+    параметрами dateFrom/dateTo в Unix-времени (WB Marketplace) понимают их
+    правильно."""
+    tz_offset_sec = int(timezone_offset_hours * 3600)
+    epoch_shift = 946684800 if time.gmtime(0)[0] == 2000 else 0
+    shifted_now = time.time() + epoch_shift + tz_offset_sec + int(day_offset) * 86400
+    local_midnight_shifted = (shifted_now // 86400) * 86400
+    since = local_midnight_shifted - tz_offset_sec
+    return int(since), int(since + 86399)
+
+
 def _iso_z(epoch_utc):
     y, m, d, hh, mm, ss, _, _ = time.gmtime(epoch_utc)
     return "%04d-%02d-%02dT%02d:%02d:%02dZ" % (y, m, d, hh, mm, ss)
