@@ -1085,6 +1085,31 @@ document.getElementById("ota-check").addEventListener("click", async (ev) => {
   }
 });
 
+document.getElementById("ota-sources-check").addEventListener("click", async (ev) => {
+  const button = ev.target;
+  const list = document.getElementById("ota-sources-list");
+  button.disabled = true;
+  list.innerHTML = "<li>Проверяю серверы...</li>";
+  try {
+    const res = await fetch("/api/ota/sources", { method: "POST" });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || res.status);
+    list.innerHTML = "";
+    for (const src of data.sources) {
+      const li = document.createElement("li");
+      li.textContent = src.online
+        ? "● " + src.name + " — онлайн, версия " + src.version + " (" + (src.ms / 1000).toFixed(1) + " с)"
+        : "○ " + src.name + " — недоступен";
+      if (!src.online) li.classList.add("offline");
+      list.appendChild(li);
+    }
+  } catch (err) {
+    list.innerHTML = "<li class=\"offline\">Ошибка: " + err.message + "</li>";
+  } finally {
+    button.disabled = false;
+  }
+});
+
 document.getElementById("ota-apply").addEventListener("click", async (ev) => {
   const button = ev.target;
   const checkButton = document.getElementById("ota-check");

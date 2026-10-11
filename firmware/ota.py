@@ -21,6 +21,7 @@
 # notifications/ (свои мелодии).
 
 import os
+import time
 import binascii
 
 try:
@@ -50,6 +51,13 @@ OTA_SOURCES = (
     "https://raw.githubusercontent.com/itsskin/SellerCounter/main/firmware/",
     "https://cdn.jsdelivr.net/gh/itsskin/SellerCounter@main/firmware/",
 ) + tuple(url for url, _ in OWN_SERVERS)
+
+# Названия источников для веб-интерфейса (адреса своих серверов не показываем).
+SOURCE_NAMES = ("GitHub", "jsDelivr") + tuple(
+    "Резервный сервер %d" % (i + 1) for i in range(len(OWN_SERVERS))
+)
+# Короче, чем MANIFEST_TIMEOUT_SEC: проверяются все источники подряд.
+STATUS_TIMEOUT_SEC = 6
 
 VERSION_PATH = "/ota_version.txt"
 # Таймаут одного источника — сумма (все источники таймаутят) не должна
@@ -141,6 +149,29 @@ async def check():
             "source": base,
         }
     raise OtaError("ни один источник не ответил: " + "; ".join(errors))
+
+
+async def check_sources():
+    """Доступность каждого источника обновлений: [{"name", "online",
+    "version", "ms", "error"}]. Источники опрашиваются по очереди с await
+    между ними (см. check() — чтобы watchdog успевал кормиться)."""
+    import ujson as json
+
+    results = []
+    for name, base in zip(SOURCE_NAMES, OTA_SOURCES):
+        started = time.ticks_ms()
+        try:
+            manifest = json.loads(_get(base + "ota_manifest.json", STATUS_TIMEOUT_SEC))
+            results.append({
+                "name": name,
+                "online": True,
+                "version": manifest.get("version"),
+                "ms": time.ticks_diff(time.ticks_ms(), started),
+            })
+        except Exception as exc:
+            results.append({"name": name, "online": False, "error": str(exc)[:80]})
+        await asyncio.sleep_ms(0)
+    return results
 
 
 def _local_hash(path):

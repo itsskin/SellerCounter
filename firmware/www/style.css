@@ -430,3 +430,14 @@ html {
 .card {
   scroll-margin-top: 70px;
 }
+
+/* Статусы источников обновлений */
+.sources-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 13px;
+}
+
+.sources-list li { padding: 3px 0; }
+.sources-list li.offline { color: var(--muted); }

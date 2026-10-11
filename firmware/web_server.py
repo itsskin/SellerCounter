@@ -177,6 +177,13 @@ async def api_ota_check(request):
     }
 
 
+@app.route("/api/ota/sources", methods=["POST"])
+async def api_ota_sources(request):
+    """Какие источники обновлений сейчас доступны (GitHub, jsDelivr,
+    резервные серверы) — для списка статусов в разделе «Обновление прошивки»."""
+    return {"ok": True, "sources": await ota.check_sources()}
+
+
 @app.route("/api/ota/apply", methods=["POST"])
 async def api_ota_apply(request):
     """Проверяет ещё раз (на случай если с последней проверки в вебе
