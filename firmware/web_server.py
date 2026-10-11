@@ -116,6 +116,7 @@ async def api_state(request):
         "marketplaces_available": available_marketplaces(),
         "marketplaces": [_public_marketplace(e) for e in cfg["marketplaces"]],
         "ota_version": ota.current_version(),
+        "auto_update": cfg.get("auto_update", {"enabled": True, "hour": 4}),
     }
     if engine is not None:
         data["stats"] = engine.latest
@@ -332,6 +333,14 @@ async def api_settings(request):
             display.full_refresh_every = cfg["display"].get("full_refresh_every", 50)
         if display is not None and "partial_update" in body["display"]:
             display.set_partial(cfg["display"].get("partial_update", True))
+    if "auto_update" in body:
+        incoming = body["auto_update"] or {}
+        current = dict(cfg.get("auto_update") or {"enabled": True, "hour": 4})
+        if "enabled" in incoming:
+            current["enabled"] = bool(incoming["enabled"])
+        if "hour" in incoming:
+            current["hour"] = max(0, min(23, int(incoming["hour"])))
+        cfg["auto_update"] = current
     if "buzzer" in body:
         cfg["buzzer"].update(body["buzzer"])
         buzzer = _state["buzzer"]

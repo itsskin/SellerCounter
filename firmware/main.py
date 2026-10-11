@@ -124,22 +124,44 @@ async def _feed_watchdog(wdt):
         await asyncio.sleep_ms(WDT_FEED_INTERVAL_MS)
 
 
-AUTO_UPDATE_INTERVAL_SEC = 24 * 60 * 60
+AUTO_UPDATE_POLL_SEC = 60
+
+
+def _auto_update_cycle_key(cfg):
+    """(год, месяц, день) текущего дня по местному времени, если время уже
+    синхронизировано по NTP, и час; иначе None."""
+    shifted = time.time() + int(cfg.get("timezone_offset_hours", 3) * 3600)
+    t = time.gmtime(shifted)
+    if t[0] < 2024:
+        return None
+    return (t[0], t[1], t[2]), t[3]
 
 
 async def _auto_update(cfg):
     """Раз в сутки САМА проверяет и, если есть новая версия, применяет
     OTA-обновление — без участия человека (ручные кнопки в веб-интерфейсе,
-    см. web_server.py /api/ota/check и /apply, остаются как есть, это
-    отдельный, автоматический путь). Интервал считаем от МОМЕНТА ЗАГРУЗКИ
-    этой конкретной корутины (обычный sleep, не привязка к часам) — так
-    что если плата перезагружается часто (например из-за нестабильности,
-    см. историю проекта), 24-часовой отсчёт просто начинается заново
-    каждый раз, а не бьёт по серверам обновлений на каждой перезагрузке.
-    Сбой проверки/применения (нет сети, GitHub/jsDelivr недоступны и т.п.)
-    не считается фатальным — просто ждём следующего раза через сутки."""
+    см. web_server.py /api/ota/check и /apply, остаются как есть). Окно —
+    [hour, hour+1) по местному времени (cfg["auto_update"], по умолчанию 4
+    утра, настраивается и выключается из веба без перезагрузки: cfg — тот же
+    объект, что у веб-сервера). Раз в минуту смотрим на часы; внутри окна
+    проверка выполняется один раз за день (после перезагрузки от самого
+    обновления — ещё один, дешёвый, «обновлений нет»). Если плата включена
+    вне окна, проверка не запускается до следующего окна. Сбой проверки или
+    применения (нет сети, источники недоступны) не фатален — ждём
+    следующего окна."""
+    done_day = None
     while True:
-        await asyncio.sleep(AUTO_UPDATE_INTERVAL_SEC)
+        await asyncio.sleep(AUTO_UPDATE_POLL_SEC)
+        conf = cfg.get("auto_update") or {}
+        if not conf.get("enabled", True):
+            continue
+        now = _auto_update_cycle_key(cfg)
+        if now is None:
+            continue
+        day, hour = now
+        if hour != int(conf.get("hour", 4)) or day == done_day:
+            continue
+        done_day = day
         try:
             breadcrumb.mark("auto-update: checking")
             result = await ota.check()

@@ -287,6 +287,15 @@
     <button type="button" id="ota-apply" hidden>Обновить</button>
     <p id="ota-msg" class="msg"></p>
 
+    <label class="checkbox">
+      <input type="checkbox" id="set-auto-update">
+      Автоматически обновлять прошивку
+    </label>
+    <label>В какой час (местное время, плата перезагрузится)
+      <input type="number" id="set-auto-update-hour" min="0" max="23">
+    </label>
+    <p id="auto-update-msg" class="msg"></p>
+
     <button type="button" id="ota-sources-check">Проверить серверы</button>
     <ul id="ota-sources-list" class="sources-list"></ul>
 

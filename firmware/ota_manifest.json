@@ -3,7 +3,7 @@
   "boot.py": "c125b2cd03296b74ae2f5eabffe2f33274c3b0aa1fc4f313bdf4839d5eac53d6",
   "breadcrumb.py": "9f0f73d1fd0dfebf62a4dc14ae5fbb11c33d831aebb278b8dc9a9a271d084f41",
   "buzzer.py": "bac572cd23ebc11287d4c9e7508456a0714ec2a1897a163821ca2d316a59991f",
-  "config.py": "3020612852a3396488482d17f764cd5aaec1201d859477e0e9e5ee967933bc3b",
+  "config.py": "051be1b80f1cd3119b4b0f70a6058c04e302c2971993dea4472f6cbaeea669c8",
   "display/base.py": "5865e7f162dcb5147afeee2cf394bf7edacf9b55e0178684a39ad6ba52569e55",
   "display/column.png": "668eea8362fc9a3b867e5e53c5fe2417489b9893489237f75db7a0a46f346328",
   "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
@@ -44,7 +44,7 @@
   "lib/sc_http/__init__.py": "eb6639452c65e974fc4e0b09af7794b225d8aff4145e3cdfbfab7eae41e65867",
   "lib/umidiparser/__init__.py": "9cd841108db4f550d552afb0424661a0246817ad88fda82ed35903ac9f5e71a9",
   "lib/umidiparser/umidiparser.py": "82ac1b5ac975eb4ed82500d29b1b03c644855575bd3bfb1373a17139ec4d4dea",
-  "main.py": "ba8e00733c612788b32487d63711fdb5fd18d01b76f0c934f6a78fc5afad0bb6",
+  "main.py": "43e9604bd9cbb34183a9d0c3e2b2040feabd26911dcee190de5eadac07faa10d",
   "marketplaces/base.py": "30ec23cde4b9c49ec134b3b923785b74f344608aef850036d0be734bec5c67c8",
   "marketplaces/ozon.py": "01bce5d85d601b82b2856ae3e1738b5249a31781e77eee7275e22439194b7722",
   "marketplaces/registry.py": "ba228e3c6ec02c801738dfbd7dd562370962878cb5f8bc900dc8a640a1bde76f",
@@ -56,13 +56,13 @@
   "stats_engine.py": "720b390d5795a2a5fc03ee9c82c6c528c8c0c999d915f7374c76af70d17c517f",
   "utils/http.py": "de8f3b5a2bc492757b5fc041020e369a3fb850556d54b24dc770263f6bf4b218",
   "utils/time_sync.py": "01ceb2b3b2eae1717eef3728c3715992769217f26646ccd3f25392c89842fff9",
-  "web_server.py": "6ad8f5648ce1704029416c2d240af9db287c6d3c677625917dba6e7708373aa2",
+  "web_server.py": "9a9ffac1301697947d723044ca7bde5c3f05592885fa1803ece49062ebb95239",
   "wifi_manager.py": "3c256185c8c2095551714e547668957d23e99318eed108b4072d24c1b2381e44",
-  "www/app.js": "4a56c17e3d2d0d12195723c58617f3ca25b62ec0eb135173c32d779cf4851e8b",
-  "www/index.html": "ffb994d4f27e959b9ee0dca753e4b7da6309dfaabaa8a7d82fbc39d960aaea6a",
-  "www/main.html": "9d4ba6c386d16822d01f8d7258fde6367c04ff788eb07cc5a7fe1df01139e55b",
-  "www/main.js": "1e0f793d879019301cb8bce40a259144f053fda4c58b59e0403842e1d5c889d6",
+  "www/app.js": "7876f3752ada3f1a4245be1d94edb5bb631d70c6c715e7739d8f1c14652f8aed",
+  "www/index.html": "6faa0fd85b48f57d3c424920197b2d35d22052681a9cc8e6f31cc5d602a6d4e5",
+  "www/main.html": "0fa1488644f6a1e84c82128006ae8f25a030677d10e51dd15402500152b795f0",
+  "www/main.js": "13d045965e13231edfe44472c20b852e46f6ae0a3c848e4d16ed1dbee082667e",
   "www/style.css": "07d4242c717e64a5c7e6ffb85c81414bf2b41ce1c4d099baa0485074569adbf5"
  },
- "version": 107
+ "version": 108
 }

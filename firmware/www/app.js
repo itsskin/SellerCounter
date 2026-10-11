@@ -126,6 +126,9 @@ function renderSettings(state) {
     (state.display && state.display.layout_override) || "";
 
   document.getElementById("ota-current-version").textContent = state.ota_version ?? "?";
+  const autoUpdate = state.auto_update || { enabled: true, hour: 4 };
+  document.getElementById("set-auto-update").checked = !!autoUpdate.enabled;
+  document.getElementById("set-auto-update-hour").value = autoUpdate.hour ?? 4;
 }
 
 function mpTestField(input) {
@@ -1084,6 +1087,28 @@ document.getElementById("ota-check").addEventListener("click", async (ev) => {
     button.disabled = false;
   }
 });
+
+async function saveAutoUpdate() {
+  const msg = document.getElementById("auto-update-msg");
+  const hour = Math.min(23, Math.max(0, parseInt(document.getElementById("set-auto-update-hour").value, 10) || 0));
+  try {
+    const res = await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ auto_update: { enabled: document.getElementById("set-auto-update").checked, hour } }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || res.status);
+    msg.textContent = "Сохранено";
+    msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+}
+document.getElementById("set-auto-update").addEventListener("change", saveAutoUpdate);
+document.getElementById("set-auto-update-hour").addEventListener("change", saveAutoUpdate);
 
 document.getElementById("ota-sources-check").addEventListener("click", async (ev) => {
   const button = ev.target;
