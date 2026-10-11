@@ -50,8 +50,9 @@
   "marketplaces/registry.py": "ba228e3c6ec02c801738dfbd7dd562370962878cb5f8bc900dc8a640a1bde76f",
   "marketplaces/wb.py": "ff9c528b47ac5920bc0bd8b9d589ea9a1b3c3d94c016612ea109a3c01bca9ff2",
   "marketplaces/yandex.py": "a6fbea48eefef7cedde1ac655d999c69e1587f68175c4ce57328959e112e0081",
-  "ota.py": "e16335e5d021627cb43f129f06947811226f2f4b9bb20fce8d5ba4047e8a4408",
+  "ota.py": "6481bd7352004f1f66e51cc4ba04b460dbb4fa6f2d294b75163a2d3966097a7f",
   "ota_server.pem": "d327be142073789acff739f9f0f5ba473cb308c95debec301636ec8890133af8",
+  "ota_server_2.pem": "ae64c862f879c9f6abce6b4e225916134196fe77647cc9c6d44bc16f91960faa",
   "stats_engine.py": "720b390d5795a2a5fc03ee9c82c6c528c8c0c999d915f7374c76af70d17c517f",
   "utils/http.py": "de8f3b5a2bc492757b5fc041020e369a3fb850556d54b24dc770263f6bf4b218",
   "utils/time_sync.py": "01ceb2b3b2eae1717eef3728c3715992769217f26646ccd3f25392c89842fff9",
@@ -63,5 +64,5 @@
   "www/main.js": "38096f392916fb2d5ac2b18f55e735959f09b68ddd01efab31bc3a096387d593",
   "www/style.css": "09ac4f444c0dab9baa590d3e37054c046d87c500893cf65bfd8c9e15b108bddd"
  },
- "version": 102
+ "version": 103
 }

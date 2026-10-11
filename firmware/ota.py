@@ -35,19 +35,21 @@ except ImportError:
 
 import sc_http as requests
 
-# Третий, запасной источник — собственный сервер (если GitHub недоступен или
-# репозиторий закрыт). Сервер самоподписанный: плата доверяет только его
-# сертификату из файла OWN_SERVER_CERT_PATH (ota_server.pem в прошивке), так
-# что подмена сервера по сети не пройдёт. Остальные источники проверяются
-# только по sha256 из манифеста (как раньше).
-OWN_SERVER = "https://213.165.32.91:8443/"
-OWN_SERVER_CERT_PATH = "/ota_server.pem"
+# Дополнительные источники — собственные серверы (если GitHub недоступен или
+# репозиторий закрыт). Серверы самоподписанные: плата доверяет только
+# сертификату конкретного сервера из его файла в прошивке (OWN_SERVERS), так
+# что подмена сервера по сети не пройдёт. GitHub и jsDelivr проверяются только
+# по sha256 из манифеста (как раньше). Новый сервер = строка здесь + его
+# сертификат ota_server_N.pem в firmware/ + tools/deploy_update_server.sh.
+OWN_SERVERS = (
+    ("https://213.165.32.91:8443/", "/ota_server.pem"),
+    ("https://83.147.216.82:8443/", "/ota_server_2.pem"),
+)
 
 OTA_SOURCES = (
     "https://raw.githubusercontent.com/itsskin/SellerCounter/main/firmware/",
     "https://cdn.jsdelivr.net/gh/itsskin/SellerCounter@main/firmware/",
-    OWN_SERVER,
-)
+) + tuple(url for url, _ in OWN_SERVERS)
 
 VERSION_PATH = "/ota_version.txt"
 # Таймаут одного источника — сумма (все источники таймаутят) не должна
@@ -81,15 +83,19 @@ def _headers():
     return {"User-Agent": "SellerCounter-ESP32/1.0"}
 
 
-def _own_server_cadata():
-    """Сертификат собственного сервера (PEM-файл -> DER) для проверки TLS."""
-    with open(OWN_SERVER_CERT_PATH) as f:
-        lines = [l.strip() for l in f if l.strip() and not l.startswith("-----")]
-    return binascii.a2b_base64("".join(lines))
+def _own_server_cadata(url):
+    """Сертификат собственного сервера (PEM-файл -> DER) для проверки TLS;
+    None — для обычных источников (GitHub, jsDelivr)."""
+    for base, cert_path in OWN_SERVERS:
+        if url.startswith(base):
+            with open(cert_path) as f:
+                lines = [l.strip() for l in f if l.strip() and not l.startswith("-----")]
+            return binascii.a2b_base64("".join(lines))
+    return None
 
 
 def _get(url, timeout):
-    cadata = _own_server_cadata() if url.startswith(OWN_SERVER) else None
+    cadata = _own_server_cadata(url)
     response = requests.request("GET", url, headers=_headers(), timeout=timeout, cadata=cadata)
     try:
         if response.status_code != 200:
