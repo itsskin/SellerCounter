@@ -173,7 +173,7 @@ async def api_ota_check(request):
         "current_version": result["current_version"],
         "available_version": result["available_version"],
         "update_available": result["update_available"],
-        "source": result["source"],
+        "source": ota.source_name(result["source"]),
     }
 
 

@@ -114,15 +114,16 @@ def _get(url, timeout):
 
 
 async def check():
-    """Пробует источники по очереди; у ПЕРВОГО, кто ответил, доверяем его
-    версии (оба источника — зеркала одного и того же репозитория, дальше
-    ходить не за чем — переключаемся на следующий источник ТОЛЬКО если этот
-    вообще не ответил, не если ответил "обновлений нет").
+    """Опрашивает ВСЕ источники по очереди и берёт манифест с самой новой
+    версией (при равенстве — первый по порядку в OTA_SOURCES). Раньше брался
+    первый ответивший, но jsDelivr кэширует ветку и может отдавать устаревший
+    манифест, пока GitHub уже отдаёт новый (и наоборот — GitHub может быть
+    недоступен, а запасные серверы нет).
 
-    async и с await между попытками (не внутри самого блокирующего HTTP-
-    запроса — sc_http синхронный) — чтобы между двумя таймаутами подряд
-    (10с * 2 источника, см. MANIFEST_TIMEOUT_SEC) event loop успел отдать
-    время кормлению watchdog, а не стоял все 20с одним куском.
+    async и с await между источниками (не внутри самого блокирующего HTTP-
+    запроса — sc_http синхронный) — чтобы между таймаутами event loop успевал
+    кормить watchdog: каждый источник блокирует не дольше MANIFEST_TIMEOUT_SEC
+    (10с), а не все вместе.
 
     Возвращает {"current_version", "available_version", "update_available",
     "manifest", "source"}. Бросает OtaError, если ни один источник не
@@ -131,6 +132,7 @@ async def check():
 
     cur = current_version()
     errors = []
+    best = None  # (version, manifest, base)
     for base in OTA_SOURCES:
         try:
             raw = _get(base + "ota_manifest.json", MANIFEST_TIMEOUT_SEC)
@@ -140,15 +142,28 @@ async def check():
             errors.append("%s: %s" % (base, exc))
             await asyncio.sleep_ms(0)
             continue
-        available = manifest.get("version", 0)
-        return {
-            "current_version": cur,
-            "available_version": available,
-            "update_available": available > cur,
-            "manifest": manifest,
-            "source": base,
-        }
-    raise OtaError("ни один источник не ответил: " + "; ".join(errors))
+        version = manifest.get("version", 0)
+        if best is None or version > best[0]:
+            best = (version, manifest, base)
+        await asyncio.sleep_ms(0)
+    if best is None:
+        raise OtaError("ни один источник не ответил: " + "; ".join(errors))
+    available, manifest, base = best
+    return {
+        "current_version": cur,
+        "available_version": available,
+        "update_available": available > cur,
+        "manifest": manifest,
+        "source": base,
+    }
+
+
+def source_name(base):
+    """Понятное название источника для интерфейса (адреса серверов не показываем)."""
+    for name, src in zip(SOURCE_NAMES, OTA_SOURCES):
+        if src == base:
+            return name
+    return "?"
 
 
 async def check_sources():
