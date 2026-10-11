@@ -1,0 +1,432 @@
+:root {
+  /* Стиль e-ink: белая «бумага» и чёрные чернила, как на экране устройства.
+     Сети может не быть (точка доступа), поэтому веб-шрифтов нет — системный моно. */
+  --bg: #fff;
+  --card: #fff;
+  --field: #fff;
+  --border: #111;
+  --text: #111;
+  --muted: #555;
+  --accent: #111;
+  --on-accent: #fff;
+  --good: #111;
+  --bad: #111;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  accent-color: #111;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: 40px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 3px solid var(--border);
+}
+
+header h1 { font-size: 22px; margin: 0; letter-spacing: 0.12em; text-transform: uppercase; }
+
+.badge {
+  font-size: 12px;
+  padding: 3px 10px;
+  border: 2px solid var(--border);
+  background: var(--card);
+  color: var(--muted);
+}
+
+/* Цвета нет — статус читается инверсией, как на e-ink. */
+.badge.ok { background: var(--text); color: var(--on-accent); }
+.badge.bad { border-style: dashed; color: var(--text); font-weight: 700; }
+
+main {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 0;
+  padding: 16px;
+}
+
+.card h2 {
+  margin: 0 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.card h3 {
+  margin: 16px 0 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+
+form { display: flex; flex-direction: column; gap: 10px; }
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+label.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="time"],
+select,
+textarea {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+input[type="file"] {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+button {
+  display: block;
+  width: 100%;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 2px solid var(--accent);
+  border-radius: 0;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+/* e-ink: при нажатии цвета меняются местами, а не бледнеют. */
+button:active { background: var(--card); color: var(--text); }
+
+.msg { font-size: 13px; color: var(--good); min-height: 16px; overflow-wrap: anywhere; }
+.msg.error { color: var(--text); font-weight: 700; }
+.msg.error:not(:empty)::before { content: "✕ "; }
+
+.stats-row { display: flex; gap: 16px; }
+
+.stat { flex: 1; text-align: center; }
+
+.stat-value { font-size: 34px; font-weight: 700; letter-spacing: 0.02em; }
+
+.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+
+#preview-img {
+  width: 100%;
+  border: 2px solid var(--border);
+  border-radius: 0;
+  background: #fff;
+  image-rendering: pixelated;
+}
+
+.override-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.override-row label,
+.override-row button {
+  flex: 1;
+  min-width: 0;
+}
+
+.override-row input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.mp-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.mp-stats-table th,
+.mp-stats-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mp-stats-table th {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--border);
+}
+
+.mp-stats-table th:not(:first-child),
+.mp-stats-table td:not(:first-child) {
+  text-align: right;
+}
+
+.mp-stats-error td {
+  color: var(--text);
+}
+
+.mp-stats-error-note {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 11px;
+  /* Длинный текст ошибки (URL, JSON от API маркетплейса) без пробелов
+     иначе может растянуть таблицу шире карточки — сам текст теперь и так
+     укорочен на бэкенде (см. utils/http.py), но это подстраховка на
+     случай будущей длинной ошибки без единого пробела. */
+  overflow-wrap: anywhere;
+}
+
+.mp-type {
+  margin-bottom: 16px;
+}
+
+.mp-type-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mp-type-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.mp-type-head .mp-add-shop {
+  width: auto;
+  margin-top: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--text);
+  color: var(--text);
+}
+
+.mp-card {
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.mp-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.mp-card .status {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.mp-card .status.ok {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.mp-card .mp-remove-shop {
+  width: auto;
+  margin-top: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px dashed var(--text);
+  color: var(--text);
+}
+
+.mp-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mp-reorder {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mp-reorder button {
+  width: auto;
+  margin-top: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.mp-reorder button:disabled {
+  opacity: 0.3;
+}
+
+.hint code {
+  background: var(--field);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 1px 4px;
+  font-size: 12px;
+}
+
+.bg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.bg-row label {
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+}
+
+.bg-row .bg-file {
+  width: 100%;
+}
+
+.bg-row .bg-upload {
+  width: auto;
+  margin-top: 0;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.notif-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.notif-row.disabled {
+  opacity: 0.5;
+}
+
+.notif-row label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.notif-row .notif-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.notif-row button {
+  width: auto;
+  margin-top: 0;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Быстрые переходы к разделам (main.html) — панель остаётся наверху при
+   прокрутке; боковые отступы выровнены по колонке main (max-width 600px). */
+.quick-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  padding: 10px max(16px, calc((100% - 600px) / 2 + 16px));
+  background: var(--bg);
+  border-bottom: 3px solid var(--border);
+}
+
+.quick-nav a {
+  flex: 1;
+  padding: 10px 6px;
+  border-radius: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 2px solid var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.quick-nav a:active {
+  background: var(--card);
+  color: var(--text);
+}
+
+.card {
+  scroll-margin-top: 70px;
+}

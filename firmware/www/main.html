@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UBIX monik</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>UBIX monik</h1>
+  <div id="conn-status" class="badge">...</div>
+</header>
+
+<nav class="quick-nav">
+  <a href="#wifi-section">Настройка Wi-Fi</a>
+  <a href="#marketplaces-section">Маркетплейсы</a>
+  <a href="#notifications-section">Доп. настройки</a>
+</nav>
+
+<main>
+  <section id="stats-section" class="card">
+    <h2>Статистика сегодня</h2>
+    <p class="hint" id="page-updated">—</p>
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-value" id="stat-orders">—</div>
+        <div class="stat-label">ЗАКАЗЫ</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="stat-revenue">—</div>
+        <div class="stat-label">выручка, ₽</div>
+      </div>
+    </div>
+    <p id="stats-errors" class="msg error"></p>
+    <button id="stats-refresh" type="button">Обновить сейчас</button>
+    <p id="stats-msg" class="msg"></p>
+
+    <table class="mp-stats-table">
+      <thead>
+        <tr><th>Маркетплейс</th><th>Заказы</th><th>Выручка, ₽</th><th>Опрошен</th></tr>
+      </thead>
+      <tbody id="mp-stats-body"></tbody>
+    </table>
+  </section>
+
+  <section id="preview-section" class="card">
+    <h2>Превью экрана</h2>
+    <img id="preview-img" src="/api/display/preview.bmp" alt="Превью экрана">
+    <button id="preview-refresh" type="button">Обновить превью</button>
+  </section>
+
+  <section id="marketplaces-section" class="card">
+    <h2>Маркетплейсы</h2>
+    <div id="marketplace-breakdown-toggle" hidden>
+      <label class="checkbox">
+        <input type="checkbox" id="set-marketplace-breakdown">
+        Экран «Маркеты» (вместо «Итогов»)
+      </label>
+      <p class="hint">
+        Показывает каждый подключённый маркетплейс отдельным столбиком ("Oz"/"Wb"/"Ya" сверху,
+        крупная выручка, заказы мельче), рядом друг с другом. Какие маркетплейсы показывать и в
+        каком порядке — галочка "Показывать на экране «Маркеты»" и стрелки ▲/▼ у каждого ниже
+        (можно отключить малозначимый и следить только за одним-двумя важными).
+      </p>
+    </div>
+    <p id="marketplace-breakdown-msg" class="msg"></p>
+    <div id="marketplaces-list"></div>
+    <label class="checkbox">
+      <input type="checkbox" id="set-fbs-reminder">
+      Показывать на экране "Собрать FBS"
+    </label>
+    <p class="hint">
+      Появляется на экране само, когда за сегодня есть хотя бы один
+      несобранный FBS-заказ (продавец обязан сам собрать и отправить его —
+      в отличие от FBO, который уже лежит на складе маркетплейса), и
+      пропадает, когда таких заказов нет.
+    </p>
+    <p id="fbs-reminder-msg" class="msg"></p>
+  </section>
+
+  <section id="notifications-section" class="card">
+    <h2>Уведомления</h2>
+    <label class="checkbox">
+      <input type="checkbox" id="set-buzzer-disabled">
+      Полностью выключить звук
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" id="set-beep">
+      Уведомлять при новом заказе
+    </label>
+    <label class="checkbox">
+      <input type="checkbox" id="set-boot-sound">
+      Звук при включении
+    </label>
+    <div id="notifications-list"></div>
+    <label>
+      <span>Громкость: <span id="volume-value">100</span>%</span>
+      <input type="range" id="set-volume" min="0" max="100" step="5">
+    </label>
+
+    <h3>Уведомления</h3>
+    <div id="mp-sounds-list"></div>
+    <button type="button" id="mp-sounds-save">Сохранить</button>
+
+    <h3>Ночной режим</h3>
+    <p class="hint">
+      В это время уведомления о продажах не звучат — опрос маркетплейсов и экран это не касается,
+      молчит только звук. Диапазон через полночь (например 22:00 → 08:00) работает как есть.
+    </p>
+    <label class="checkbox">
+      <input type="checkbox" id="set-night-enabled">
+      Включить ночной режим
+    </label>
+    <div class="override-row">
+      <label>С
+        <input type="time" id="set-night-start" value="22:00">
+      </label>
+      <label>До
+        <input type="time" id="set-night-end" value="08:00">
+      </label>
+    </div>
+    <p id="notifications-msg" class="msg"></p>
+  </section>
+
+  <section id="wifi-section" class="card">
+    <h2>Wi-Fi</h2>
+    <p class="hint">Плата подключится к этой сети и будет опрашивать маркетплейсы через неё.</p>
+    <form id="wifi-form">
+      <label>SSID
+        <input type="text" name="ssid" id="wifi-ssid" required>
+      </label>
+      <label>Пароль
+        <input type="password" name="password" id="wifi-password">
+      </label>
+      <button type="submit">Сохранить и перезагрузить</button>
+    </form>
+    <p id="wifi-msg" class="msg"></p>
+  </section>
+
+  <section id="ota-section" class="card">
+    <h2>Обновление прошивки</h2>
+    <p class="hint">
+      Текущая версия: <span id="ota-current-version">?</span>.
+      Обновление качается с GitHub (два независимых источника — если один
+      недоступен, пробуется второй) и проверяется по контрольной сумме
+      каждого файла перед применением.
+    </p>
+    <button type="button" id="ota-check">Проверить обновления</button>
+    <button type="button" id="ota-apply" hidden>Обновить</button>
+    <p id="ota-msg" class="msg"></p>
+  </section>
+</main>
+
+<script src="/main.js"></script>
+</body>
+</html>

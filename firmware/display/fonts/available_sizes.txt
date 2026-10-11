@@ -1,0 +1,43 @@
+Доступные шрифты/размеры в display/fonts/<name>_<N>.py.
+Не грузится на устройство как данные — просто справка для правки
+display/assets/layout.txt (поле font).
+
+orbitron:
+  имя файла          реальная высота цифр на экране
+  orbitron_12       9px
+  orbitron_20       15px
+  orbitron_24       17px
+  orbitron_36       26px
+  orbitron_42       30px
+  orbitron_52       37px
+  orbitron_70       51px
+  orbitron_78       56px
+  orbitron_84       61px
+  orbitron_90       65px
+  orbitron_96       70px
+  orbitron_128      92px
+
+orbitronbold:
+  имя файла          реальная высота цифр на экране
+  orbitronbold_14       10px
+  orbitronbold_26       19px
+  orbitronbold_45       32px
+  orbitronbold_70       50px
+
+verdana:
+  имя файла          реальная высота цифр на экране
+  verdana_15       17px
+  verdana_28       34px
+
+pixelmix:
+  имя файла          реальная высота цифр на экране
+  pixelmix_7        7px
+  pixelmix_8        8px
+
+Если в layout.txt указать размер, которого нет у данного семейства —
+плата возьмёт ближайший меньший ИЗ ЭТОГО СЕМЕЙСТВА и увеличит его до
+нужного целым числом (апскейл, картинка становится 'кубиками', но
+разборчиво). Уменьшать так нельзя — только увеличивать. Смешивать
+семейства при подборе ближайшего размера нельзя (значит, если для
+verdana_90 нет размера крупнее самого большого verdana_*, orbitron_*
+вместо него не возьмётся).
