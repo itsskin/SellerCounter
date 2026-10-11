@@ -314,7 +314,7 @@ def request(
             context = tls.SSLContext(tls.PROTOCOL_TLS_CLIENT)
             if cadata is not None:
                 context.verify_mode = tls.CERT_REQUIRED
-                context.load_verify_locations(cadata=cadata)
+                context.load_verify_locations(None, cadata)
             else:
                 context.verify_mode = tls.CERT_NONE
             s = context.wrap_socket(s, server_hostname=host)
