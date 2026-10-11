@@ -41,7 +41,7 @@
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
   "lib/microdot/__init__.py": "600f59c25bc576bb6659e3ad4697a82c3c7a225f0063cc6024f8fc439c4a0a7c",
   "lib/microdot/microdot.py": "557157ddab3869ebbac4b1a1a3cb30568fe3be643b94cf21f28415241708be57",
-  "lib/sc_http/__init__.py": "85920e150d23ca8b7f2c0e82428eec1fd1e212ee849fbaaf9b8b8c2d75186bef",
+  "lib/sc_http/__init__.py": "eb6639452c65e974fc4e0b09af7794b225d8aff4145e3cdfbfab7eae41e65867",
   "lib/umidiparser/__init__.py": "9cd841108db4f550d552afb0424661a0246817ad88fda82ed35903ac9f5e71a9",
   "lib/umidiparser/umidiparser.py": "82ac1b5ac975eb4ed82500d29b1b03c644855575bd3bfb1373a17139ec4d4dea",
   "main.py": "ba8e00733c612788b32487d63711fdb5fd18d01b76f0c934f6a78fc5afad0bb6",
@@ -64,5 +64,5 @@
   "www/main.js": "1e0f793d879019301cb8bce40a259144f053fda4c58b59e0403842e1d5c889d6",
   "www/style.css": "07d4242c717e64a5c7e6ffb85c81414bf2b41ce1c4d099baa0485074569adbf5"
  },
- "version": 105
+ "version": 106
 }
