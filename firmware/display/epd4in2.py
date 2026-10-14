@@ -61,34 +61,6 @@ CMD_DISPLAY_UPDATE_CTRL2 = 0x22
 CMD_MASTER_ACTIVATE = 0x20
 CMD_DEEP_SLEEP = 0x10
 CMD_WRITE_RAM_RED = 0x26  # у SSD1683 это "старый" кадр для частичного обновления
-CMD_BOOSTER = 0x0C
-CMD_LUT = 0x32
-CMD_LUT_END_OPT = 0x3F
-CMD_GATE_VOLTAGE = 0x03
-CMD_SOURCE_VOLTAGE = 0x04
-CMD_VCOM = 0x2C
-
-
-def build_partial_lut(tp=24):
-    """Собственная таблица импульсов (LUT, 227 байт) для дифференциального
-    частичного обновления — по схеме проекта часов (eInkClock/epd.py): пиксели,
-    чей цвет не меняется, импульса не получают, меняющиеся — один прямой
-    импульс на чёрный или белый, без промежуточных миганий.
-
-    Формат SSD1683: 5 подтаблиц по 42 байта (6 групп по 7 байт: повтор RP,
-    затем VS<<6 | TP фазы A и т.д.) — LUTC (VCOM), LUTWW, LUTBW, LUTWB, LUTBB,
-    имя = {новый цвет}{старый цвет}; байт 224 — код частоты кадров. Заполняется
-    только фаза A группы 0 каждой подтаблицы, остальное нули. VS: 0 = VSS (нет
-    импульса), 1 = VSH1 (чёрный), 2 = VSL (белый). Формат сверен с описанием
-    независимой реализации для этой панели (miklav/SSD1683-fast-partial-lut,
-    GPL-3.0 — наш код написан заново, не копия) и с 4-градационной таблицей
-    Waveshare 4.2" V2 (MIT). TP (длительность в кадрах) — настраиваемая."""
-    lut = bytearray(227)
-    for base, vs in ((0, 0), (42, 0), (84, 1), (126, 2), (168, 0)):
-        lut[base] = 1                      # RP: повтор
-        lut[base + 1] = (vs << 6) | (tp & 0x3F)
-    lut[224] = 0x02                        # частота кадров
-    return bytes(lut)
 
 
 class Epd4in2Display(DisplayDriver):
@@ -109,12 +81,6 @@ class Epd4in2Display(DisplayDriver):
     # (см. cfg["display"]["full_refresh_every"], config.py) — переопределяется
     # СРАЗУ, без перезагрузки платы, см. web_server.py /api/settings.
     full_refresh_every = 50
-
-    # Частичное обновление своей таблицей импульсов (build_partial_lut, как в
-    # проекте часов) вместо встроенной (0xFC): быстрее и без промежуточных
-    # миганий. Экспериментально — включается cfg["display"]["partial_lut"].
-    partial_lut = False
-    partial_lut_tp = 24
 
     def __init__(self):
         super().__init__()
@@ -142,7 +108,6 @@ class Epd4in2Display(DisplayDriver):
         # См. set_partial/_show_partial: опорный кадр лежит в обеих RAM.
         self._base_valid = False
         self._partial_dirty = False
-        self._lut_loaded = False
 
     def set_partial(self, enabled):
         self.partial_update = bool(enabled)
@@ -181,7 +146,6 @@ class Epd4in2Display(DisplayDriver):
             self._cs(1)
 
     async def _hw_init(self):
-        self._lut_loaded = False  # сброс чипа стирает загруженную таблицу
         self._reset()
         await self._wait_busy()
         self._cmd(CMD_SW_RESET)
@@ -288,22 +252,7 @@ class Epd4in2Display(DisplayDriver):
             self._cmd(CMD_DISPLAY_UPDATE_CTRL1, bytes([0x00, 0x00]))
         self._set_window(0, 0, self.width - 1, self.height - 1)
         self._cmd(CMD_WRITE_RAM_BW, inverted)
-        if self.partial_lut:
-            if not self._lut_loaded:
-                # собственная таблица не несёт настроек зарядового насоса из OTP —
-                # без 0x0C насос не запускается; напряжения — как у штатных LUT
-                self._cmd(CMD_BOOSTER, bytes([0x8B, 0x9C, 0xA4, 0x0F]))
-                self._cmd(CMD_LUT, build_partial_lut(self.partial_lut_tp))
-                self._cmd(CMD_LUT_END_OPT, bytes([0x22]))
-                self._cmd(CMD_GATE_VOLTAGE, bytes([0x17]))
-                self._cmd(CMD_SOURCE_VOLTAGE, bytes([0x41, 0xA8, 0x32]))
-                self._cmd(CMD_VCOM, bytes([0x30]))
-                self._lut_loaded = True
-            # 0xDC: питание, загрузка таблицы из регистров, режим ч/б, обновление
-            # (без загрузки температуры — таблица не из OTP)
-            self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xDC]))
-        else:
-            self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xFC]))
+        self._cmd(CMD_DISPLAY_UPDATE_CTRL2, bytes([0xFC]))
         self._cmd(CMD_MASTER_ACTIVATE)
         await self._wait_busy()
         self._write_base(inverted)

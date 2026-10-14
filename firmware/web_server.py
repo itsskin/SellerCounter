@@ -331,11 +331,6 @@ async def api_settings(request):
             # driver/screen выше, которые меняют физическую SPI/пин-
             # конфигурацию и требуют настоящего рестарта).
             display.full_refresh_every = cfg["display"].get("full_refresh_every", 50)
-        if display is not None and "partial_lut" in body["display"]:
-            display.partial_lut = bool(cfg["display"].get("partial_lut", False))
-            display._lut_loaded = False
-            if hasattr(display, "set_partial"):
-                display.set_partial(display.partial_update)  # следующий кадр — полный
         if display is not None and ("partial_update" in body["display"] or "visual_alert" in body["display"]):
             # Визуальное оповещение — полное обновление экрана на каждое
             # изменение, поэтому частичное при нём выключено

@@ -69,8 +69,6 @@ DEFAULT_CONFIG = {
         # /api/settings — живой объект display уже создан при старте).
         "full_refresh_every": 50,
         "partial_update": True,
-        # частичное обновление 4.2" собственной таблицей импульсов (экспериментально)
-        "partial_lut": False,
         # час (местное время), в который при частичном обновлении делается
         # честный полный refresh; null — не делать
         "full_refresh_hour": 4,
