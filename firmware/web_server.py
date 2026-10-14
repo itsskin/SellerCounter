@@ -355,7 +355,13 @@ async def api_settings(request):
             buzzer.enabled = cfg["buzzer"].get("enabled", buzzer.enabled)
     config_module.save(cfg)
     engine = _state["engine"]
-    if engine is not None and "show_marketplace_breakdown" in (body.get("display") or {}):
+    # Смена режима (визуальное оповещение вкл/выкл) — сразу полное обновление
+    # экрана: set_partial() выше уже сбросил счётчик, так что первый же show()
+    # будет честным полным, остаётся только его вызвать.
+    if engine is not None and (
+        "show_marketplace_breakdown" in (body.get("display") or {})
+        or "visual_alert" in (body.get("display") or {})
+    ):
         try:
             await engine.redraw()
         except Exception as exc:
