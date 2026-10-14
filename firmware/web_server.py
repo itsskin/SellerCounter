@@ -331,8 +331,12 @@ async def api_settings(request):
             # driver/screen выше, которые меняют физическую SPI/пин-
             # конфигурацию и требуют настоящего рестарта).
             display.full_refresh_every = cfg["display"].get("full_refresh_every", 50)
-        if display is not None and "partial_update" in body["display"]:
-            display.set_partial(cfg["display"].get("partial_update", True))
+        if display is not None and ("partial_update" in body["display"] or "visual_alert" in body["display"]):
+            # Визуальное оповещение — полное обновление экрана на каждое
+            # изменение, поэтому частичное при нём выключено
+            display.set_partial(
+                cfg["display"].get("partial_update", True) and not cfg["display"].get("visual_alert", False)
+            )
     if "auto_update" in body:
         incoming = body["auto_update"] or {}
         current = dict(cfg.get("auto_update") or {"enabled": True, "hour": 4})

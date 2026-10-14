@@ -88,6 +88,7 @@ function renderSettings(state) {
   document.getElementById("set-poll").value = state.poll_interval_sec;
   document.getElementById("set-tz").value = state.timezone_offset_hours;
   document.getElementById("set-beep").checked = !!(state.display && state.display.beep_on_sale);
+  document.getElementById("set-visual-alert").checked = !!(state.display && state.display.visual_alert);
   document.getElementById("set-yesterday").checked = (state.debug_day_offset || 0) !== 0;
   document.getElementById("set-fbs-reminder").checked = !!(state.display && state.display.show_fbs_reminder);
   document.getElementById("set-marketplace-breakdown").checked = !!(state.display && state.display.show_marketplace_breakdown);
@@ -814,6 +815,23 @@ document.getElementById("set-buzzer-disabled").addEventListener("change", async 
       body: JSON.stringify({ buzzer: { enabled: !ev.target.checked } }),
     });
     msg.textContent = ev.target.checked ? "Звук выключен" : "Звук включён";
+    msg.classList.remove("error");
+  } catch (err) {
+    msg.textContent = "Ошибка: " + err.message;
+    msg.classList.add("error");
+  }
+  setTimeout(() => (msg.textContent = ""), 3000);
+});
+
+document.getElementById("set-visual-alert").addEventListener("change", async (ev) => {
+  const msg = document.getElementById("notifications-msg");
+  try {
+    await api("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ display: { visual_alert: ev.target.checked } }),
+    });
+    msg.textContent = "Сохранено";
     msg.classList.remove("error");
   } catch (err) {
     msg.textContent = "Ошибка: " + err.message;
