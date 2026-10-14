@@ -66,6 +66,7 @@ def _get_display(cfg):
     display.set_partial(
         cfg["display"].get("partial_update", True) and not cfg["display"].get("visual_alert", False)
     )
+    display.partial_lut = bool(cfg["display"].get("partial_lut", False))
     display.full_refresh_hour = cfg["display"].get("full_refresh_hour", 4)
     display.tz_offset_hours = cfg.get("timezone_offset_hours", 3)
     return display
