@@ -57,6 +57,19 @@ _CANCELLED_SUPPLIER = ("cancel",)
 _CANCELLED_WB = ("canceled", "canceled_by_client", "declined_by_client")
 
 
+def _price_rub(order):
+    """Цена FBS-заказа в рублях. price — в копейках, но в валюте
+    currencyCode (для покупателя из другой страны это НЕ рубли: например, 981 =
+    лари, заказ в Грузии: price 2212 = 22,12 GEL), а convertedPrice — тоже в
+    копейках, в валюте convertedCurrencyCode (643 = рубли). Берём то, что
+    в рублях; если рублей нет вовсе — convertedPrice как есть."""
+    if order.get("convertedCurrencyCode") == 643 and order.get("convertedPrice") is not None:
+        return float(order["convertedPrice"]) / 100
+    if order.get("currencyCode") == 643 or order.get("convertedPrice") is None:
+        return float(order.get("price", 0)) / 100
+    return float(order["convertedPrice"]) / 100
+
+
 class WBClient(MarketplaceClient):
     id = "wb"
     name = "Wildberries"
@@ -131,8 +144,7 @@ class WBClient(MarketplaceClient):
                 rid = order.get("rid")
                 if rid and rid in seen_srids:
                     continue
-                # price — в копейках (валюта продавца)
-                fresh.append((order.get("id"), float(order.get("price", 0)) / 100))
+                fresh.append((order.get("id"), _price_rub(order)))
             next_value = data.get("next", 0)
             if len(batch) < 1000 or not next_value:
                 break
