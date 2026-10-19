@@ -46,7 +46,7 @@
   "lib/umidiparser/umidiparser.py": "82ac1b5ac975eb4ed82500d29b1b03c644855575bd3bfb1373a17139ec4d4dea",
   "main.py": "f7f56d2bf79022cf2ce6607df554ed83cc244d311eb168aeea009108146a5493",
   "marketplaces/base.py": "30ec23cde4b9c49ec134b3b923785b74f344608aef850036d0be734bec5c67c8",
-  "marketplaces/ozon.py": "5d717ab6b816e406c0e1e3bb6d1ae2443d30bbe416ed0541ec548a39b8745f70",
+  "marketplaces/ozon.py": "ee2f38ae3a384edd93db2e0e970a3bb4890caa997f2f7d887659ae677c6e67cf",
   "marketplaces/registry.py": "ba228e3c6ec02c801738dfbd7dd562370962878cb5f8bc900dc8a640a1bde76f",
   "marketplaces/wb.py": "15c70830c890091e2f194114bfa748f89b5a860ca6af0be113df45fc3f0a1fb6",
   "marketplaces/yandex.py": "a6fbea48eefef7cedde1ac655d999c69e1587f68175c4ce57328959e112e0081",
@@ -64,5 +64,5 @@
   "www/main.js": "23f0431a6616bbc1836a84660b81141fde6d9905287d3c9a42cda27ad224700c",
   "www/style.css": "07d4242c717e64a5c7e6ffb85c81414bf2b41ce1c4d099baa0485074569adbf5"
  },
- "version": 115
+ "version": 116
 }

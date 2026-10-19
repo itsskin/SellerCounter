@@ -21,7 +21,18 @@ import time
 from utils.http import request_json
 from utils.time_sync import today_utc_bounds_z
 
-FBS_URL = "https://api-seller.ozon.ru/v3/posting/fbs/list"
+# /v4/posting/fbs/list вместо v3 с 2026-10-19: /v3/posting/fbs/list часами
+# отдавал HTTP 429 "rate limit per second" с `retry-after: 0` и
+# `ratelimit-remaining: 0` (сбой на стороне Ozon — тот же сценарий, что в
+# pyMarketPlan был у /v2/posting/fbo/list), а v4 в то же время отвечал 200 с
+# `ratelimit-remaining: 49`. Контракт v4 проверен живыми запросами: тело ответа
+# БЕЗ обёртки "result" ({"has_next", "cursor", "postings"}), пагинация через
+# cursor, limit максимум 100, price — вложенный объект {"amount", "currency"}
+# (как у FBO v3, см. _sum_postings), фильтр по "status" в теле игнорируется
+# (вернулся delivered при status=awaiting_packaging) — статус проверяем сами.
+FBS_URL = "https://api-seller.ozon.ru/v4/posting/fbs/list"
+FBS_LIST_LIMIT = 100
+FBS_MAX_PAGES = 5
 # /v2/posting/fbo/list стабильно отдавал HTTP 429 "rate limit per second" на
 # этом аккаунте много часов подряд, включая одиночные запросы с интервалом
 # в несколько минут (не похоже на настоящий троттлинг по частоте) — завели
@@ -107,6 +118,30 @@ def _post_json(url, headers, body):
             wait = min(max(float(wait), 0.5) + 0.2, _RATE_LIMIT_MAX_WAIT_SEC)
             print("ozon: HTTP 429, жду %.1f с и повторяю (%d/%d)" % (wait, attempt + 1, _RATE_LIMIT_RETRIES))
             time.sleep_ms(int(wait * 1000))
+
+
+def _fetch_fbs_pages(headers, since_iso, to_iso):
+    """Все отправления FBS за окно (v4: страницы по FBS_LIST_LIMIT через
+    cursor, не больше FBS_MAX_PAGES страниц — до 500 отправлений)."""
+    postings = []
+    cursor = ""
+    for page in range(FBS_MAX_PAGES):
+        body = {
+            "dir": "ASC",
+            "filter": {"since": since_iso, "to": to_iso, "status": ""},
+            "limit": FBS_LIST_LIMIT,
+            "with": {"financial_data": False},
+        }
+        if cursor:
+            body["cursor"] = cursor
+        if page:
+            time.sleep_ms(_BETWEEN_REQUESTS_MS)
+        data = _post_json(FBS_URL, headers, body)
+        postings.extend(data.get("postings", []))
+        cursor = data.get("cursor") or ""
+        if not data.get("has_next") or not cursor:
+            break
+    return postings
 
 class OzonClient(MarketplaceClient):
     id = "ozon"
@@ -199,15 +234,7 @@ class OzonClient(MarketplaceClient):
             self.settings.get("timezone_offset_hours", 3),
             self.settings.get("day_offset", 0),
         )
-        body = {
-            "dir": "ASC",
-            "filter": {"since": since_iso, "to": to_iso, "status": ""},
-            "limit": 1000,
-            "offset": 0,
-            "with": {"financial_data": False},
-        }
-        data = _post_json(FBS_URL, headers, body)
-        postings = data.get("result", {}).get("postings", [])
+        postings = _fetch_fbs_pages(headers, since_iso, to_iso)
         count, revenue = _sum_postings(postings)
         # Отдельный try/except — сбой ИМЕННО этого (более редкого, более
         # широкого) запроса не должен ронять уже успешно полученные
@@ -248,17 +275,10 @@ class OzonClient(MarketplaceClient):
             self.settings.get("timezone_offset_hours", 3),
             self.settings.get("day_offset", 0),
         )
-        body = {
-            "dir": "ASC",
-            "filter": {"since": since_iso, "to": to_iso, "status": PENDING_FBS_STATUS},
-            "limit": 1000,
-            "offset": 0,
-            "with": {"financial_data": False},
-        }
         time.sleep_ms(_BETWEEN_REQUESTS_MS)
-        data = _post_json(FBS_URL, headers, body)
-        postings = data.get("result", {}).get("postings", [])
-        return len(postings)
+        postings = _fetch_fbs_pages(headers, since_iso, to_iso)
+        # v4 не фильтрует по статусу на стороне Ozon — считаем сами
+        return sum(1 for p in postings if p.get("status") == PENDING_FBS_STATUS)
 
     def _fetch_fbo(self, headers):
         # since/to — полноценный google.protobuf.Timestamp (RFC3339 с "Z"),
