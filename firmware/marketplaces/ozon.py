@@ -16,6 +16,8 @@
 # покупатель), без вычета комиссии Ozon и логистики.
 
 from marketplaces.base import MarketplaceClient, MarketplaceError
+import time
+
 from utils.http import request_json
 from utils.time_sync import today_utc_bounds_z
 
@@ -79,6 +81,32 @@ PENDING_FBS_STATUS = "awaiting_packaging"
 _last_good_fbs = {}
 _last_good_fbo = {}
 
+
+
+# Лимит Ozon "request rate limit per second" (HTTP 429) прилетает даже при
+# спокойном опросе: пул лимита общий со всеми, кто ходит с тем же ключом (другие
+# программы, личный кабинет), а мы делаем 3 запроса подряд за цикл. Как в
+# pyMarketPlan (supply_planner._post): на 429 ждём Retry-After (если Ozon
+# прислал; иначе 1 с) + 0,2 с и повторяем тот же запрос, а не бросаем канал
+# до следующего цикла. На плате ожидание блокирующее, поэтому потолок
+# паузы 3 с и не больше двух повторов (худший случай ~6 с на запрос — в
+# пределах watchdog), плюс короткая пауза между запросами цикла.
+_RATE_LIMIT_RETRIES = 2
+_RATE_LIMIT_MAX_WAIT_SEC = 3.0
+_BETWEEN_REQUESTS_MS = 300
+
+
+def _post_json(url, headers, body):
+    for attempt in range(_RATE_LIMIT_RETRIES + 1):
+        try:
+            return request_json("POST", url, headers=headers, json_body=body)
+        except MarketplaceError as exc:
+            if "HTTP 429" not in str(exc) or attempt >= _RATE_LIMIT_RETRIES:
+                raise
+            wait = exc.retry_after_sec if exc.retry_after_sec else 1.0
+            wait = min(max(float(wait), 0.5) + 0.2, _RATE_LIMIT_MAX_WAIT_SEC)
+            print("ozon: HTTP 429, жду %.1f с и повторяю (%d/%d)" % (wait, attempt + 1, _RATE_LIMIT_RETRIES))
+            time.sleep_ms(int(wait * 1000))
 
 class OzonClient(MarketplaceClient):
     id = "ozon"
@@ -178,7 +206,7 @@ class OzonClient(MarketplaceClient):
             "offset": 0,
             "with": {"financial_data": False},
         }
-        data = request_json("POST", FBS_URL, headers=headers, json_body=body)
+        data = _post_json(FBS_URL, headers, body)
         postings = data.get("result", {}).get("postings", [])
         count, revenue = _sum_postings(postings)
         # Отдельный try/except — сбой ИМЕННО этого (более редкого, более
@@ -227,7 +255,8 @@ class OzonClient(MarketplaceClient):
             "offset": 0,
             "with": {"financial_data": False},
         }
-        data = request_json("POST", FBS_URL, headers=headers, json_body=body)
+        time.sleep_ms(_BETWEEN_REQUESTS_MS)
+        data = _post_json(FBS_URL, headers, body)
         postings = data.get("result", {}).get("postings", [])
         return len(postings)
 
@@ -243,7 +272,8 @@ class OzonClient(MarketplaceClient):
             "limit": FBO_LIST_LIMIT,
             "offset": 0,
         }
-        data = request_json("POST", FBO_URL, headers=headers, json_body=body)
+        time.sleep_ms(_BETWEEN_REQUESTS_MS)
+        data = _post_json(FBO_URL, headers, body)
         # v3 отдаёт "postings" сразу в корне, БЕЗ обёртки "result" (та была
         # у v2) — см. комментарий у FBO_URL выше.
         postings = data.get("postings", [])
