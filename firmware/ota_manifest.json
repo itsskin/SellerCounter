@@ -6,7 +6,7 @@
   "config.py": "4a22d11de700b7d0235bfc54e02476ee12292a4128a06a6695be07d1443f7c6c",
   "display/base.py": "5865e7f162dcb5147afeee2cf394bf7edacf9b55e0178684a39ad6ba52569e55",
   "display/column.png": "668eea8362fc9a3b867e5e53c5fe2417489b9893489237f75db7a0a46f346328",
-  "display/custom_font.py": "cd0126d53fb5b45795a233a1d0b79930d974a5fd3f038d762ba37b57658fd3ba",
+  "display/custom_font.py": "54bfb6565b83a5d4add40ce577499ceb4e929358aa5650a2aff33851dfb3a653",
   "display/epd1in54.py": "85c784ae7fed0b1fbf29bb99819d24a1d029ec2900c6366c797634c739c85c6a",
   "display/epd4in2.py": "f4031410ad0bfeb731dd35048b2d1c2da641b9114f1239bef753b10a5184d9b0",
   "display/fonts/available_sizes.txt": "7af67b67126e2d24462b432eac57441ccf4fc591dd30758022f9c72d089bf333",
@@ -33,9 +33,9 @@
   "display/fonts/verdana_28.py": "78527e93d327267bbd3a1053120b5a2b09a397060cf3bf34bd0a6fa6a3efb441",
   "display/framebuf_sim.py": "f3c6e694d95a2d596f5d28964b60d984e8bff78f0dc1e354c46174cb483810c5",
   "display/layout.py": "eb8917b23da1e22bd7e45528e560a491b7ef8dc1e55669aff54359de5be71e0f",
-  "display/layout_200x200.py": "7254423dbc63db754ec4cfdfff01339971e4f1bb86abcbf14717e5e754d5e626",
-  "display/layout_400x300.py": "9259411b218394d77d28e861b1102865493b7a64d18fd74cd730f5b6dcd7b4d4",
-  "display/layout_common.py": "a81b0b99f5682b57a776f649dbb90e0f268d8d5b548891b89447cd3e29ef46fa",
+  "display/layout_200x200.py": "66d8da3a479f28fa1708842aace2504d0b6c27c1a724e63ffd5bf3f406a38263",
+  "display/layout_400x300.py": "69157a4b90ceb05197049c7ee07b2a31e0f8f98cdb6b9ac6e11b0dce8dae110e",
+  "display/layout_common.py": "0a87fcd72995c31335eb10489fed680fc696c1a6a4f8f53751ef61389998a3b4",
   "display/png_to_bin.py": "f8ecfc29855e0e65fefcbcc41d5773a6b31abdcba1cadfc130617935db8c52d8",
   "display/start_screen_400x300.bin": "7f9f75cfacba6a2d127ca381d62ce712ceace6709246f686826a546651f1165f",
   "lib/VENDORED.md": "360ee1a54d3feac41d11eb47565dad649622c14070f178b6422cd4d385879522",
@@ -64,5 +64,5 @@
   "www/main.js": "23f0431a6616bbc1836a84660b81141fde6d9905287d3c9a42cda27ad224700c",
   "www/style.css": "07d4242c717e64a5c7e6ffb85c81414bf2b41ce1c4d099baa0485074569adbf5"
  },
- "version": 116
+ "version": 117
 }

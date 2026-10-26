@@ -156,7 +156,8 @@ def draw_text_with_trailing(
         cx += text_width(font, text, scale)
 
 
-def format_compact(font, value, max_width, scale=1, decimal_font=None, decimal_scale=1, max_decimals=3, min_abbrev=0):
+def format_compact(font, value, max_width, scale=1, decimal_font=None, decimal_scale=1, max_decimals=3, min_abbrev=0,
+                   abbrev_from=0):
     """Целое число как строка; если не влезает в max_width — сокращаем
     тысячи в "K", миллионы в "M". Пробуем от max_decimals цифр после точки
     и вниз до 0, пока не влезет.
@@ -174,9 +175,17 @@ def format_compact(font, value, max_width, scale=1, decimal_font=None, decimal_s
     за край — предполагается, что порог выставлен так, что до него
     полное число гарантированно влезает). Нужно, чтобы "999" не вдруг не
     сократилось в "1K" на пограничных по ширине значениях — предсказуемое
-    поведение важнее пиксельной точности."""
+    поведение важнее пиксельной точности.
+
+    abbrev_from — наоборот: с этого значения (и не меньше 1000) число ВСЕГДА
+    пишется сокращённо ("3.3K", "13.5K", "158K", "1.2M"), даже если полное
+    целиком влезает по ширине — чтобы крупная сумма с начала дня не выглядела
+    точным показанием счётчика. Дробная часть — одна цифра, пока до сотен
+    тысяч; с 100K и выше без неё; ".0" не пишется ("3K"). 0 — выключено
+    (сокращаем только если не влезло, как раньше)."""
     plain = "%d" % round(value)
-    if value < min_abbrev or text_width(font, plain, scale) <= max_width:
+    forced = bool(abbrev_from) and value >= max(abbrev_from, 1000)
+    if not forced and (value < min_abbrev or text_width(font, plain, scale) <= max_width):
         return plain
 
     if value < 1000000:
@@ -196,6 +205,8 @@ def format_compact(font, value, max_width, scale=1, decimal_font=None, decimal_s
     dec_scale = decimal_scale if decimal_font is not None else scale
 
     candidate = "%d%s" % (round(value / unit), suffix)  # decimals=0, на случай если цикл ниже пустой
+    if forced and value / unit >= 100:
+        max_decimals = 0  # "158K" без дроби
     for decimals in range(max_decimals, -1, -1):
         if decimals == 0:
             # ВАЖНО: пересчитать заново, а не переиспользовать candidate из
@@ -206,6 +217,14 @@ def format_compact(font, value, max_width, scale=1, decimal_font=None, decimal_s
             int_part, frac_part = candidate, ""
         else:
             candidate = ("%." + str(decimals) + "f%s") % (value / unit, suffix)
+            if forced and candidate[:-len(suffix)].endswith(".0"):
+                # ровно "3.0K" -> "3K"
+                candidate = candidate[:-len(suffix) - 2] + suffix
+                int_part, frac_part = candidate, ""
+                w = text_width(font, int_part, scale) + text_width(dec_font, frac_part, dec_scale)
+                if w <= max_width:
+                    return candidate
+                continue
             dot = candidate.index(".")
             int_part, frac_part = candidate[:dot], candidate[dot:]
         w = text_width(font, int_part, scale) + text_width(dec_font, frac_part, dec_scale)

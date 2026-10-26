@@ -314,6 +314,7 @@ LAYOUT_TXT_PATH = ASSETS_DIR + "/layout.txt"
 
 DEFAULTS = {
     "revenue.name": "Выручка",
+    "revenue.abbrev_from": "1000",
     "revenue.show.200x200": "1",
     "revenue.show.400x300": "1",
     "revenue.x.200x200": "100",
@@ -495,6 +496,7 @@ LAYOUT_TXT_TEMPLATE = """\
 
 # ЭКРАН «ИТОГИ»: выручка — самое крупное число, над разделительной линией.
 revenue.name = {revenue.name}  # название для человека, на экран не влияет
+revenue.abbrev_from = {revenue.abbrev_from}  # с какой выручки (руб.) всегда писать «3.3K»/«13.5K»/«158K» вместо полного числа; 0 — сокращать только если не влезает
 revenue.show.200x200 = {revenue.show.200x200}  # рисовать на 200x200 (0/1)
 revenue.x.200x200 = {revenue.x.200x200}  # центр по X, 200x200
 revenue.y.200x200 = {revenue.y.200x200}  # центр по Y, 200x200

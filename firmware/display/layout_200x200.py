@@ -131,6 +131,7 @@ def update_numbers(fb, data):
             decimal_font=decimal_font,
             decimal_scale=decimal_scale,
             max_decimals=1,  # "13.5K" с точкой, если влезает; иначе сама откатится на "654K" без точки
+            abbrev_from=LAYOUT.cfg_int(cfg, "revenue.abbrev_from"),
         )
         revenue_x = LAYOUT.cfg_int(cfg, res_key("revenue", "x", RES))
         revenue_y = LAYOUT.cfg_int(cfg, res_key("revenue", "y", RES))

@@ -248,7 +248,8 @@ def _draw_marketplace_breakdown(fb, cfg, data):
         text = custom_font.format_compact(
             revenue_font, entry.get("revenue", 0), max_width, revenue_scale,
             decimal_font=revenue_decimal_font, decimal_scale=revenue_decimal_scale,
-            max_decimals=0, min_abbrev=1000,
+            max_decimals=1, min_abbrev=1000,
+            abbrev_from=LAYOUT.cfg_int(cfg, "revenue.abbrev_from"),
         )
         big, tail = split_compact(text)
         revenue_items.append((mp_id, entry, big, tail))
@@ -310,6 +311,7 @@ def _draw_revenue(fb, cfg, value, key):
         decimal_font=decimal_font,
         decimal_scale=decimal_scale,
         max_decimals=1,
+        abbrev_from=LAYOUT.cfg_int(cfg, "revenue.abbrev_from"),
     )
     revenue_big, revenue_tail = split_compact(revenue_text)
     revenue_trailing = [(revenue_tail, decimal_font, decimal_scale)] if revenue_tail else []
