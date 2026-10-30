@@ -15,6 +15,7 @@ import machine
 import breadcrumb
 import config as config_module
 import ota
+import time
 import wifi_manager
 from display import layout as layout_module
 from display import layout_common
@@ -116,6 +117,10 @@ async def api_state(request):
         "marketplaces_available": available_marketplaces(),
         "marketplaces": [_public_marketplace(e) for e in cfg["marketplaces"]],
         "ota_version": ota.current_version(),
+        "ota_sources": ota.last_sources["sources"],
+        "ota_sources_age_sec": (
+            None if ota.last_sources["at"] is None else int(time.time() - ota.last_sources["at"])
+        ),
         "auto_update": cfg.get("auto_update", {"enabled": True, "hour": 4}),
     }
     if engine is not None:
@@ -182,7 +187,7 @@ async def api_ota_check(request):
 async def api_ota_sources(request):
     """Какие источники обновлений сейчас доступны (GitHub, jsDelivr,
     резервные серверы) — для списка статусов в разделе «Обновление прошивки»."""
-    return {"ok": True, "sources": await ota.check_sources()}
+    return {"ok": True, "sources": await ota.refresh_sources()}
 
 
 @app.route("/api/ota/apply", methods=["POST"])

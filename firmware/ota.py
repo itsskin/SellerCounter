@@ -166,6 +166,19 @@ def source_name(base):
     return "?"
 
 
+# Результат последней проверки источников — для постоянного показа в веб-
+# интерфейсе без запроса на каждое открытие страницы: {"at": time.time(),
+# "sources": [...]}. Обновляется фоновой задачей (main.py) и по кнопке.
+last_sources = {"at": None, "sources": []}
+
+
+async def refresh_sources():
+    sources = await check_sources()
+    last_sources["sources"] = sources
+    last_sources["at"] = time.time()
+    return sources
+
+
 async def check_sources():
     """Доступность каждого источника обновлений: [{"name", "online",
     "version", "ms", "error"}]. Источники опрашиваются по очереди с await

@@ -139,6 +139,25 @@ def _auto_update_cycle_key(cfg):
     return (t[0], t[1], t[2]), t[3]
 
 
+SOURCES_MONITOR_FIRST_SEC = 90
+SOURCES_MONITOR_INTERVAL_SEC = 30 * 60
+
+
+async def _sources_monitor():
+    """Фоновая проверка доступности источников обновлений (GitHub, jsDelivr,
+    резервные серверы) — первый раз через 90 с после старта, дальше раз в
+    30 минут. Результат лежит в ota.last_sources и показывается в веб-
+    интерфейсе (/api/state) без ожидания запроса. Каждая проверка блокирует
+    цикл не дольше STATUS_TIMEOUT_SEC на источник (см. ota.check_sources)."""
+    await asyncio.sleep(SOURCES_MONITOR_FIRST_SEC)
+    while True:
+        try:
+            await ota.refresh_sources()
+        except Exception as exc:
+            print("sources monitor:", exc)
+        await asyncio.sleep(SOURCES_MONITOR_INTERVAL_SEC)
+
+
 async def _auto_update(cfg):
     """Раз в сутки САМА проверяет и, если есть новая версия, применяет
     OTA-обновление — без участия человека (ручные кнопки в веб-интерфейсе,
@@ -227,6 +246,7 @@ async def _run_normal(cfg, engine, display, buzzer, wdt):
         engine.run(),
         _feed_watchdog(wdt),
         _auto_update(cfg),
+        _sources_monitor(),
     )
 
 

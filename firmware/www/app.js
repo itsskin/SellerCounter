@@ -127,6 +127,7 @@ function renderSettings(state) {
     (state.display && state.display.layout_override) || "";
 
   document.getElementById("ota-current-version").textContent = state.ota_version ?? "?";
+  renderOtaSources(state.ota_sources, state.ota_sources_age_sec);
   const autoUpdate = state.auto_update || { enabled: true, hour: 4 };
   document.getElementById("set-auto-update").checked = !!autoUpdate.enabled;
   document.getElementById("set-auto-update-hour").value = autoUpdate.hour ?? 4;
@@ -1128,6 +1129,32 @@ async function saveAutoUpdate() {
 document.getElementById("set-auto-update").addEventListener("change", saveAutoUpdate);
 document.getElementById("set-auto-update-hour").addEventListener("change", saveAutoUpdate);
 
+// Статусы источников обновлений: версия и «недоступен». Берётся из кэша платы
+// (фоновая проверка раз в 30 минут) — виден сразу при открытии страницы; кнопка
+// «Проверить серверы» обновляет сразу.
+function renderOtaSources(sources, ageSec) {
+  const list = document.getElementById("ota-sources-list");
+  list.innerHTML = "";
+  if (!sources || !sources.length) {
+    list.innerHTML = "<li>Статус серверов ещё не проверен — нажми «Проверить серверы»</li>";
+    return;
+  }
+  for (const src of sources) {
+    const li = document.createElement("li");
+    li.textContent = src.online
+      ? "● " + src.name + " — версия " + src.version
+      : "○ " + src.name + " — недоступен";
+    if (!src.online) li.classList.add("offline");
+    list.appendChild(li);
+  }
+  if (ageSec != null) {
+    const li = document.createElement("li");
+    li.classList.add("offline");
+    li.textContent = "проверено " + (ageSec < 90 ? "только что" : Math.round(ageSec / 60) + " мин назад");
+    list.appendChild(li);
+  }
+}
+
 document.getElementById("ota-sources-check").addEventListener("click", async (ev) => {
   const button = ev.target;
   const list = document.getElementById("ota-sources-list");
@@ -1137,15 +1164,7 @@ document.getElementById("ota-sources-check").addEventListener("click", async (ev
     const res = await fetch("/api/ota/sources", { method: "POST" });
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || res.status);
-    list.innerHTML = "";
-    for (const src of data.sources) {
-      const li = document.createElement("li");
-      li.textContent = src.online
-        ? "● " + src.name + " — онлайн, версия " + src.version + " (" + (src.ms / 1000).toFixed(1) + " с)"
-        : "○ " + src.name + " — недоступен";
-      if (!src.online) li.classList.add("offline");
-      list.appendChild(li);
-    }
+    renderOtaSources(data.sources, 0);
   } catch (err) {
     list.innerHTML = "<li class=\"offline\">Ошибка: " + err.message + "</li>";
   } finally {
