@@ -43,7 +43,7 @@ import sc_http as requests
 # по sha256 из манифеста (как раньше). Новый сервер = строка здесь + его
 # сертификат ota_server_N.pem в firmware/ + tools/deploy_update_server.sh.
 OWN_SERVERS = (
-    ("https://213.165.32.91:8443/", "/ota_server.pem"),
+    ("https://194.76.137.210:8443/", "/ota_server.pem"),
     ("https://83.147.216.82:8443/", "/ota_server_2.pem"),
 )
 
