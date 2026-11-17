@@ -99,6 +99,11 @@ async def main_js(request):
     return Response.send_file("/www/main.js", content_type="application/javascript")
 
 
+@app.route("/logo.png")
+async def logo_png(request):
+    return Response.send_file("/www/logo.png", content_type="image/png")
+
+
 @app.route("/api/state")
 async def api_state(request):
     cfg = _state["cfg"]
@@ -152,6 +157,17 @@ async def api_wifi(request):
     config_module.save(cfg)
     asyncio.create_task(_reset_soon())
     return {"ok": True, "message": "saved, rebooting"}
+
+
+@app.route("/api/wifi/scan")
+async def api_wifi_scan(request):
+    """Список Wi-Fi сетей вокруг — страница настройки подставляет выбранное
+    название в поле SSID, чтобы не вводить его руками."""
+    try:
+        return {"ok": True, "networks": wifi_manager.scan_networks()}
+    except OSError as exc:
+        # Радио занято (например, плата прямо сейчас подключается к сети).
+        return {"ok": False, "error": str(exc)}, 503
 
 
 async def _reset_soon():

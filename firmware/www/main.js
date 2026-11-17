@@ -11,6 +11,17 @@ const FIELD_LABELS = {
   api_key: "API-ключ",
 };
 
+// Ссылки на туториалы «как получить ключи» по маркетплейсам (страницы сайта).
+const TUTORIAL_URLS = {
+  ozon: "https://monik.u-bix.ru/integrations/ozon/",
+  wb: "https://monik.u-bix.ru/integrations/wildberries/",
+  yandex: "https://monik.u-bix.ru/integrations/yandex-market/",
+};
+
+// Ссылка на полный туториал «Как настроить?» (верхнее меню). Тот же адрес зашит в
+// QR «ИНСТРУКЦИЯ» на заставке (display/start_screen_400x300.bin) — менять нельзя.
+const HELP_URL = "https://monik.u-bix.ru/start/";
+
 async function api(path, options) {
   const res = await fetch(path, options);
   if (!res.ok) throw new Error("HTTP " + res.status);
@@ -30,12 +41,18 @@ function renderConnStatus(state) {
   if (state.mode === "provisioning") {
     badge.textContent = "Режим настройки Wi-Fi";
     badge.className = "badge";
+    delete badge.dataset.ip;
+    badge.title = "";
   } else if (state.wifi_connected) {
     badge.textContent = "Онлайн · " + state.ip;
     badge.className = "badge ok";
+    badge.dataset.ip = state.ip;
+    badge.title = "Нажмите, чтобы скопировать адрес";
   } else {
     badge.textContent = "Нет Wi-Fi";
     badge.className = "badge bad";
+    delete badge.dataset.ip;
+    badge.title = "";
   }
 }
 
@@ -84,7 +101,9 @@ function renderSettings(state) {
   document.getElementById("set-beep").checked = !!(state.display && state.display.beep_on_sale);
   document.getElementById("set-visual-alert").checked = !!(state.display && state.display.visual_alert);
   document.getElementById("set-fbs-reminder").checked = !!(state.display && state.display.show_fbs_reminder);
-  document.getElementById("set-marketplace-breakdown").checked = !!(state.display && state.display.show_marketplace_breakdown);
+  const breakdownOn = !!(state.display && state.display.show_marketplace_breakdown);
+  document.getElementById("mode-breakdown").checked = breakdownOn;
+  document.getElementById("mode-total").checked = !breakdownOn;
 
   document.getElementById("set-buzzer-disabled").checked = !!(state.buzzer && state.buzzer.enabled === false);
   document.getElementById("set-boot-sound").checked = !(state.buzzer && state.buzzer.boot_sound === false);
@@ -118,24 +137,18 @@ function shopCardHtml(available, shop, showVisibilityToggle) {
     })
     .join("");
 
-  // Галочка видимости у КОНКРЕТНОГО магазина имеет смысл, только если их
-  // на площадке больше одного (выбираем, какие суммировать в колонку) —
-  // при единственном магазине она дублирует галочку у площадки целиком
-  // (marketplaceTypeHtml), см. запрос пользователя.
-  const visibilityToggle = showVisibilityToggle
-    ? `<label class="checkbox">
-        <input type="checkbox" class="shop-breakdown-visible" data-shop-key="${shop.key}" ${shopVisibleFromState[shop.key] !== false ? "checked" : ""}>
-        Показывать на экране «Маркеты»
-      </label>`
+  // У «пустого» магазина (ключа ещё нет, он заводится при первом
+  // сохранении) нет смысла в кнопке удаления.
+  const removeButton = shop.key
+    ? '<button type="button" class="mp-remove-shop">Удалить магазин</button>'
     : "";
 
   return `
     <div class="mp-card" data-key="${shop.key}">
-      ${visibilityToggle}
       <form data-key="${shop.key}">
         <div class="mp-card-head">
-          <span class="status ${shop.configured ? "ok" : ""}">${shop.configured ? "активен" : "нет ключей"}</span>
-          <button type="button" class="mp-remove-shop">Удалить магазин</button>
+          <span class="status ${shop.configured ? "ok" : ""}">${shop.configured ? "подключён" : "ключи не введены"}</span>
+          ${removeButton}
         </div>
         ${fields}
         <button type="submit">Сохранить</button>
@@ -144,30 +157,61 @@ function shopCardHtml(available, shop, showVisibilityToggle) {
     </div>`;
 }
 
-function marketplaceTypeHtml(available, shops, breakdownVisible, orderInfo) {
-  const cards = shops.map((shop) => shopCardHtml(available, shop, shops.length > 1)).join("");
+// После сохранения/удаления магазина сразу обновляем экран устройства — иначе
+// заставка первого запуска (или обычный экран) сменится только на следующем цикле
+// опроса, до 5 минут. Ошибку опроса (например, неверный ключ) не показываем здесь:
+// она видна в блоке статистики.
+function refreshAfterShopChange() {
+  api("/api/refresh", { method: "POST" })
+    .then(() => loadState(false))
+    .catch(() => {});
+}
+
+function tutorialLinkHtml(mpId) {
+  const url = TUTORIAL_URLS[mpId] || "#";
+  // Пока адреса нет ("#") — клик ничего не делает, чтобы страница не прыгала наверх.
+  const attrs = url === "#" ? 'onclick="return false"' : 'target="_blank" rel="noopener"';
+  return `<a class="pill-link" href="${url}" ${attrs}>Как получить ключи ›</a>`;
+}
+
+// Маркетплейс — раскрывающаяся вкладка (<details>). Первый магазин вводится
+// сразу, без кнопки «Добавить»: пока магазинов нет, показываем пустую форму
+// (key пустой — запись заводится при первом сохранении, см. обработчик submit).
+function marketplaceTypeHtml(available, shops, breakdownVisible, orderInfo, isOpen) {
+  const configuredCount = shops.filter((s) => s.configured).length;
+  const badge = configuredCount
+    ? `<span class="acc-badge ok">подключён${configuredCount > 1 ? " · " + configuredCount : ""}</span>`
+    : '<span class="acc-badge">не подключён</span>';
+  const list = shops.length ? shops : [{ key: "", configured: false, api_key_set: false }];
+  const cards = list.map((shop) => shopCardHtml(available, shop, shops.length > 1)).join("");
+  const addButton = shops.length
+    ? '<button type="button" class="mp-add-shop">+ Добавить ещё один магазин</button>'
+    : "";
   return `
-    <div class="mp-type" data-mp-id="${available.id}">
-      <div class="mp-type-head">
-        <h3>${available.name}</h3>
-        <button type="button" class="mp-add-shop">+ Добавить магазин</button>
+    <details class="mp-type acc" data-mp-id="${available.id}" ${isOpen ? "open" : ""}>
+      <summary>${available.name} ${badge}</summary>
+      <div class="acc-body">
+        ${tutorialLinkHtml(available.id)}
+        <div class="mp-breakdown-row">
+          <span class="mp-order-label">Порядок столбиков на экране</span>
+          <span class="mp-reorder">
+            <button type="button" class="mp-move-up" data-mp-id="${available.id}" ${orderInfo.isFirst ? "disabled" : ""}>▲</button>
+            <button type="button" class="mp-move-down" data-mp-id="${available.id}" ${orderInfo.isLast ? "disabled" : ""}>▼</button>
+          </span>
+        </div>
+        ${cards}
+        ${addButton}
       </div>
-      <div class="mp-breakdown-row">
-        <label class="checkbox">
-          <input type="checkbox" class="mp-breakdown-visible" data-mp-id="${available.id}" ${breakdownVisible ? "checked" : ""}>
-          Показывать на экране «Маркеты»
-        </label>
-        <span class="mp-reorder">
-          <button type="button" class="mp-move-up" data-mp-id="${available.id}" ${orderInfo.isFirst ? "disabled" : ""}>▲</button>
-          <button type="button" class="mp-move-down" data-mp-id="${available.id}" ${orderInfo.isLast ? "disabled" : ""}>▼</button>
-        </span>
-      </div>
-      ${cards || '<p class="hint">Магазинов нет — нажми "+ Добавить магазин".</p>'}
-    </div>`;
+    </details>`;
 }
 
 function renderMarketplaces(state) {
   const container = document.getElementById("marketplaces-list");
+  // Запоминаем, какие вкладки были раскрыты, — иначе после сохранения
+  // перерисовка свернёт то, с чем пользователь только что работал.
+  const openIds = new Set(
+    Array.from(container.querySelectorAll("details.mp-type[open]")).map((d) => d.dataset.mpId)
+  );
   container.innerHTML = "";
   shopVisibleFromState = (state.display && state.display.marketplace_shop_visible) || {};
   const shopsById = {};
@@ -191,7 +235,7 @@ function renderMarketplaces(state) {
     const visible = breakdownVisibleMap[mpId] !== false;
     const orderInfo = { isFirst: i === 0, isLast: i === order.length - 1 };
     container.insertAdjacentHTML(
-      "beforeend", marketplaceTypeHtml(availableById[mpId], shops, visible, orderInfo)
+      "beforeend", marketplaceTypeHtml(availableById[mpId], shops, visible, orderInfo, openIds.has(mpId))
     );
   });
 
@@ -209,42 +253,6 @@ function renderMarketplaces(state) {
     });
     refreshPreview();
   }
-
-  container.querySelectorAll(".mp-breakdown-visible").forEach((checkbox) => {
-    checkbox.addEventListener("change", async (ev) => {
-      const mpId = ev.target.dataset.mpId;
-      const updated = { [mpId]: ev.target.checked };
-      try {
-        await api("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ display: { marketplace_breakdown_visible: updated } }),
-        });
-        await redrawWithoutTouchingTestOverride();
-      } catch (err) {
-        ev.target.checked = !ev.target.checked;
-        alert("Ошибка: " + err.message);
-      }
-    });
-  });
-
-  container.querySelectorAll(".shop-breakdown-visible").forEach((checkbox) => {
-    checkbox.addEventListener("change", async (ev) => {
-      const key = ev.target.dataset.shopKey;
-      try {
-        await api("/api/settings", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ display: { marketplace_shop_visible: { [key]: ev.target.checked } } }),
-        });
-        shopVisibleFromState[key] = ev.target.checked;
-        await redrawWithoutTouchingTestOverride();
-      } catch (err) {
-        ev.target.checked = !ev.target.checked;
-        alert("Ошибка: " + err.message);
-      }
-    });
-  });
 
   async function moveMarketplace(mpId, delta) {
     const idx = order.indexOf(mpId);
@@ -275,7 +283,7 @@ function renderMarketplaces(state) {
   container.querySelectorAll("form[data-key]").forEach((form) => {
     form.addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      const key = form.dataset.key;
+      let key = form.dataset.key;
       const msg = form.querySelector(".mp-msg");
       const fd = new FormData(form);
       const body = {};
@@ -283,6 +291,17 @@ function renderMarketplaces(state) {
         if (val) body[k] = val;
       }
       try {
+        if (!key) {
+          // Первый магазин площадки: пустую запись не создаём, пока
+          // пользователь ничего не ввёл.
+          if (!Object.keys(body).length) {
+            msg.textContent = "Заполните поля и нажмите «Сохранить»";
+            msg.classList.add("error");
+            return;
+          }
+          const mpId = form.closest(".mp-type").dataset.mpId;
+          key = (await api("/api/marketplaces/" + mpId + "/add", { method: "POST" })).key;
+        }
         await api("/api/shops/" + key, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -290,6 +309,7 @@ function renderMarketplaces(state) {
         });
         msg.textContent = "Сохранено";
         msg.classList.remove("error");
+        refreshAfterShopChange();
       } catch (err) {
         msg.textContent = "Ошибка сохранения: " + err.message;
         msg.classList.add("error");
@@ -304,6 +324,7 @@ function renderMarketplaces(state) {
       if (!confirm("Удалить этот магазин? Ключи не восстановить.")) return;
       try {
         await api("/api/shops/" + key + "/remove", { method: "POST" });
+        refreshAfterShopChange();
       } catch (err) {
         alert("Ошибка удаления: " + err.message);
       }
@@ -477,8 +498,9 @@ async function loadState(forceFormRefresh) {
 
   // Экран «Маркеты» рисуется только на 400x300 — на 200x200 переключатель
   // просто нечего было бы переключать.
-  document.getElementById("marketplace-breakdown-toggle").hidden =
-    !(state.display_width === 400 && state.display_height === 300);
+  const is400x300 = state.display_width === 400 && state.display_height === 300;
+  document.getElementById("marketplace-breakdown-toggle").hidden = !is400x300;
+  setBreakdownClass(is400x300 && !!(state.display && state.display.show_marketplace_breakdown));
 
   if (!formsReady || forceFormRefresh) {
     renderSettings(state);
@@ -504,6 +526,72 @@ document.getElementById("wifi-form").addEventListener("submit", async (ev) => {
     body: JSON.stringify({ ssid: fd.get("ssid"), password: fd.get("password") }),
   });
   document.getElementById("wifi-msg").textContent = "Сохранено, плата перезагружается...";
+});
+
+// Поиск Wi-Fi сетей: клик по сети подставляет её название в поле SSID.
+function signalBars(rssi) {
+  // RSSI в дБм: чем ближе к 0, тем сильнее сигнал.
+  const level = rssi >= -55 ? 4 : rssi >= -65 ? 3 : rssi >= -75 ? 2 : 1;
+  return "▂▄▆█".slice(0, level) + "░".repeat(4 - level);
+}
+
+document.getElementById("wifi-scan").addEventListener("click", async (ev) => {
+  const button = ev.currentTarget;
+  const list = document.getElementById("wifi-networks");
+  const box = document.getElementById("wifi-networks-box");
+  const msg = document.getElementById("wifi-scan-msg");
+  button.disabled = true;
+  box.hidden = true;
+  msg.textContent = "Ищу сети… это займёт несколько секунд";
+  try {
+    const data = await api("/api/wifi/scan");
+    if (!data.ok) throw new Error(data.error || "ошибка");
+    list.innerHTML = "";
+    data.networks.forEach((net) => {
+      const li = document.createElement("li");
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "wifi-net";
+      const name = document.createElement("span");
+      name.className = "wifi-net-name";
+      name.textContent = net.ssid;
+      const meta = document.createElement("span");
+      meta.className = "wifi-net-meta";
+      meta.textContent = (net.secure ? "🔒 " : "") + signalBars(net.rssi);
+      b.append(name, meta);
+      b.addEventListener("click", () => {
+        document.getElementById("wifi-ssid").value = net.ssid;
+        box.hidden = true;
+        msg.textContent = "Выбрана сеть «" + net.ssid + "». Теперь введите пароль.";
+        document.getElementById("wifi-password").focus();
+      });
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+    box.hidden = !data.networks.length;
+    msg.textContent = data.networks.length
+      ? "Нажмите на свою сеть. Плата видит только сети 2,4 ГГц."
+      : "Сети не найдены. Плата видит только сети 2,4 ГГц — попробуйте ещё раз.";
+  } catch (err) {
+    msg.textContent = "Не удалось найти сети: " + err.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+document.getElementById("wifi-scan-collapse").addEventListener("click", () => {
+  document.getElementById("wifi-networks-box").hidden = true;
+  document.getElementById("wifi-scan-msg").textContent = "";
+});
+
+// Глазик у пароля: показать/скрыть введённые символы.
+document.getElementById("wifi-pw-toggle").addEventListener("click", (ev) => {
+  const input = document.getElementById("wifi-password");
+  const show = input.type === "password";
+  input.type = show ? "text" : "password";
+  ev.currentTarget.classList.toggle("shown", show);
+  ev.currentTarget.setAttribute("aria-label", show ? "Скрыть пароль" : "Показать пароль");
+  ev.currentTarget.title = show ? "Скрыть пароль" : "Показать пароль";
 });
 
 document.getElementById("preview-refresh").addEventListener("click", refreshPreview);
@@ -636,30 +724,42 @@ document.getElementById("set-boot-sound").addEventListener("change", async (ev) 
   setTimeout(() => (msg.textContent = ""), 3000);
 });
 
-document.getElementById("set-marketplace-breakdown").addEventListener("change", async (ev) => {
-  const msg = document.getElementById("marketplace-breakdown-msg");
-  try {
-    await api("/api/settings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ display: { show_marketplace_breakdown: ev.target.checked } }),
-    });
-    // {} без ключа per_marketplace — см. комментарий в renderMarketplaces
-    // про redrawWithoutTouchingTestOverride: перерисовывает, не трогая
-    // тестовый оверрайд, который мог быть выставлен с основной страницы.
-    await api("/api/display/test", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    msg.textContent = "Сохранено и перерисовано";
-    msg.classList.remove("error");
-    refreshPreview();
-  } catch (err) {
-    msg.textContent = "Ошибка: " + err.message;
-    msg.classList.add("error");
-  }
-  setTimeout(() => (msg.textContent = ""), 3000);
+function setBreakdownClass(on) {
+  // Стрелки порядка столбиков имеют смысл только в режиме «Каждый отдельно».
+  document.getElementById("marketplaces-section").classList.toggle("breakdown-on", on);
+}
+
+["mode-total", "mode-breakdown"].forEach((id) => {
+  document.getElementById(id).addEventListener("change", async () => {
+    const msg = document.getElementById("marketplace-breakdown-msg");
+    const on = document.getElementById("mode-breakdown").checked;
+    try {
+      await api("/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ display: { show_marketplace_breakdown: on } }),
+      });
+      // {} без ключа per_marketplace — см. комментарий в renderMarketplaces
+      // про redrawWithoutTouchingTestOverride: перерисовывает, не трогая
+      // тестовый оверрайд, который мог быть выставлен с основной страницы.
+      await api("/api/display/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      setBreakdownClass(on);
+      msg.textContent = "Сохранено и перерисовано";
+      msg.classList.remove("error");
+      refreshPreview();
+    } catch (err) {
+      // Возвращаем выбор назад, раз не сохранилось.
+      document.getElementById("mode-breakdown").checked = !on;
+      document.getElementById("mode-total").checked = on;
+      msg.textContent = "Ошибка: " + err.message;
+      msg.classList.add("error");
+    }
+    setTimeout(() => (msg.textContent = ""), 3000);
+  });
 });
 
 document.getElementById("set-fbs-reminder").addEventListener("change", async (ev) => {
@@ -815,8 +915,56 @@ document.getElementById("ota-apply").addEventListener("click", async (ev) => {
   }
 });
 
+// Верхнее меню: если раздел — свёрнутая вкладка, раскрываем её при переходе.
+document.querySelectorAll(".quick-nav a[href^='#']:not(.help)").forEach((link) => {
+  link.addEventListener("click", () => {
+    const target = document.querySelector(link.getAttribute("href"));
+    if (target && target.tagName === "DETAILS") target.open = true;
+  });
+});
+
+// «Как настроить?» — внешняя ссылка на туториал. Пока адреса нет — ничего не делает.
+(function () {
+  const help = document.getElementById("help-link");
+  if (HELP_URL === "#") {
+    help.addEventListener("click", (ev) => ev.preventDefault());
+  } else {
+    help.href = HELP_URL;
+    help.target = "_blank";
+    help.rel = "noopener";
+  }
+})();
+
 loadState(true);
 loadNotifications();
 refreshPreview();
 setInterval(() => loadState(false), 30000);
 setInterval(refreshPreview, 30000);
+
+// Плашка «Онлайн · IP»: клик копирует адрес платы в домашней сети. На http://
+// navigator.clipboard недоступен, поэтому запасной вариант через выделение текста.
+(function () {
+  const badge = document.getElementById("conn-status");
+  if (!badge) return;
+  badge.addEventListener("click", () => {
+    const ip = badge.dataset.ip;
+    if (!ip) return;
+    const done = () => {
+      const prev = badge.textContent;
+      badge.textContent = "Скопировано ✓";
+      setTimeout(() => { if (badge.dataset.ip === ip) badge.textContent = prev; }, 1500);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(ip).then(done, () => {});
+      return;
+    }
+    const ta = document.createElement("textarea");
+    ta.value = ip;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { if (document.execCommand("copy")) done(); } catch (e) {}
+    document.body.removeChild(ta);
+  });
+})();

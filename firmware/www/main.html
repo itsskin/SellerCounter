@@ -8,14 +8,17 @@
 </head>
 <body>
 <header>
-  <h1>UBIX monik</h1>
-  <div id="conn-status" class="badge">...</div>
+  <div class="header-inner">
+    <h1 class="brand"><img src="/logo.png" alt="UBIX monik" width="98" height="34"></h1>
+    <div id="conn-status" class="badge">...</div>
+  </div>
 </header>
 
 <nav class="quick-nav">
-  <a href="#wifi-section">Настройка Wi-Fi</a>
+  <a href="#wifi-section">Wi-Fi</a>
   <a href="#marketplaces-section">Маркетплейсы</a>
-  <a href="#notifications-section">Доп. настройки</a>
+  <a href="#notifications-section">Звуки</a>
+  <a href="#" id="help-link" class="help">Как настроить?</a>
 </nav>
 
 <main>
@@ -44,98 +47,165 @@
     </table>
   </section>
 
-  <section id="preview-section" class="card">
-    <h2>Превью экрана</h2>
-    <img id="preview-img" src="/api/display/preview.bmp" alt="Превью экрана">
-    <button id="preview-refresh" type="button">Обновить превью</button>
-  </section>
+  <!-- Превью экрана: по умолчанию свёрнуто (нет атрибута open) -->
+  <details id="preview-section" class="card acc">
+    <summary>Превью экрана</summary>
+    <div class="acc-body">
+      <img id="preview-img" src="/api/display/preview.bmp" alt="Превью экрана">
+      <button id="preview-refresh" type="button">Обновить превью</button>
+    </div>
+  </details>
 
   <section id="marketplaces-section" class="card">
-    <h2>Маркетплейсы</h2>
+    <h2>Подключение маркетплейсов</h2>
+
+    <!-- Выбор вида экрана (только для 400x300, на 200x200 скрыт). -->
     <div id="marketplace-breakdown-toggle" hidden>
-      <label class="checkbox">
-        <input type="checkbox" id="set-marketplace-breakdown">
-        Экран «Маркеты» (вместо «Итогов»)
-      </label>
-      <p class="hint">
-        Показывает каждый подключённый маркетплейс отдельным столбиком ("Oz"/"Wb"/"Ya" сверху,
-        крупная выручка, заказы мельче), рядом друг с другом. Какие маркетплейсы показывать и в
-        каком порядке — галочка "Показывать на экране «Маркеты»" и стрелки ▲/▼ у каждого ниже
-        (можно отключить малозначимый и следить только за одним-двумя важными).
-      </p>
+      <div class="screen-choice">
+        <label class="screen-opt screen-opt-left">
+          <input type="radio" name="screen-mode" id="mode-total" value="total">
+          <div class="screen-opt-body">
+            <span class="screen-opt-badge" aria-hidden="true">✓</span>
+            <span class="screen-opt-title">Всё вместе</span>
+            <span class="screen-preview">
+            <svg viewBox="0 0 400 300" role="img" aria-label="Общий экран: одна сумма по всем маркетплейсам">
+              <rect x="4" y="4" width="392" height="292" rx="14" fill="#fff" stroke="#111" stroke-width="5"/>
+              <text x="200" y="52" text-anchor="middle" font-size="22" font-weight="700" fill="#111">ВЫРУЧКА</text>
+              <text x="200" y="125" text-anchor="middle" font-size="64" font-weight="700" fill="#111">139 950</text>
+              <line x1="30" y1="160" x2="370" y2="160" stroke="#111" stroke-width="3" stroke-dasharray="3 5"/>
+              <text x="200" y="232" text-anchor="middle" font-size="64" font-weight="700" fill="#111">41</text>
+              <text x="200" y="272" text-anchor="middle" font-size="20" font-weight="700" fill="#111">КОЛИЧЕСТВО ЗАКАЗОВ</text>
+            </svg>
+            </span>
+            <span class="screen-opt-sub">одна общая сумма</span>
+            <span class="screen-opt-state"><span class="st-off">Нажмите, чтобы выбрать</span><span class="st-on">✓ ВЫБРАНО</span></span>
+          </div>
+        </label>
+        <label class="screen-opt screen-opt-right">
+          <input type="radio" name="screen-mode" id="mode-breakdown" value="breakdown">
+          <div class="screen-opt-body">
+            <span class="screen-opt-badge" aria-hidden="true">✓</span>
+            <span class="screen-opt-title">Каждый отдельно</span>
+            <span class="screen-preview">
+            <svg viewBox="0 0 400 300" role="img" aria-label="Раздельный экран: сверху общая выручка и заказы, внизу столбики по маркетплейсам">
+              <rect x="4" y="4" width="392" height="292" rx="14" fill="#fff" stroke="#111" stroke-width="5"/>
+              <text x="200" y="40" text-anchor="middle" font-size="16" font-weight="700" fill="#111">ВЫРУЧКА</text>
+              <text x="200" y="98" text-anchor="middle" font-size="52" font-weight="700" fill="#111">139 950</text>
+              <text x="200" y="134" text-anchor="middle" font-size="24" fill="#111">41 заказ</text>
+              <line x1="30" y1="150" x2="370" y2="150" stroke="#111" stroke-width="3" stroke-dasharray="3 5"/>
+              <text x="80" y="184" text-anchor="middle" font-size="22" font-weight="700" fill="#111">Oz</text>
+              <text x="80" y="228" text-anchor="middle" font-size="28" font-weight="700" fill="#111">74 200</text>
+              <text x="80" y="266" text-anchor="middle" font-size="22" fill="#111">21</text>
+              <text x="200" y="184" text-anchor="middle" font-size="22" font-weight="700" fill="#111">Wb</text>
+              <text x="200" y="228" text-anchor="middle" font-size="28" font-weight="700" fill="#111">54 250</text>
+              <text x="200" y="266" text-anchor="middle" font-size="22" fill="#111">16</text>
+              <text x="320" y="184" text-anchor="middle" font-size="22" font-weight="700" fill="#111">Ya</text>
+              <text x="320" y="228" text-anchor="middle" font-size="28" font-weight="700" fill="#111">11 500</text>
+              <text x="320" y="266" text-anchor="middle" font-size="22" fill="#111">4</text>
+              <line x1="140" y1="166" x2="140" y2="278" stroke="#111" stroke-width="2" stroke-dasharray="3 5"/>
+              <line x1="260" y1="166" x2="260" y2="278" stroke="#111" stroke-width="2" stroke-dasharray="3 5"/>
+            </svg>
+            </span>
+            <span class="screen-opt-sub">столбик на маркетплейс</span>
+            <span class="screen-opt-state"><span class="st-off">Нажмите, чтобы выбрать</span><span class="st-on">✓ ВЫБРАНО</span></span>
+          </div>
+        </label>
+      </div>
     </div>
     <p id="marketplace-breakdown-msg" class="msg"></p>
+
     <div id="marketplaces-list"></div>
+
     <label class="checkbox">
       <input type="checkbox" id="set-fbs-reminder">
-      Показывать на экране "Собрать FBS"
+      Напоминать про заказы для сборки (FBS)
     </label>
     <p class="hint">
-      Появляется на экране само, когда за сегодня есть хотя бы один
-      несобранный FBS-заказ (продавец обязан сам собрать и отправить его —
-      в отличие от FBO, который уже лежит на складе маркетплейса), и
-      пропадает, когда таких заказов нет.
+      Когда появится заказ, который нужно самому собрать и отправить, на экране
+      загорится напоминание «Собрать FBS». Отправили всё — напоминание пропадёт.
     </p>
     <p id="fbs-reminder-msg" class="msg"></p>
   </section>
 
-  <section id="notifications-section" class="card">
-    <h2>Уведомления</h2>
-    <label class="checkbox">
-      <input type="checkbox" id="set-buzzer-disabled">
-      Полностью выключить звук
-    </label>
-    <label class="checkbox">
-      <input type="checkbox" id="set-beep">
-      Уведомлять при новом заказе
-    </label>
-    <label class="checkbox">
-      <input type="checkbox" id="set-visual-alert">
-      Визуальное оповещение
-    </label>
-    <label class="checkbox">
-      <input type="checkbox" id="set-boot-sound">
-      Звук при включении
-    </label>
-    <div id="notifications-list"></div>
-    <label>
-      <span>Громкость: <span id="volume-value">100</span>%</span>
-      <input type="range" id="set-volume" min="0" max="100" step="5">
-    </label>
-
-    <h3>Уведомления</h3>
-    <div id="mp-sounds-list"></div>
-    <button type="button" id="mp-sounds-save">Сохранить</button>
-
-    <h3>Ночной режим</h3>
-    <p class="hint">
-      В это время уведомления о продажах не звучат — опрос маркетплейсов и экран это не касается,
-      молчит только звук. Диапазон через полночь (например 22:00 → 08:00) работает как есть.
-    </p>
-    <label class="checkbox">
-      <input type="checkbox" id="set-night-enabled">
-      Включить ночной режим
-    </label>
-    <div class="override-row">
-      <label>С
-        <input type="time" id="set-night-start" value="22:00">
+  <!-- Уведомления и звуки: свёрнуто, «Сохранить» внизу -->
+  <details id="notifications-section" class="card acc">
+    <summary>Уведомления и звуки</summary>
+    <div class="acc-body">
+      <h3 class="first-h3">Ночной режим</h3>
+      <p class="hint">
+        В это время сигналы о заказах молчат. Экран и подсчёт продаж работают как обычно.
+        Можно задать время через полночь, например с 22:00 до 08:00.
+      </p>
+      <label class="checkbox">
+        <input type="checkbox" id="set-night-enabled">
+        Включить ночной режим
       </label>
-      <label>До
-        <input type="time" id="set-night-end" value="08:00">
+      <div class="override-row night-row">
+        <label>С
+          <input type="time" id="set-night-start" value="22:00">
+        </label>
+        <label>До
+          <input type="time" id="set-night-end" value="08:00">
+        </label>
+      </div>
+
+      <h3>Звук</h3>
+      <label class="checkbox">
+        <input type="checkbox" id="set-buzzer-disabled">
+        Полностью выключить звук
       </label>
+      <label class="checkbox">
+        <input type="checkbox" id="set-beep">
+        Сигнал при новом заказе
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" id="set-visual-alert">
+        Визуальное оповещение на экране
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" id="set-boot-sound">
+        Звук при включении устройства
+      </label>
+
+      <h3>Мелодия по умолчанию</h3>
+      <div id="notifications-list"></div>
+      <label>
+        <span>Громкость: <span id="volume-value">100</span>%</span>
+        <input type="range" id="set-volume" min="0" max="100" step="5">
+      </label>
+
+      <h3>Своя мелодия для каждого маркетплейса</h3>
+      <div id="mp-sounds-list"></div>
+
+      <button type="button" id="mp-sounds-save">Сохранить</button>
+      <p id="notifications-msg" class="msg"></p>
     </div>
-    <p id="notifications-msg" class="msg"></p>
-  </section>
+  </details>
 
   <section id="wifi-section" class="card">
     <h2>Wi-Fi</h2>
-    <p class="hint">Плата подключится к этой сети и будет опрашивать маркетплейсы через неё.</p>
+    <p class="hint">Устройство подключится к этой сети и будет получать данные о продажах через неё.</p>
     <form id="wifi-form">
-      <label>SSID
-        <input type="text" name="ssid" id="wifi-ssid" required>
+      <label>Название сети (SSID)
+        <input type="text" name="ssid" id="wifi-ssid" required autocomplete="off" autocapitalize="none" spellcheck="false">
       </label>
+      <button type="button" id="wifi-scan" class="btn-light">Найти сети рядом</button>
+      <div id="wifi-networks-box" hidden>
+        <ul id="wifi-networks" class="wifi-list"></ul>
+        <button type="button" id="wifi-scan-collapse" class="btn-light btn-small">▲ Свернуть список сетей</button>
+      </div>
+      <p id="wifi-scan-msg" class="hint"></p>
       <label>Пароль
-        <input type="password" name="password" id="wifi-password">
+        <div class="pw-wrap">
+          <input type="password" name="password" id="wifi-password" autocomplete="off">
+          <button type="button" id="wifi-pw-toggle" class="pw-eye" aria-label="Показать пароль" title="Показать пароль">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/>
+              <circle cx="12" cy="12" r="3"/>
+              <line class="eye-slash" x1="3" y1="3" x2="21" y2="21"/>
+            </svg>
+          </button>
+        </div>
       </label>
       <button type="submit">Сохранить и перезагрузить</button>
     </form>

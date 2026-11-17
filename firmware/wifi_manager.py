@@ -47,6 +47,33 @@ def connect_sta(ssid, password, timeout_sec=20):
     return sta
 
 
+def scan_networks(limit=20):
+    """Ищет Wi-Fi сети вокруг (только 2,4 ГГц — 5 ГГц ESP32-S3 не видит).
+
+    Возвращает [{"ssid", "rssi", "secure"}], самые сильные первыми; скрытые
+    сети (пустой SSID) пропускаем, одинаковые названия (несколько точек
+    одной сети) склеиваем по самому сильному сигналу. Блокирующий вызов,
+    занимает несколько секунд. Точка доступа платы при этом продолжает
+    работать (AP+STA), но на время скана может на миг подвиснуть.
+    """
+    sta = network.WLAN(network.STA_IF)
+    sta.active(True)
+    raw = sta.scan()  # [(ssid, bssid, channel, rssi, authmode, hidden), ...]
+    best = {}
+    for item in raw:
+        try:
+            ssid = item[0].decode("utf-8")
+        except UnicodeError:
+            continue
+        if not ssid:
+            continue
+        rssi = item[3]
+        if ssid not in best or rssi > best[ssid]["rssi"]:
+            best[ssid] = {"ssid": ssid, "rssi": rssi, "secure": item[4] != 0}
+    nets = sorted(best.values(), key=lambda n: -n["rssi"])
+    return nets[:limit]
+
+
 def is_sta_connected():
     sta = network.WLAN(network.STA_IF)
     return sta.active() and sta.isconnected()

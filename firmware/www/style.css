@@ -1,84 +1,139 @@
 :root {
-  /* Стиль e-ink: белая «бумага» и чёрные чернила, как на экране устройства.
-     Сети может не быть (точка доступа), поэтому веб-шрифтов нет — системный моно. */
-  --bg: #fff;
-  --card: #fff;
-  --field: #fff;
-  --border: #111;
-  --text: #111;
-  --muted: #555;
-  --accent: #111;
-  --on-accent: #fff;
-  --good: #111;
-  --bad: #111;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  accent-color: #111;
+  /* Спокойная приглушённая бирюза в духе Web 2.0: мягкие градиенты, скругления,
+     лёгкие тени. Сети может не быть (точка доступа), поэтому веб-шрифтов нет —
+     только системные. Все цвета собраны здесь: меняешь тут — меняется везде. */
+  --bg: #b4c9c8;
+  --bg-2: #9db6b6;
+  --card: #f3f8f8;
+  --card-2: #e2ecec;
+  --field: #ffffff;
+  --border: #93adad;
+  --text: #1f3436;
+  --muted: #587274;
+  --accent: #3f8083;
+  --accent-2: #2e6a6e;
+  --accent-light: #5a9ea1;
+  --on-accent: #ffffff;
+  --good: #2e6a6e;
+  --bad: #9a4a4a;
+  --shadow: 0 2px 6px rgba(31, 52, 54, 0.18);
+  --radius: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  accent-color: #3f8083;
 }
 
 * { box-sizing: border-box; }
 
+/* Атрибут hidden должен работать и у кнопок/блоков, у которых задан display. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
-  background: var(--bg);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%) fixed;
   color: var(--text);
   padding-bottom: 40px;
 }
 
 header {
+  padding: 10px 14px;
+  background: linear-gradient(180deg, var(--accent-light) 0%, var(--accent-2) 100%);
+  border-bottom: 1px solid #1f4d50;
+  box-shadow: 0 2px 6px rgba(31, 52, 54, 0.3);
+  color: var(--on-accent);
+}
+
+/* Шапка: логотип по левому краю колонки контента, плашка «Онлайн · IP» — по
+   правому (колонка main: max-width 720 минус padding 14 с каждой стороны). */
+.header-inner {
+  max-width: 692px;
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 3px solid var(--border);
+  gap: 10px;
 }
 
-header h1 { font-size: 22px; margin: 0; letter-spacing: 0.12em; text-transform: uppercase; }
+header .brand {
+  margin: 0;
+  line-height: 0;
+  font-size: 0;
+  text-shadow: none;
+}
+
+header .brand img {
+  display: block;
+  height: 34px;
+  width: auto;
+}
+
+#conn-status[data-ip] {
+  cursor: pointer;
+}
+
+header h1 {
+  font-size: 20px;
+  margin: 0;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
 
 .badge {
   font-size: 12px;
-  padding: 3px 10px;
-  border: 2px solid var(--border);
-  background: var(--card);
-  color: var(--muted);
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--on-accent);
 }
 
-/* Цвета нет — статус читается инверсией, как на e-ink. */
-.badge.ok { background: var(--text); color: var(--on-accent); }
-.badge.bad { border-style: dashed; color: var(--text); font-weight: 700; }
+.badge.ok {
+  background: linear-gradient(180deg, #8fd0b4 0%, #4fa886 100%);
+  border-color: #3b8a6c;
+  color: #123a2c;
+  font-weight: 600;
+}
+.badge.bad {
+  background: linear-gradient(180deg, #e6b3b3 0%, #c98080 100%);
+  border-color: #a85f5f;
+  color: #4a1c1c;
+  font-weight: 600;
+}
 
 main {
-  max-width: 600px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .card {
-  background: var(--card);
-  border: 2px solid var(--border);
-  border-radius: 0;
-  padding: 16px;
+  background: linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .card h2 {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border);
   font-size: 14px;
-  color: var(--text);
+  color: var(--accent-2);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
 }
 
 .card h3 {
-  margin: 16px 0 4px;
+  margin: 14px 0 4px;
   font-size: 13px;
-  color: var(--text);
+  color: var(--accent-2);
 }
 
-.hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+.hint { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 0 0 10px; }
 
 form { display: flex; flex-direction: column; gap: 10px; }
 
@@ -94,6 +149,8 @@ label.checkbox {
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  color: var(--text);
+  margin-bottom: 6px;
 }
 
 input[type="text"],
@@ -104,11 +161,17 @@ select,
 textarea {
   background: var(--field);
   border: 1px solid var(--border);
-  border-radius: 0;
-  padding: 10px;
+  border-radius: 6px;
+  padding: 9px 10px;
   color: var(--text);
   font-size: 14px;
   font-family: inherit;
+  box-shadow: inset 0 1px 2px rgba(31, 52, 54, 0.12);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--accent-light);
+  outline-offset: 0;
 }
 
 textarea {
@@ -126,39 +189,55 @@ input[type="file"] {
   margin-bottom: 10px;
 }
 
+/* Глянцевые кнопки: светлая полоса сверху, тёмный низ */
 button {
   display: block;
   width: 100%;
-  background: var(--accent);
+  background: linear-gradient(180deg, var(--accent-light) 0%, var(--accent) 48%, var(--accent-2) 100%);
   color: var(--on-accent);
-  border: 2px solid var(--accent);
-  border-radius: 0;
-  padding: 10px 14px;
+  border: 1px solid #265a5e;
+  border-radius: 7px;
+  padding: 9px 14px;
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
   margin-top: 4px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 3px rgba(31, 52, 54, 0.25);
 }
 
-/* e-ink: при нажатии цвета меняются местами, а не бледнеют. */
-button:active { background: var(--card); color: var(--text); }
+button:hover { filter: brightness(1.06); }
 
-.msg { font-size: 13px; color: var(--good); min-height: 16px; overflow-wrap: anywhere; }
-.msg.error { color: var(--text); font-weight: 700; }
+button:active {
+  filter: brightness(0.92);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+button:disabled { opacity: 0.5; cursor: default; }
+
+.msg { font-size: 13px; color: var(--good); min-height: 16px; margin: 6px 0 0; overflow-wrap: anywhere; }
+.msg.error { color: var(--bad); font-weight: 600; }
 .msg.error:not(:empty)::before { content: "✕ "; }
 
-.stats-row { display: flex; gap: 16px; }
+.stats-row { display: flex; gap: 12px; }
 
-.stat { flex: 1; text-align: center; }
+.stat {
+  flex: 1;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #e8f0f0 100%);
+  border: 1px solid var(--border);
+}
 
-.stat-value { font-size: 34px; font-weight: 700; letter-spacing: 0.02em; }
+.stat-value { font-size: 30px; font-weight: 700; color: var(--accent-2); }
 
-.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
 
 #preview-img {
   width: 100%;
-  border: 2px solid var(--border);
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   background: #fff;
   image-rendering: pixelated;
 }
@@ -166,7 +245,7 @@ button:active { background: var(--card); color: var(--text); }
 .override-row {
   display: flex;
   gap: 10px;
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
 .override-row label,
@@ -194,23 +273,23 @@ input[type="number"]::-webkit-outer-spin-button {
 .mp-stats-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 12px 0;
+  margin: 10px 0 0;
   font-size: 13px;
 }
 
 .mp-stats-table th,
 .mp-stats-table td {
   text-align: left;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
+  padding: 5px 6px;
+  border-bottom: 1px solid rgba(147, 173, 173, 0.55);
 }
 
 .mp-stats-table th {
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 11px;
   text-transform: uppercase;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .mp-stats-table th:not(:first-child),
@@ -223,8 +302,8 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .mp-stats-error-note {
-  color: var(--text);
-  font-weight: 700;
+  color: var(--bad);
+  font-weight: 600;
   font-size: 11px;
   /* Длинный текст ошибки (URL, JSON от API маркетплейса) без пробелов
      иначе может растянуть таблицу шире карточки — сам текст теперь и так
@@ -233,36 +312,75 @@ input[type="number"]::-webkit-outer-spin-button {
   overflow-wrap: anywhere;
 }
 
-.mp-type {
-  margin-bottom: 16px;
-}
+/* ───── Раскрывающиеся вкладки (<details class="acc">) ───── */
 
-.mp-type-head {
+.acc > summary {
+  list-style: none;
+  cursor: pointer;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-}
-
-.mp-type-head h3 {
-  margin: 0;
+  gap: 8px;
   font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  user-select: none;
 }
 
-.mp-type-head .mp-add-shop {
-  width: auto;
-  margin-top: 0;
-  padding: 6px 10px;
-  font-size: 12px;
-  background: transparent;
-  border: 1px solid var(--text);
-  color: var(--text);
+.acc > summary::-webkit-details-marker { display: none; }
+
+/* Стрелка-шеврон справа; при раскрытии поворачивается вниз */
+.acc > summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--accent-2);
+  border-bottom: 2px solid var(--accent-2);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
 }
+
+.acc[open] > summary::after { transform: rotate(45deg); }
+
+.acc-body { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+.acc-badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 2px 9px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(147, 173, 173, 0.3);
+  border: 1px solid var(--border);
+}
+
+.acc-badge.ok {
+  color: #123a2c;
+  background: linear-gradient(180deg, #b6e3cf 0%, #85c9a9 100%);
+  border-color: #5fa986;
+}
+
+/* Маркетплейс — вложенная вкладка внутри карточки «Маркетплейсы» */
+.mp-type.acc {
+  margin-bottom: 10px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff 0%, #eaf2f2 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.mp-type > summary { font-size: 14px; letter-spacing: 0.02em; text-transform: none; }
 
 .mp-card {
   border: 1px solid var(--border);
-  border-radius: 0;
-  padding: 12px;
+  border-radius: 8px;
+  background: var(--card);
+  padding: 10px;
   margin-bottom: 10px;
 }
 
@@ -270,7 +388,7 @@ input[type="number"]::-webkit-outer-spin-button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .mp-card .status {
@@ -279,19 +397,26 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .mp-card .status.ok {
-  color: var(--text);
+  color: var(--good);
   font-weight: 700;
 }
 
+.mp-type .mp-add-shop,
 .mp-card .mp-remove-shop {
   width: auto;
   margin-top: 0;
   padding: 6px 10px;
   font-size: 12px;
-  background: transparent;
-  border: 1px dashed var(--text);
-  color: var(--text);
+  color: var(--accent-2);
+  text-shadow: none;
+  background: linear-gradient(180deg, #ffffff 0%, #dfeaea 100%);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 #fff;
 }
+
+.mp-card .mp-remove-shop { color: var(--bad); }
+
+.mp-type .mp-add-shop { width: 100%; }
 
 .mp-breakdown-row {
   display: flex;
@@ -300,6 +425,8 @@ input[type="number"]::-webkit-outer-spin-button {
   gap: 8px;
   margin-bottom: 8px;
 }
+
+.mp-breakdown-row label.checkbox { margin-bottom: 0; }
 
 .mp-reorder {
   display: flex;
@@ -310,21 +437,235 @@ input[type="number"]::-webkit-outer-spin-button {
 .mp-reorder button {
   width: auto;
   margin-top: 0;
-  padding: 4px 8px;
+  padding: 4px 9px;
   font-size: 12px;
-  background: transparent;
+  color: var(--accent-2);
+  text-shadow: none;
+  background: linear-gradient(180deg, #ffffff 0%, #dfeaea 100%);
   border: 1px solid var(--border);
-  color: var(--text);
+  box-shadow: inset 0 1px 0 #fff;
 }
 
 .mp-reorder button:disabled {
-  opacity: 0.3;
+  opacity: 0.35;
 }
+
+.card h3.first-h3 { margin-top: 0; }
+
+/* Фирменный жёлтый: ссылки-«пилюли» (например, «Как получить ключи») */
+.pill-link {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid #c99700;
+  background: linear-gradient(180deg, #ffe58a 0%, #ffcf3f 50%, #f2b705 100%);
+  color: #4a3600;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(31, 52, 54, 0.3);
+}
+
+.pill-link:hover { filter: brightness(1.05); }
+.pill-link:active { filter: brightness(0.94); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25); }
+
+button.btn-small { padding: 6px 10px; font-size: 12px; margin-top: 6px; }
+
+/* ───── Выбор вида экрана: две крупные карточки-радио ─────
+   Выбранная — яркая синяя, с жёлтой рамкой, большой галочкой и плашкой
+   «ВЫБРАНО». Невыбранная — бледная, с пустым кружком и подсказкой. */
+
+.screen-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.screen-opt { display: block; position: relative; cursor: pointer; }
+
+.screen-opt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.screen-opt-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 3px solid #b9caca;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f4f8f8 0%, #dfe9e9 100%);
+  transition: all 0.15s;
+}
+
+/* Невыбранная: приглушена, предлагает нажать */
+.screen-opt-title { font-size: 15px; font-weight: 800; color: var(--muted); padding-right: 40px; }
+.screen-opt-sub { font-size: 12px; color: var(--muted); }
+.screen-opt .screen-preview { opacity: 0.55; filter: grayscale(0.5); transition: all 0.15s; }
+.screen-opt:hover .screen-opt-body { border-color: var(--accent-light); }
+
+/* Кружок-галочка справа вверху: пустой у невыбранной */
+.screen-opt-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 3px solid #a9bcbc;
+  background: #fff;
+  color: transparent;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 24px;
+  text-align: center;
+}
+
+/* Полоса состояния внизу карточки */
+.screen-opt-state {
+  display: block;
+  margin-top: 2px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: rgba(147, 173, 173, 0.25);
+  color: var(--muted);
+}
+.screen-opt-state .st-on { display: none; }
+
+/* ВЫБРАННАЯ */
+.screen-opt input:checked + .screen-opt-body {
+  border-color: #f2b705;
+  background: linear-gradient(180deg, #4fb0d4 0%, #2d86ad 55%, #1d6486 100%);
+  box-shadow: 0 0 0 4px rgba(242, 183, 5, 0.45), 0 6px 16px rgba(20, 70, 95, 0.45);
+  transform: translateY(-2px);
+}
+
+.screen-opt input:checked + .screen-opt-body .screen-opt-title { color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+.screen-opt input:checked + .screen-opt-body .screen-opt-sub { color: #e6f6fc; }
+.screen-opt input:checked + .screen-opt-body .screen-preview { opacity: 1; filter: none; }
+
+.screen-opt input:checked + .screen-opt-body .screen-opt-badge {
+  border-color: #c99700;
+  background: linear-gradient(180deg, #ffe58a 0%, #ffcf3f 50%, #f2b705 100%);
+  color: #4a3600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.screen-opt input:checked + .screen-opt-body .screen-opt-state {
+  background: linear-gradient(180deg, #ffe58a 0%, #ffcf3f 50%, #f2b705 100%);
+  color: #4a3600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.screen-opt input:checked + .screen-opt-body .st-off { display: none; }
+.screen-opt input:checked + .screen-opt-body .st-on { display: inline; }
+
+.screen-opt input:focus-visible + .screen-opt-body { outline: 3px solid var(--accent-light); outline-offset: 2px; }
+
+/* Превью экрана. font-family у SVG-текста — системный. */
+.screen-preview { display: block; position: relative; }
+
+.screen-preview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  border-radius: 6px;
+}
+
+/* Порядок столбиков показываем только в режиме «Каждый отдельно» */
+.mp-breakdown-row { display: none; }
+#marketplaces-section.breakdown-on .mp-breakdown-row { display: flex; }
+.mp-order-label { font-size: 13px; color: var(--muted); }
+
+/* Светлая (второстепенная) кнопка */
+button.btn-light {
+  color: var(--accent-2);
+  text-shadow: none;
+  background: linear-gradient(180deg, #ffffff 0%, #dfeaea 100%);
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+/* Список найденных Wi-Fi сетей */
+.wifi-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--field);
+}
+
+.wifi-list li + li { border-top: 1px solid rgba(147, 173, 173, 0.5); }
+
+button.wifi-net {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  text-shadow: none;
+  box-shadow: none;
+  text-align: left;
+}
+
+button.wifi-net:hover { background: #e4f0f0; filter: none; }
+
+.wifi-net-name { overflow-wrap: anywhere; font-size: 14px; }
+.wifi-net-meta { color: var(--accent-2); font-size: 12px; white-space: nowrap; }
+
+/* Поле пароля с глазиком справа */
+.pw-wrap { position: relative; display: flex; }
+.pw-wrap input { width: 100%; padding-right: 44px; }
+
+button.pw-eye {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--muted);
+  text-shadow: none;
+}
+
+button.pw-eye:hover { color: var(--accent-2); filter: none; }
+
+/* Перечёркнутый глаз виден, только когда пароль показан */
+.pw-eye .eye-slash { display: none; }
+.pw-eye.shown .eye-slash { display: inline; }
+
+.night-row { margin-bottom: 4px; }
 
 .hint code {
   background: var(--field);
   border: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: 4px;
   padding: 1px 4px;
   font-size: 12px;
 }
@@ -334,7 +675,7 @@ input[type="number"]::-webkit-outer-spin-button {
   align-items: flex-end;
   gap: 10px;
   border: 1px solid var(--border);
-  border-radius: 0;
+  border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 8px;
 }
@@ -361,8 +702,9 @@ input[type="number"]::-webkit-outer-spin-button {
   align-items: flex-end;
   gap: 10px;
   border: 1px solid var(--border);
-  border-radius: 0;
-  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--field);
+  padding: 8px 12px;
   margin-bottom: 8px;
 }
 
@@ -396,39 +738,57 @@ html {
 }
 
 /* Быстрые переходы к разделам (main.html) — панель остаётся наверху при
-   прокрутке; боковые отступы выровнены по колонке main (max-width 600px). */
+   прокрутке; боковые отступы выровнены по колонке main (max-width 720px). */
 .quick-nav {
   position: sticky;
   top: 0;
   z-index: 10;
   display: flex;
   gap: 8px;
-  padding: 10px max(16px, calc((100% - 600px) / 2 + 16px));
-  background: var(--bg);
-  border-bottom: 3px solid var(--border);
+  padding: 8px max(14px, calc((100% - 720px) / 2 + 14px));
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(31, 52, 54, 0.15);
 }
 
 .quick-nav a {
   flex: 1;
-  padding: 10px 6px;
-  border-radius: 0;
-  background: var(--accent);
+  padding: 8px 6px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, var(--accent-light) 0%, var(--accent) 48%, var(--accent-2) 100%);
   color: var(--on-accent);
-  border: 2px solid var(--accent);
+  border: 1px solid #265a5e;
   font-size: 12px;
   font-weight: 700;
   text-align: center;
-  text-transform: uppercase;
   text-decoration: none;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .quick-nav a:active {
-  background: var(--card);
-  color: var(--text);
+  filter: brightness(0.92);
+}
+
+/* Жёлтая кнопка «Как настроить?» */
+.quick-nav a.help {
+  background: linear-gradient(180deg, #ffe58a 0%, #ffcf3f 50%, #f2b705 100%);
+  border-color: #c99700;
+  color: #4a3600;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 3px rgba(31, 52, 54, 0.3);
+}
+
+.quick-nav a { min-width: 0; display: flex; align-items: center; justify-content: center; }
+
+/* Узкие экраны (телефоны): четыре кнопки помещаются в строку, подписи могут переноситься */
+@media (max-width: 480px) {
+  .quick-nav { gap: 5px; }
+  .quick-nav a { font-size: 11px; padding: 7px 2px; line-height: 1.15; }
 }
 
 .card {
-  scroll-margin-top: 70px;
+  scroll-margin-top: 62px;
 }
 
 /* Статусы источников обновлений */

@@ -32,6 +32,7 @@ import framebuf
 from display import custom_font
 from display.layout_common import (
     fbs_line,
+    import_font,
     LAYOUT,
     res_key,
     resolve_font,
@@ -84,16 +85,71 @@ def static_frame(fb):
 START_SCREEN_PATH = "/display/start_screen_400x300.bin"
 
 
-def _load_start_screen(fb):
-    """True, если заставка нарисована; False — файла нет, тогда рисуется
-    обычный экран."""
+def _load_bin_screen(fb, path):
+    """Рисует готовый 1bpp-кадр 400x300 из файла. False — файла нет или он
+    неполный (обрезан при заливке): тогда вызывающий рисует запасной экран."""
     try:
-        with open(START_SCREEN_PATH, "rb") as f:
+        with open(path, "rb") as f:
             data = bytearray(f.read())
     except OSError:
         return False
+    if len(data) != WIDTH * HEIGHT // 8:
+        return False
     fb.fill(0)
     fb.blit(framebuf.FrameBuffer(data, WIDTH, HEIGHT, framebuf.MONO_HLSB), 0, 0)
+    return True
+
+
+def _load_start_screen(fb):
+    """True, если заставка нарисована; False — файла нет, тогда рисуется
+    обычный экран."""
+    return _load_bin_screen(fb, START_SCREEN_PATH)
+
+
+# Второй экран: плата уже подключилась к домашнему Wi-Fi, но маркетплейсов ещё
+# нет. Вместо QR на точку доступа — QR на АДРЕС ПЛАТЫ В СЕТИ (наведи телефон —
+# откроется админка) и сам адрес цифрами для компьютера. Рамка, логотип и
+# подпись — в готовой картинке start_screen2_400x300.bin, QR и адрес рисуются
+# поверх (см. display/qr.py).
+START2_PATH = "/display/start_screen2_400x300.bin"
+_AP_IP = "192.168.4.1"
+# Место под QR (из макета): центр области 135x135, QR 25 модулей по 5 px = 125x125.
+QR2_CX = 200
+QR2_CY = 153
+QR2_SCALE = 5
+# Адрес цифрами под QR: самый крупный Orbitron, который помещается по ширине.
+IP2_CY = 240
+IP2_MAX_W = 372
+_IP2_FONTS = ("orbitron_20", "orbitron_12")
+_qr_cache = {}
+
+
+def _draw_start_screen2(fb, ip):
+    """True, если второй экран нарисован; False — нет файла (рисуется первый)."""
+    if not _load_bin_screen(fb, START2_PATH):
+        return False
+    try:
+        from display import qr
+
+        mods = _qr_cache.get(ip)
+        if mods is None:
+            _qr_cache.clear()
+            mods = qr.make("http://" + ip + "/")
+            _qr_cache[ip] = mods
+        side = qr.SIZE * QR2_SCALE
+        qr.draw(fb, mods, QR2_CX - side // 2, QR2_CY - side // 2, QR2_SCALE)
+    except Exception as exc:  # без QR экран всё равно полезен — адрес виден цифрами
+        print("start_screen2: QR не нарисован:", exc)
+    font = None
+    for name in _IP2_FONTS:
+        try:
+            font = import_font(name)
+        except Exception:
+            continue
+        if custom_font.text_width(font, ip) <= IP2_MAX_W:
+            break
+    if font is not None:
+        custom_font.draw_text_centered(fb, font, ip, 200, IP2_CY)
     return True
 
 
@@ -364,8 +420,14 @@ def update_numbers(fb, data):
     # Фон перезагружаем на каждой перерисовке (не только один раз при
     # старте) — та же причина, что у layout_200x200: текст не должен
     # оставлять "призраков" от старого значения.
-    if data.get("show_start_screen") and _load_start_screen(fb):
-        return
+    if data.get("show_start_screen"):
+        ip = data.get("ip") or ""
+        # Подключены к домашней сети (адрес не от точки доступа) — второй экран,
+        # иначе (режим настройки Wi-Fi) — первый.
+        if ip and ip != _AP_IP and _draw_start_screen2(fb, ip):
+            return
+        if _load_start_screen(fb):
+            return
     _load_background(fb, breakdown=bool(data.get("show_marketplace_breakdown")))
     cfg = LAYOUT.get()
 
