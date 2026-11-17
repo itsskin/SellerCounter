@@ -284,6 +284,8 @@ def main():
         cfg["buzzer"]["pin"],
         cfg["buzzer"].get("enabled", True),
         cfg["buzzer"].get("volume", 100),
+        cfg["buzzer"].get("invert", False),
+        cfg["buzzer"].get("legacy_sound", False),
     )
 
     # Аппаратный watchdog — см. _feed_watchdog() выше про то, зачем он
@@ -330,8 +332,7 @@ def main():
     cause = machine.reset_cause()
     if cause == machine.PWRON_RESET:
         if cfg["buzzer"].get("boot_sound", True):
-            buzzer.beep(1000, 100)
-            buzzer.startup_chime()
+            buzzer.play_boot_sound()
     elif cause == machine.WDT_RESET:
         if cfg["buzzer"].get("watchdog_sound", True):
             buzzer.beep(440, 3000)

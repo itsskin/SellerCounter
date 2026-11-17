@@ -374,6 +374,7 @@ async def api_settings(request):
             # применяем изменения сразу, без перезагрузки платы.
             buzzer.volume = cfg["buzzer"].get("volume", buzzer.volume)
             buzzer.enabled = cfg["buzzer"].get("enabled", buzzer.enabled)
+            buzzer.legacy = bool(cfg["buzzer"].get("legacy_sound", buzzer.legacy))
     config_module.save(cfg)
     engine = _state["engine"]
     # Смена режима (визуальное оповещение вкл/выкл) — сразу полное обновление

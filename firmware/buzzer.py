@@ -42,6 +42,7 @@
 # есть у MH-FMD) высокая нота иногда звучит ГРОМЧЕ на 80-90%, чем на 100% —
 # это ожидаемая физика PWM, не баг.
 
+import math
 import struct
 import time
 from machine import Pin, PWM
@@ -62,16 +63,66 @@ WAV_PWM_CARRIER_FREQ = 32000  # несущая частота PWM для пот�
 # реальной громкости.
 VOLUME_SCALE = 0.8
 
+# «Мягкий» звук мелодий (MIDI). Зумер — не динамик: резкий прямоугольный сигнал звучит как писк, а
+# низкие ноты хрипят. Поэтому (1) каждая нота плавно нарастает и затухает, как колокольчик
+# (ENV_*), и (2) мелодия сдвигается целыми октавами в диапазон, где зумер звучит чище
+# (AUTO_LOW..AUTO_HIGH — номера нот MIDI: 79 = G5 ~ 784 Гц, 103 = G7 ~ 3136 Гц).
+ENV_ATTACK_MS = 8      # нарастание в начале ноты (убирает щелчок)
+ENV_DECAY_MS = 170     # постоянная затухания «колокольчика»
+ENV_FLOOR = 0.12       # до какой доли громкости затухает нота (не до нуля, чтобы длинные ноты не обрывались)
+ENV_STEP_MS = 8        # как часто обновляем громкость во время ноты
+AUTO_LOW = 79
+AUTO_HIGH = 103
+
+
+def _env_gain(t_ms):
+    """Множитель громкости (0..1) через t_ms после начала ноты."""
+    if t_ms < ENV_ATTACK_MS:
+        return t_ms / ENV_ATTACK_MS
+    return ENV_FLOOR + (1.0 - ENV_FLOOR) * math.exp(-(t_ms - ENV_ATTACK_MS) / ENV_DECAY_MS)
+
+
+def _auto_transpose(lo, hi):
+    """Сдвиг в полутонах (кратный 12), чтобы мелодия попала в AUTO_LOW..AUTO_HIGH."""
+    if hi < lo:
+        return 0
+    shift = 0
+    while lo + shift < AUTO_LOW and hi + shift + 12 <= AUTO_HIGH:
+        shift += 12
+    while hi + shift > AUTO_HIGH and lo + shift - 12 >= 36:
+        shift -= 12
+    return shift
+
 
 def _note_to_freq(note):
     return 440.0 * (2 ** ((note - 69) / 12.0))
 
 
+class _InvertedPWM:
+    """Обёртка над PWM для модулей с ОБРАТНОЙ логикой (звучат на НИЗКОМ уровне — «low level
+    trigger», так ведут себя часть MH-FMD): скважность инвертируется, поэтому в покое
+    (duty 0) пин держится на ВЫСОКОМ уровне и модуль молчит, а тон звучит как обычно
+    (на 50% скважности инверсия сигнал не меняет). Остальное — как у обычного PWM."""
+
+    def __init__(self, pwm):
+        self._p = pwm
+
+    def duty_u16(self, value):
+        self._p.duty_u16(65535 - value)
+
+    def freq(self, *args):
+        return self._p.freq(*args)
+
+    def deinit(self):
+        self._p.deinit()
+
+
 class Buzzer:
-    def __init__(self, pin_num, enabled=True, volume=100):
+    def __init__(self, pin_num, enabled=True, volume=100, invert=False, legacy=False):
         self.pin_num = pin_num
         self.enabled = enabled
         self.volume = volume  # 0-500%, см. пояснение в шапке файла
+        self.legacy = legacy  # True — звуки без обработки (см. play_midi / play_boot_sound)
         # ОДИН PWM-канал на весь срок жизни платы — раньше каждый
         # beep()/play_midi()/play_wav() создавал PWM(Pin(...)) заново и
         # deinit()'ил его в конце. HW-подтверждено: шипение через зуммер
@@ -84,6 +135,8 @@ class Buzzer:
         # отпускает его), и никакой пересборки объекта/пина между звуками
         # больше нет.
         self._pwm = PWM(Pin(pin_num), freq=440)
+        if invert:
+            self._pwm = _InvertedPWM(self._pwm)
         self._pwm.duty_u16(0)
         # play_midi() — асинхронный и отдаёт управление между нотами
         # (await), так что второй вызов play_notification() (реальная
@@ -122,6 +175,23 @@ class Buzzer:
             self.beep(freq, 70)
             time.sleep_ms(30)
 
+    def play_boot_sound(self, path="/notifications/start.mid"):
+        """Звук при физическом включении платы. Вызывается ДО запуска цикла событий (из main()),
+        поэтому синхронно: играет start.mid; если файла нет — прежний сигнал из трёх тонов."""
+        try:
+            import os
+
+            os.stat(path)
+        except OSError:
+            self.beep(1000, 100)
+            self.startup_chime()
+            return
+        if self.legacy:
+            self.beep(1000, 100)
+            self.startup_chime()
+            return
+        asyncio.run(self.play_notification(path))
+
     async def play_notification(self, filename):
         """Играет файл уведомления — .mid или .wav, определяется по
         расширению. Используется и для реального алерта о продаже, и для
@@ -140,35 +210,75 @@ class Buzzer:
             else:
                 print("buzzer: unsupported notification file %r (нужен .mid или .wav)" % filename)
 
-    async def play_midi(self, filename, transpose=0):
+    def _midi_range(self, filename):
+        """(самая низкая, самая высокая нота) файла — для автоподбора октавы."""
+        lo, hi = 127, 0
+        try:
+            for event in umidiparser.MidiFile(filename):
+                if event.status == umidiparser.NOTE_ON and event.velocity > 0:
+                    if event.note < lo:
+                        lo = event.note
+                    if event.note > hi:
+                        hi = event.note
+        except Exception as exc:
+            print("buzzer: не смог прочитать диапазон нот %s: %s" % (filename, exc))
+        return lo, hi
+
+    async def _envelope_loop(self, pwm, state):
+        """Пока нота звучит, плавно меняет громкость (скважность) по _env_gain()."""
+        while True:
+            if state["on"]:
+                t = time.ticks_diff(time.ticks_ms(), state["t0"])
+                pwm.duty_u16(int(self._tone_duty() * _env_gain(t)))
+            await asyncio.sleep_ms(ENV_STEP_MS)
+
+    async def play_midi(self, filename, transpose=None):
         """Асинхронно проигрывает MIDI-файл — не блокирует остальные
         асинхронные задачи (веб-сервер, опрос маркетплейсов) между нотами.
         Если ноты в файле накладываются — играем как монофонический
-        синтезатор: стек зажатых нот, звучит верхушка стека."""
+        синтезатор: стек зажатых нот, звучит верхушка стека.
+
+        transpose=None — подобрать октаву автоматически (см. AUTO_LOW/AUTO_HIGH), число — свой
+        сдвиг в полутонах (0 — как в файле). Каждая нота звучит с плавным нарастанием и затуханием."""
         if not self.enabled:
             return
+
+        legacy = self.legacy
+        if transpose is None:
+            if legacy:
+                transpose = 0
+            else:
+                lo, hi = self._midi_range(filename)
+                transpose = _auto_transpose(lo, hi)
 
         pwm = self._pwm
         pwm.duty_u16(0)
         held_notes = []
+        state = {"on": False, "t0": 0}
+
+        def start_note(note):
+            freq = int(round(_note_to_freq(note + transpose)))
+            pwm.freq(max(MIN_PWM_FREQ, min(freq, MAX_PWM_FREQ)))
+            if legacy:
+                pwm.duty_u16(self._tone_duty())      # без обработки: сразу полная громкость, без огибающей
+                return
+            state["t0"] = time.ticks_ms()
+            state["on"] = True
 
         def note_on(note):
             held_notes.append(note)
-            freq = int(round(_note_to_freq(note + transpose)))
-            freq = max(MIN_PWM_FREQ, min(freq, MAX_PWM_FREQ))
-            pwm.freq(freq)
-            pwm.duty_u16(self._tone_duty())
+            start_note(note)
 
         def note_off(note):
             if note in held_notes:
                 held_notes.remove(note)
             if held_notes:
-                freq = int(round(_note_to_freq(held_notes[-1] + transpose)))
-                pwm.freq(max(MIN_PWM_FREQ, min(freq, MAX_PWM_FREQ)))
-                pwm.duty_u16(self._tone_duty())
+                start_note(held_notes[-1])
             else:
+                state["on"] = False
                 pwm.duty_u16(0)
 
+        env_task = None if legacy else asyncio.create_task(self._envelope_loop(pwm, state))
         try:
             midi = umidiparser.MidiFile(filename)
             async for event in midi.play():
@@ -181,6 +291,9 @@ class Buzzer:
         except Exception as exc:
             print("buzzer: play_midi(%s) failed: %s" % (filename, exc))
         finally:
+            state["on"] = False
+            if env_task is not None:
+                env_task.cancel()
             pwm.duty_u16(0)
 
     def play_wav(self, filename, chunk_size=512):

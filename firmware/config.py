@@ -137,7 +137,16 @@ DEFAULT_CONFIG = {
     "buzzer": {
         "pin": 13,
         "enabled": True,
-        "volume": 100,
+        # 25 — тихо и при этом слышно на зумере MH-FMD (ниже ~20% сигнал почти пропадает).
+        "volume": 25,
+        # True — модуль с обратной логикой (звучит на НИЗКОМ уровне, «low level trigger»):
+        # в покое пин держится на высоком уровне и модуль молчит. Признак: без этого флага
+        # модуль постоянно трещит. Задаётся в config.json платы.
+        "invert": False,
+        # True — «legacy sound»: звуки как раньше, без обработки (без плавного нарастания/затухания нот
+        # и без автоподбора октавы, при включении прежний сигнал из трёх тонов). По умолчанию мягкий звук.
+        # Переключается галочкой на странице /advanced.
+        "legacy_sound": False,
         "night_mode": {"enabled": False, "start": "22:00", "end": "08:00"},
         # Отдельный переключатель конкретно для сигнала при ФИЗИЧЕСКОМ
         # включении платы (main.py: beep() + startup_chime(), только на
@@ -165,12 +174,13 @@ DEFAULT_CONFIG = {
     # кнопке "Тест" в веб-интерфейсе (см. web_server.py: /api/notifications*)
     # — дефолт/фолбэк для маркетплейсов без своей мелодии в
     # notification_sounds ниже.
-    "notification_sound": "sale.mid",
+    "notification_sound": "ozon.mid",
     # Мелодия конкретного маркетплейса (id -> имя файла в /notifications/),
     # переопределяет notification_sound выше только для этого маркетплейса.
     # Нет записи для id — играется общий notification_sound. См.
     # StatsEngine._sound_for_marketplace.
-    "notification_sounds": {},
+    # Звуки по умолчанию: Ozon играет общий (выше), у Wildberries и Яндекс Маркета свои.
+    "notification_sounds": {"wb": "wb.mid", "yandex": "yandex.mid"},
 }
 
 
@@ -217,6 +227,23 @@ def load():
     # пользователь задал сам, не трогаем.
     if cfg["ap"].get("ssid") in ("SellerCounter-Setup", "UBIX Setup"):
         cfg["ap"]["ssid"] = DEFAULT_CONFIG["ap"]["ssid"]
+    # Миграция звуков: файлы мелодий могли сменить (остался только набор start/ozon/wb/yandex) —
+    # если выбранного файла больше нет, берём звук по умолчанию вместо тишины.
+    try:
+        import os
+
+        names = os.listdir("/notifications")
+    except OSError:
+        names = None
+    if names is not None:
+        if cfg.get("notification_sound") not in names:
+            cfg["notification_sound"] = DEFAULT_CONFIG["notification_sound"]
+        sounds = cfg.get("notification_sounds", {})
+        for key in [k for k, v in sounds.items() if v not in names]:
+            if DEFAULT_CONFIG["notification_sounds"].get(key) in names:
+                sounds[key] = DEFAULT_CONFIG["notification_sounds"][key]
+            else:
+                del sounds[key]
     return _ensure_marketplace_keys(cfg)
 
 

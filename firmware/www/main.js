@@ -11,11 +11,13 @@ const FIELD_LABELS = {
   api_key: "API-ключ",
 };
 
-// Ссылки на туториалы «как получить ключи» по маркетплейсам (страницы сайта).
+// Ссылки «как получить ключи» по маркетплейсам.
+// Якоря ведут в раздел «Подключение маркетплейсов» инструкции (/start/), сразу к нужному
+// маркетплейсу. Страница /start/ и её якоря (#ozon, #wildberries, #yandex-market) менять нельзя.
 const TUTORIAL_URLS = {
-  ozon: "https://monik.u-bix.ru/integrations/ozon/",
-  wb: "https://monik.u-bix.ru/integrations/wildberries/",
-  yandex: "https://monik.u-bix.ru/integrations/yandex-market/",
+  ozon: "https://monik.u-bix.ru/start/#ozon",
+  wb: "https://monik.u-bix.ru/start/#wildberries",
+  yandex: "https://monik.u-bix.ru/start/#yandex-market",
 };
 
 // Ссылка на полный туториал «Как настроить?» (верхнее меню). Тот же адрес зашит в

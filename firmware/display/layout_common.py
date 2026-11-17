@@ -319,60 +319,60 @@ DEFAULTS = {
     "revenue.show.400x300": "1",
     "revenue.x.200x200": "100",
     "revenue.x.400x300": "200",
-    "revenue.y.200x200": "73",
-    "revenue.y.400x300": "95",
+    "revenue.y.200x200": "68",
+    "revenue.y.400x300": "90",
     "revenue.font.200x200": "orbitron_52",
-    "revenue.font.400x300": "orbitron_128",
+    "revenue.font.400x300": "orbitronbold_70",
     "revenue.max_width.200x200": "176",
     # 380 — по факту хватает на "1xxx" (371px в orbitron_128, у "1" узкий
     # глиф) без сокращения в "1.8K"; другие ведущие цифры ("2000"+) шире
     # (~410-430px) и физически не влезли бы в 400px экран без сокращения
     # даже с бОльшим запасом — так что выше поднимать особо некуда.
-    "revenue.max_width.400x300": "380",
+    "revenue.max_width.400x300": "250",
     # Когда выручка сокращается до вида "12.3K"/"1.2M" (см. format_compact),
     # часть от точки и дальше рисуется этим, более мелким шрифтом — для
     # визуального разделения целой части и сокращения, как копейки на
     # ценнике.
     "revenue.decimal_font.200x200": "orbitron_36",
-    "revenue.decimal_font.400x300": "orbitron_70",
+    "revenue.decimal_font.400x300": "orbitronbold_70",
 
     "orders.name": "Заказы",
     "orders.show.200x200": "1",
     "orders.show.400x300": "1",
-    "orders.x.200x200": "100",
+    "orders.x.200x200": "200",
     "orders.x.400x300": "200",
-    "orders.y.200x200": "126",
-    "orders.y.400x300": "205",
+    "orders.y.200x200": "75",
+    "orders.y.400x300": "215",
     "orders.font.200x200": "orbitron_42",
-    "orders.font.400x300": "orbitron_96",
+    "orders.font.400x300": "orbitronbold_45",
     "orders.max_width.200x200": "176",
-    "orders.max_width.400x300": "320",
+    "orders.max_width.400x300": "300",
     "orders.decimal_font.200x200": "orbitron_24",
-    "orders.decimal_font.400x300": "orbitron_52",
+    "orders.decimal_font.400x300": "orbitronbold_45",
 
     "clock.name": "Дата",
     # На 400x300 по умолчанию выключено — там своё место занято IP (см.
     # ip.* ниже); включи clock.show.400x300, если хочешь дату и там тоже.
     "clock.show.200x200": "1",
-    "clock.show.400x300": "0",
-    "clock.x.200x200": "100",
-    "clock.x.400x300": "200",
-    "clock.y.200x200": "10",
-    "clock.y.400x300": "10",
-    "clock.font.200x200": "orbitron_20",
-    "clock.font.400x300": "orbitron_20",
+    "clock.show.400x300": "1",
+    "clock.x.200x200": "30",
+    "clock.x.400x300": "87",
+    "clock.y.200x200": "6",
+    "clock.y.400x300": "3",
+    "clock.font.200x200": "pixelmix_4",
+    "clock.font.400x300": "pixelmix_8",
 
     "ip.name": "IP-адрес",
     # На 200x200 по умолчанию выключено — экран маленький, места под ещё
     # одну строку обычно нет; включи ip.show.200x200, если нужно.
-    "ip.show.200x200": "0",
+    "ip.show.200x200": "1",
     "ip.show.400x300": "1",
     "ip.x.200x200": "100",
-    "ip.x.400x300": "200",
-    "ip.y.200x200": "190",
-    "ip.y.400x300": "282",
-    "ip.font.200x200": "orbitron_20",
-    "ip.font.400x300": "orbitron_20",
+    "ip.x.400x300": "314",
+    "ip.y.200x200": "185",
+    "ip.y.400x300": "3",
+    "ip.font.200x200": "pixelmix_7",
+    "ip.font.400x300": "pixelmix_8",
 
     "fbs_label.name": 'Напоминание "Собрать FBS"',
     # Кроме этого флага, напоминание всё равно рисуется, только когда
@@ -385,9 +385,9 @@ DEFAULTS = {
     "fbs_label.x.200x200": "100",
     "fbs_label.x.400x300": "200",
     "fbs_label.y.200x200": "165",
-    "fbs_label.y.400x300": "260",
+    "fbs_label.y.400x300": "245",
     "fbs_label.font.200x200": "verdana_15",
-    "fbs_label.font.400x300": "verdana_28",
+    "fbs_label.font.400x300": "verdana_15",
     # Число несобранных FBS-заказов (сумма по ВСЕМ маркетплейсам сразу)
     # дописывается прямо в этот текст при отрисовке ("Собрать FBS: 3шт") —
     # само поле fbs_label.text.* остаётся только "заголовочной" частью, без
@@ -423,12 +423,12 @@ DEFAULTS = {
     # шрифт в узком столбике. decimal_font тут почти не используется
     # (max_decimals=0 в коде), но нужен на случай, если даже "2K" не влезет
     # и придётся ужимать шрифт с хвостом-буквой отдельно.
-    "mp_row.revenue_font": "orbitron_70",
-    "mp_row.revenue_decimal_font": "orbitron_36",
+    "mp_row.revenue_font": "orbitronbold_26",
+    "mp_row.revenue_decimal_font": "orbitron_16",
     # Заказы — заметно мельче выручки (это дополнительная цифра, не
     # главная).
-    "mp_row.orders_font": "orbitron_36",
-    "mp_row.orders_decimal_font": "orbitron_20",
+    "mp_row.orders_font": "orbitronbold_26",
+    "mp_row.orders_decimal_font": "orbitron_16",
     # Ширина столбика = area_width / (число видимых маркетплейсов) — та же
     # формула для позиции И для бюджета ширины под число (см.
     # _draw_marketplace_breakdown — пробовали разделить их, кончилось
@@ -436,41 +436,41 @@ DEFAULTS = {
     # столбиках). column_margin — отступ с обеих сторон вместе, вычитается
     # из этой ширины под сам текст (нужна только для сокращения "K"/"M",
     # шрифт mp_row.*_font НЕ подгоняется под неё — размер ручной).
-    "mp_row.column_margin": "10",
+    "mp_row.column_margin": "45",
     # Общие выручка/заказы на экране «Маркеты» — отдельно от revenue.*/
     # orders.* обычного экрана (другой фон, другие положение и размеры).
     # show = 0 — не рисуются.
     "mp_total_revenue.name": "Экран «Маркеты»: общая выручка",
-    "mp_total_revenue.show": "0",
+    "mp_total_revenue.show": "1",
     "mp_total_revenue.x": "200",
-    "mp_total_revenue.y": "60",
-    "mp_total_revenue.font": "orbitron_64",
+    "mp_total_revenue.y": "63",
+    "mp_total_revenue.font": "orbitronbold_70",
     "mp_total_revenue.max_width": "220",
-    "mp_total_revenue.decimal_font": "orbitron_36",
+    "mp_total_revenue.decimal_font": "orbitronbold_45",
     "mp_total_orders.name": "Экран «Маркеты»: общие заказы",
-    "mp_total_orders.show": "0",
+    "mp_total_orders.show": "1",
     "mp_total_orders.x": "200",
     "mp_total_orders.y": "130",
-    "mp_total_orders.font": "orbitron_48",
+    "mp_total_orders.font": "orbitronbold_45",
     "mp_total_orders.max_width": "220",
-    "mp_total_orders.decimal_font": "orbitron_36",
+    "mp_total_orders.decimal_font": "orbitronbold_45",
     "mp_row.area_x": "5",
     "mp_row.area_width": "390",
     # Отступ крайних столбиков от краёв (px): первый вправо, последний влево.
-    "mp_row.edge_margin": "0",
+    "mp_row.edge_margin": "10",
     # Верхний y точечного разделителя между столбиками (display/column.png).
     "mp_row.divider_y": "187",
     # Подпись — высоко над числами; выручка сразу под ней, вплотную.
-    "mp_row.label_y": "20",
-    "mp_row.revenue_y": "58",
-    "mp_row.orders_y": "225",
+    "mp_row.label_y": "285",
+    "mp_row.revenue_y": "202",
+    "mp_row.orders_y": "228",
     # Число FBS под заказами — свои y и шрифт, не общие с fbs_label.*.400x300
     # (Итоги): раскладки этих двух экранов разные, общий y сажал число
     # слишком высоко, к подписи "шт" у заказов. Шрифт по умолчанию — тот
     # же, что у orders_font выше (число заказов) — тот же "рост" цифр в
     # столбике, что и у выручки/заказов, не мелкая подпись.
     "mp_row.fbs_y": "265",
-    "mp_row.fbs_font": "orbitron_36",
+    "mp_row.fbs_font": "orbitronbold_14",
 }
 
 LAYOUT_TXT_TEMPLATE = """\

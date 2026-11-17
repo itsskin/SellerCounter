@@ -218,6 +218,14 @@ def _process_events( event_iterator,
 
 
 
+
+# ЛОКАЛЬНАЯ ПРАВКА (SellerCounter): в MicroPython 1.20+ у bytes.decode() нет кодировки "latin-1"
+# (OSError/LookupError «unknown encoding: latin-1») — мелодии не играли вообще. Имена блоков MIDI
+# ("MThd", "MTrk") — байты ASCII, поэтому переводим их в строку напрямую, без кодеков.
+def _chunk_id(data):
+    return "".join(chr(b) for b in data)
+
+
 class MidiParser:
     # This class instantiates a MidiParser, the class constructor
     # accepts a iterable with MIDI events in MIDI file format, i.e.
@@ -1113,7 +1121,7 @@ class MidiFile:
             # Disregard the number of chunks, read the real number of tracks present.
             self.tracks = []
             for _ in range(number_of_chunks):
-                track_id = file.read(4).decode( "latin-1" )
+                track_id = _chunk_id(file.read(4))
                 # Only process MTrk chunks
                 if track_id == "MTrk":
                     self.tracks.append( MidiTrack(     file, 
@@ -1136,7 +1144,7 @@ class MidiFile:
         # values of the header:
         # format type (0-2), number of data chunks, MIDI ticks per quarter note
 
-        track_id = file.read(4).decode( "latin-1" )
+        track_id = _chunk_id(file.read(4))
         if track_id != "MThd":
             # It is said that Mac midi files may have 128 extra
             # bytes prepended (i.e. a Mac BInary Header)
@@ -1144,7 +1152,7 @@ class MidiFile:
             # then read track_id again
             # I have not been able to verify this.
             file.read(128-4)
-            track_id = file.read(4).decode( "latin-1" )
+            track_id = _chunk_id(file.read(4))
             if track_id != "MThd":
                 raise ValueError("Midi file does not start with MThd header")
         header_len = int.from_bytes( file.read(4), "big" )

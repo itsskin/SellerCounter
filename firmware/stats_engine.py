@@ -506,7 +506,7 @@ class StatsEngine:
 
     def _sound_for_marketplace(self, marketplace_id):
         overrides = self.cfg.get("notification_sounds", {})
-        return overrides.get(marketplace_id) or self.cfg.get("notification_sound", "sale.mid")
+        return overrides.get(marketplace_id) or self.cfg.get("notification_sound", "ozon.mid")
 
     def _in_night_mode(self):
         """cfg["buzzer"]["night_mode"] — окно локального времени, когда
