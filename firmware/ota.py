@@ -47,13 +47,17 @@ OWN_SERVERS = (
     ("https://83.147.216.82:8443/", "/ota_server_2.pem"),
 )
 
+# Третий источник — зеркало на нашем VPS (monik.u-bix.ru, Россия, обычный сертификат
+# Let's Encrypt; проверка файлов — по sha256 из манифеста, как у GitHub). Нужен, когда
+# GitHub и jsDelivr недоступны; кладётся tools/deploy_vps_mirror.sh при каждом релизе.
 OTA_SOURCES = (
     "https://raw.githubusercontent.com/itsskin/SellerCounter/main/firmware/",
     "https://cdn.jsdelivr.net/gh/itsskin/SellerCounter@main/firmware/",
+    "https://monik.u-bix.ru/fw/",
 ) + tuple(url for url, _ in OWN_SERVERS)
 
 # Названия источников для веб-интерфейса (адреса своих серверов не показываем).
-SOURCE_NAMES = ("GitHub", "jsDelivr") + tuple(
+SOURCE_NAMES = ("GitHub", "jsDelivr", "Сервер UBIX") + tuple(
     "Резервный сервер %d" % (i + 1) for i in range(len(OWN_SERVERS))
 )
 # Короче, чем MANIFEST_TIMEOUT_SEC: проверяются все источники подряд.
