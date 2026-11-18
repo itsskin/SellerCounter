@@ -330,12 +330,24 @@ def main():
     #    OTA) достаточно много, чтобы звук на каждую из них был просто
     #    шумом, а не полезным сигналом.
     cause = machine.reset_cause()
-    if cause == machine.PWRON_RESET:
-        if cfg["buzzer"].get("boot_sound", True):
-            buzzer.play_boot_sound()
-    elif cause == machine.WDT_RESET:
+    # Первый запуск (config.json ещё не создан — плата только что прошита): мелодия при ЛЮБОМ сбросе, кроме
+    # watchdog. После прошивки по USB причина сброса зависит от разъёма (UART или native USB) и не всегда
+    # PWRON_RESET, а первое включение должно быть слышно. Дальше — как раньше: мелодия при включении питания
+    # (и при аппаратном сбросе), тишина при программных перезагрузках (сохранение настроек, OTA).
+    try:
+        import os
+
+        os.stat(config_module.CONFIG_PATH)
+        first_run = False
+    except OSError:
+        first_run = True
+    power_on = (machine.PWRON_RESET, getattr(machine, "HARD_RESET", machine.PWRON_RESET))
+    if cause == machine.WDT_RESET:
         if cfg["buzzer"].get("watchdog_sound", True):
             buzzer.beep(440, 3000)
+    elif cause in power_on or first_run:
+        if cfg["buzzer"].get("boot_sound", True):
+            buzzer.play_boot_sound()
 
     from stats_engine import StatsEngine
 

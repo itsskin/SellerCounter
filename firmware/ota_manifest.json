@@ -48,7 +48,7 @@
   "lib/sc_http/__init__.py": "eb6639452c65e974fc4e0b09af7794b225d8aff4145e3cdfbfab7eae41e65867",
   "lib/umidiparser/__init__.py": "9cd841108db4f550d552afb0424661a0246817ad88fda82ed35903ac9f5e71a9",
   "lib/umidiparser/umidiparser.py": "b7278ef13ede07ea64c9023e2df50aca0a44359e7c11bebd2b36ed6558cc0d24",
-  "main.py": "08630bb57d4203e21382d6628483970cdd2bc071b23f36e089225a7ad0811154",
+  "main.py": "dbcd0966ae1d9bf20855664f6d5b71c0a25303e9ab3e44c54fb25d79976b3318",
   "marketplaces/base.py": "30ec23cde4b9c49ec134b3b923785b74f344608aef850036d0be734bec5c67c8",
   "marketplaces/ozon.py": "ee2f38ae3a384edd93db2e0e970a3bb4890caa997f2f7d887659ae677c6e67cf",
   "marketplaces/registry.py": "ba228e3c6ec02c801738dfbd7dd562370962878cb5f8bc900dc8a640a1bde76f",
@@ -69,5 +69,5 @@
   "www/main.js": "bd4040154ee4539d56b63a2535d38d8f47d683d8cacc2ad41851b4d1c8b732b3",
   "www/style.css": "d33b09104c97a980449bd3ffabe81f5f5eec48bf18c5d244d340963595f1c560"
  },
- "version": 124
+ "version": 125
 }
